@@ -220,6 +220,47 @@ class Client():
             )
         return False
 
+    def getAttribute(self, app = None, key = None):
+        url = self.url + 'ocs/v1.php/privatedata/getattribute'
+        if app != None:
+            url += '/' + urllib.quote(app)
+            if key != None:
+                url += '/' + urllib.quote(key)
+        res = requests.get(url, auth = self.__auth)
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            values = []
+            for element in tree.find('data').iter('element'):
+                app_text = element.find('app').text
+                key_text = element.find('key').text
+                value_text = element.find('value').text
+                if key == None:
+                    if app == None:
+                        values.append((app_text, key_text, value_text))
+                    else:
+                        values.append((key_text, value_text))
+                else:
+                    return value_text
+
+            return values
+        return False
+
+    def setAttribute(self, app, key, value):
+        url = self.url + 'ocs/v1.php/privatedata/setattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        print url
+        res = requests.post(url, auth = self.__auth, data = {'value': value})
+        if res.status_code == 200:
+            return True
+        return False
+
+    def deleteAttribute(self, app, key):
+        url = self.url + 'ocs/v1.php/privatedata/deleteattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        print url
+        res = requests.post(url, auth = self.__auth)
+        if res.status_code == 200:
+            return True
+        return False
+
     @staticmethod
     def __normalizePath(path):
         if isinstance(path, File):
