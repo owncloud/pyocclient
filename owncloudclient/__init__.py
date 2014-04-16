@@ -2,6 +2,11 @@
 #
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
+"""ownCloud client package
+
+Makes it possible to access files on a remote ownCloud instance,
+share them or access application attributes.
+"""
 
 import datetime
 import time
@@ -12,6 +17,7 @@ import xml.etree.ElementTree as ET
 import os
 
 class PublicShare():
+    """Public share information"""
     def __init__(self, share_id, target_file, link, token):
         self.share_id = share_id
         self.target_file = target_file
@@ -19,27 +25,57 @@ class PublicShare():
         self.token = token
 
     def __str__(self):
-        return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % (self.share_id, self.target_file, self.link, self.token)
+        return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
+                (self.share_id, self.target_file, self.link, self.token)
 
-class File():
+class FileInfo():
+    """File information"""
+
     __DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
 
-    def __init__(self, path, file_type = 'file', attributes = {}):
+    def __init__(self, path, file_type = 'file', attributes = None):
         self.path = path
         self.file_type = file_type
-        self.attributes = attributes
+        self.attributes = attributes or {}
 
-    def getSize(self):
+    def get_size(self):
+        """Returns the size of the file
+        
+        :returns: size of the file
+        """
         return int(self.attributes['{DAV:}getcontentlength'])
 
-    def getETag(self):
+    def get_etag(self):
+        """Returns the file etag
+        
+        :returns: file etag
+        """
         return self.attributes['{DAV:}getetag']
 
-    def getContentType(self):
+    def get_content_type(self):
+        """Returns the file content type
+        
+        :returns: file content type
+        """
         return self.attributes['{DAV:}getcontenttype']
 
-    def getLastModified(self):
-        return datetime.datetime.strptime(self.attributes['{DAV:}getlastmodified'], self.__DATE_FORMAT)
+    def get_last_modified(self):
+        """Returns the last modified time
+        
+        :returns: last modified time
+        :rtype: datetime object
+        """
+        return datetime.datetime.strptime(
+                self.attributes['{DAV:}getlastmodified'],
+                self.__DATE_FORMAT
+                )
+
+    def is_dir(self):
+        """Returns whether the file info is a directory
+
+        :returns: True if it is a directory, False otherwise
+        """
+        return self.file_type != 'file'
 
     def __str__(self):
         return 'File(path=%s,file_type=%s,attributes=%s)' % (self.path, self.file_type, self.attributes)
@@ -48,6 +84,8 @@ class File():
         return self.__str__()
 
 class Client():
+    """ownCloud client"""
+
     __DEBUG = True
 
     def __init__(self, url):
@@ -63,66 +101,146 @@ class Client():
         self.__ocs_share_url = url + 'ocs/v1.php/apps/files_sharing/api/v1/'
 
     def login(self, user_id, password):
+        """Authenticate to ownCloud
+
+        :param user_id: user id
+        :param password: password
+        """
+
         self.__auth = (user_id, password)
         res = requests.get(self.url, auth = self.__auth)
         if res.status_code == 200:
-            self.authenticated = True
             return True
-        self.authenticated = False
+        self.__auth = None
         return False
 
     def logout(self):
+        """Log out the authenticated user
+
+        :param user_id: user id
+        :param password: password
+        :returns: True if the operation succeeded, False otherwise
+        """
         # TODO
-        pass
+        return False
 
-    def fileinfo(self, path):
-        return self.__makeDAVRequest('PROPFIND', path)
+    def file_info(self, path):
+        """Returns the file info for the given remote file
+        
+        :param path: path to the remote file 
+        :returns: file info
+        :rtype: :class:`FileInfo` object
+        """
+        res = self.__make_dav_request('PROPFIND', path)
+        return res[0]
 
-    def get(self, path):
-        path = self.__normalizePath(path)
+    def list(self, path):
+        """Returns the listing for the given remote directory
+        
+        :param path: path to the remote directory 
+        :returns: directory listing
+        :rtype: array of :class:`FileInfo` objects
+        """
+        if not path[-1] == '/':
+            path += '/'
+        res = self.__make_dav_request('PROPFIND', path)
+        return res
+
+    def get_file_contents(self, path):
+        """Returns the contents of a remote file
+
+        :param path: path to the remote file
+        :returns: file contents
+        :rtype: binary data
+        """
+        path = self.__normalize_path(path)
         res = requests.get(self.__webdav_url + path, auth = self.__auth)
         if res.status_code == 200:
             return res.content
         return False
 
-    def getToFile(self, path, target_file = None):
-        path = self.__normalizePath(path)
-        res = requests.get(self.__webdav_url + path, auth = self.__auth, stream = True)
-        if res.status_code == 200:
-            if target_file == None:
-                # use downloaded file name from Content-Disposition
-                # targetFile = res.headers['content-disposition']
-                target_file = os.path.basename(path)
+    def get_file(self, remote_path, local_file = None):
+        """Downloads a remote file
 
-            f = open(target_file, 'w', 8192)
+        :param remote_path: path to the remote file
+        :param local_file: optional path to the local file. If none specified,
+        the file will be downloaded into the current directory
+        :returns: True if the operation succeeded, False otherwise
+        """
+        remote_path = self.__normalize_path(remote_path)
+        res = requests.get(
+                self.__webdav_url + remote_path,
+                auth = self.__auth,
+                stream = True
+                )
+        if res.status_code == 200:
+            if local_file == None:
+                # use downloaded file name from Content-Disposition
+                # local_file = res.headers['content-disposition']
+                local_file = os.path.basename(remote_path)
+
+            file_handle = open(local_file, 'w', 8192)
             for chunk in res.iter_content(8192):
-                f.write(chunk)
-            f.close()
+                file_handle.write(chunk)
+            file_handle.close()
             return True
         return False
 
-    def getDirectoryAsZip(self, path, target_file):
-        path = self.__normalizePath(path)
-        res = requests.get(self.url + 'index.php/apps/files/ajax/download.php?dir=' + urllib.quote(path), auth = self.__auth, stream = True)
+    def get_directory_as_zip(self, remote_path, local_file):
+        """Downloads a remote directory as zip
+
+        :param remote_path: path to the remote directory to download
+        :param local_file: path and name of the target local file
+        :returns: True if the operation succeeded, False otherwise
+        """
+        remote_path = self.__normalize_path(remote_path)
+        url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
+            + urllib.quote(remote_path)
+        res = requests.get(
+                url,
+                auth = self.__auth,
+                stream = True
+                )
         if res.status_code == 200:
-            if target_file == None:
+            if local_file == None:
                 # use downloaded file name from Content-Disposition
                 # targetFile = res.headers['content-disposition']
-                target_file = os.path.basename(path)
+                local_file = os.path.basename(remote_path)
 
-            f = open(target_file, 'w', 8192)
+            file_handle = open(local_file, 'w', 8192)
             for chunk in res.iter_content(8192):
-                f.write(chunk)
-            f.close()
+                file_handle.write(chunk)
+            file_handle.close()
             return True
         return False
 
-    def putFromString(self, target_path, data):
-        return self.__makeDAVRequest('PUT', target_path, {'data': data})
+    def put_file_contents(self, remote_path, data):
+        """Write data into a remote file
 
-    def putFromFile(self, target_path, local_source_file, **kwargs):
+        :param remote_path: path of the remote file
+        :param data: data to write into the remote file
+        :returns: True if the operation succeeded, False otherwise
+        """
+        return self.__make_dav_request('PUT', remote_path, {'data': data})
+
+    def put_file(self, remote_path, local_source_file, **kwargs):
+        """Upload a file
+
+        :param remote_path: path to the target file. A target directory can
+        also be specified instead by appending a "/"
+        :param local_source_file: path to the local file to upload
+        :param chunked: (optional) use file chunking (defaults to True)
+        :param chunk_size: (optional) chunk size in bytes, defaults to 10 MB
+        :param keep_mtime: (optional) also update the remote file to the same
+        mtime as the local one, defaults to True
+        :returns: True if the operation succeeded, False otherwise
+        """
         if kwargs.get('chunked', True):
-            return self.__putFromFileChunked(target_path, local_source_file, **kwargs)
+            return self.__put_file_chunked(
+                    remote_path,
+                    local_source_file,
+                    **kwargs
+                    )
 
         stat_result = os.stat(local_source_file)
 
@@ -130,49 +248,77 @@ class Client():
         if kwargs.get('keep_mtime', True):
             headers['X-OC-MTIME'] = stat_result.st_mtime
 
-        if target_path[-1] == '/':
-            target_path += os.path.basename(local_source_file)
-        f = open(local_source_file, 'r', 8192)
-        res = self.__makeDAVRequest('PUT', target_path, {'data': f, 'headers': headers})
-        f.close()
+        if remote_path[-1] == '/':
+            remote_path += os.path.basename(local_source_file)
+        file_handle = open(local_source_file, 'r', 8192)
+        res = self.__make_dav_request(
+                'PUT',
+                remote_path,
+                {'data': file_handle, 'headers': headers}
+                )
+        file_handle.close()
         return res
 
-    def putDirectory(self, target_path, local_directory, **kwargs):
-        target_path = self.__normalizePath(target_path)
+    def put_directory(self, target_path, local_directory, **kwargs):
+        """Upload a directory with all its contents
+
+        :param target_path: path of the directory to upload into
+        :param local_directory: path to the local directory to upload
+        :param \*\*kwargs: optional arguments that ``put_file`` accepts
+        :returns: True if the operation succeeded, False otherwise
+        """
+        target_path = self.__normalize_path(target_path)
         if not target_path[-1] == '/':
             target_path += '/'
         gathered_files = []
         # gather files to upload
-        for path, dirs, files in os.walk(local_directory):
+        for path, _, files in os.walk(local_directory):
             gathered_files.append((path, files))
 
         for path, files in gathered_files:
             self.mkdir(target_path + path + '/')
             for name in files:
-                self.putFromFile(target_path + path + '/', path + '/' + name, **kwargs)
+                self.put_file(
+                        target_path + path + '/',
+                        path + '/' + name,
+                        **kwargs
+                        )
 
-    def __putFromFileChunked(self, target_path, local_source_file, **kwargs):
+    def __put_file_chunked(self, remote_path, local_source_file, **kwargs):
+        """Uploads a file using chunks. If the file is smaller than
+        ``chunk_size`` it will be uploaded directly.
+
+        :param remote_path: path to the target file. A target directory can
+        also be specified instead by appending a "/"
+        :param local_source_file: path to the local file to upload
+        :param \*\*kwargs: optional arguments that ``put_file`` accepts
+        :returns: True if the operation succeeded, False otherwise
+        """
         chunk_size = kwargs.get('chunk_size', 10 * 1024 * 1024)
         result = True
         transfer_id = int(time.time())
 
-        target_path = self.__normalizePath(target_path)
-        if target_path[-1] == '/':
-            target_path += os.path.basename(local_source_file)
-        # TODO: empty file should still work
+        remote_path = self.__normalize_path(remote_path)
+        if remote_path[-1] == '/':
+            remote_path += os.path.basename(local_source_file)
+
         stat_result = os.stat(local_source_file)
 
-        f = open(local_source_file, 'r', 8192)
-        f.seek(0, os.SEEK_END)
-        size = f.tell()
-        f.seek(0)
+        file_handle = open(local_source_file, 'r', 8192)
+        file_handle.seek(0, os.SEEK_END)
+        size = file_handle.tell()
+        file_handle.seek(0)
 
         headers = {}
         if kwargs.get('keep_mtime', True):
             headers['X-OC-MTIME'] = stat_result.st_mtime
 
         if size == 0:
-            return self.__makeDAVRequest('PUT', target_path, {'data': '', 'headers': headers})
+            return self.__make_dav_request(
+                    'PUT',
+                    remote_path,
+                    {'data': '', 'headers': headers}
+                    )
 
         chunk_count = size / chunk_size
 
@@ -183,32 +329,57 @@ class Client():
             chunk_count += 1
        
         for chunk_index in range(0, chunk_count):
-            data = f.read(chunk_size)
+            data = file_handle.read(chunk_size)
             if chunk_count > 1:
-                chunk_name = '%s-chunking-%s-%i-%i' % (target_path, transfer_id, chunk_count, chunk_index)
+                chunk_name = '%s-chunking-%s-%i-%i' % \
+                        (remote_path, transfer_id, chunk_count, chunk_index)
             else:
-                chunk_name = target_path
+                chunk_name = remote_path
 
-            if not self.__makeDAVRequest('PUT', chunk_name, {'data': data, 'headers': headers}):
+            if not self.__make_dav_request(
+                    'PUT',
+                    chunk_name,
+                    {'data': data, 'headers': headers}
+                ):
                 result = False
                 break
 
-        f.close()
+        file_handle.close()
         return result
 
     def mkdir(self, path):
+        """Creates a remote directory
+
+        :param path: path to the remote directory to create
+        :returns: True if the operation succeeded, False otherwise
+        """
         if not path[-1] == '/':
             path = path + '/'
-        return self.__makeDAVRequest('MKCOL', path)
+        return self.__make_dav_request('MKCOL', path)
 
     def delete(self, path):
-        return self.__makeDAVRequest('DELETE', path)
+        """Deletes a remote file or directory
 
-    def shareFileWithLink(self, path):
-        path = self.__normalizePath(path)
+        :param path: path to the file or directory to delete
+        :returns: True if the operation succeeded, False otherwise
+        """
+        return self.__make_dav_request('DELETE', path)
+
+    def share_file_with_link(self, path):
+        """Shares a remote file with link
+
+        :param path: path to the remote file to share
+        :returns: instance of :class:`PublicShare` with the share info
+        or False if the operation failed
+        """
+        path = self.__normalize_path(path)
         post_data = {'shareType': 3, 'path': path}
 
-        res = requests.post(self.__ocs_share_url + 'shares', auth = self.__auth, data = post_data)
+        res = requests.post(
+                self.__ocs_share_url + 'shares',
+                auth = self.__auth,
+                data = post_data
+                )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             data_el = tree.find('data')
@@ -220,7 +391,15 @@ class Client():
             )
         return False
 
-    def getAttribute(self, app = None, key = None):
+    def get_attribute(self, app = None, key = None):
+        """Returns an application attribute
+
+        :param app: application id
+        :param key: attribute key or None to retrieve all values for the
+        given application
+        :returns: attribute value if key was specified, or an array of tuples
+        (key, value) for each attribute
+        """
         url = self.url + 'ocs/v1.php/privatedata/getattribute'
         if app != None:
             url += '/' + urllib.quote(app)
@@ -245,16 +424,31 @@ class Client():
             return values
         return False
 
-    def setAttribute(self, app, key, value):
-        url = self.url + 'ocs/v1.php/privatedata/setattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+    def set_attribute(self, app, key, value):
+        """Sets an application attribute
+
+        :param app: application id
+        :param key: key of the attribute to set
+        :param value: value to set
+        :returns: True if the operation succeeded, False otherwise
+        """
+        url = self.url + 'ocs/v1.php/privatedata/setattribute/'
+        url += urllib.quote(app) + '/' + urllib.quote(key)
         print url
         res = requests.post(url, auth = self.__auth, data = {'value': value})
         if res.status_code == 200:
             return True
         return False
 
-    def deleteAttribute(self, app, key):
-        url = self.url + 'ocs/v1.php/privatedata/deleteattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+    def delete_attribute(self, app, key):
+        """Deletes an application attribute
+
+        :param app: application id
+        :param key: key of the attribute to delete
+        :returns: True if the operation succeeded, False otherwise
+        """
+        url = self.url + 'ocs/v1.php/privatedata/deleteattribute/'
+        url += urllib.quote(app) + '/' + urllib.quote(key)
         print url
         res = requests.post(url, auth = self.__auth)
         if res.status_code == 200:
@@ -262,8 +456,10 @@ class Client():
         return False
 
     @staticmethod
-    def __normalizePath(path):
-        if isinstance(path, File):
+    def __normalize_path(path):
+        """Makes sure the path starts with a "/"
+        """
+        if isinstance(path, FileInfo):
             path = path.path
         if len(path) == 0:
             return '/'
@@ -271,48 +467,78 @@ class Client():
             path = '/' + path
         return path
 
-    def __makeDAVRequest(self, method, path, attributes = {}):
+    def __make_dav_request(self, method, path, attributes = None):
+        """Makes a WebDAV request
+
+        :param method: HTTP method
+        :param path: remote path of the targetted file
+        :param attributes: optional attributes (kwargs)
+        :returns array of :class:`FileInfo` if the response
+        contains it, or True if the operation succeded, False
+        if it didn't
+        """
         if self.__DEBUG:
             print 'DAV request: %s %s' % (method, path)
 
-        path = self.__normalizePath(path)
-        attributes = attributes.copy()
+        path = self.__normalize_path(path)
+        if attributes != None:
+            attributes = attributes.copy()
+        else:
+            attributes = {}
         attributes['auth'] = self.__auth
         res = requests.request(method, self.__webdav_url + path, **attributes)
         if self.__DEBUG:
             print 'DAV status: %i' % res.status_code
         if res.status_code == 200 or res.status_code == 207:
-            return self.__parseDAVResponse(res)
+            return self.__parse_dav_response(res)
         if res.status_code == 204 or res.status_code == 201:
             return True
         return False
 
-    def __parseDAVResponse(self, res):
+    def __parse_dav_response(self, res):
+        """Parses the DAV responses from a multi-status response
+
+        :param res: DAV response
+        :returns array of :class:`FileInfo` or False if
+        the operation did not succeed
+        """
         if res.status_code == 207:
             tree = ET.fromstring(res.text)
             items = []
             for child in tree:
-                items.append(self.__parseDAVElement(child))
+                items.append(self.__parse_dav_element(child))
             return items
         return True
 
-    def __parseDAVElement(self, el):
-        href = urllib.unquote(self.__stripDAVPath(el.find('{DAV:}href').text))
-        is_collection = el.find('{DAV:}collection')
+    def __parse_dav_element(self, dav_response):
+        """Parses a single DAV element
+
+        :param el: ElementTree element containing a single DAV response
+        :returns :class:`FileInfo`
+        """
+        href = urllib.unquote(
+                self.__strip_dav_path(dav_response.find('{DAV:}href').text)
+                )
+        is_collection = dav_response.find('{DAV:}collection')
         if is_collection:
             file_type = 'dir'
         else:
             file_type = 'file'
 
         file_attrs = {}
-        attrs = el.find('{DAV:}propstat')
+        attrs = dav_response.find('{DAV:}propstat')
         attrs = attrs.find('{DAV:}prop')
         for attr in attrs:
             file_attrs[attr.tag] = attr.text
 
-        return File(href, file_type, file_attrs)
+        return FileInfo(href, file_type, file_attrs)
 
-    def __stripDAVPath(self, path):
+    def __strip_dav_path(self, path):
+        """Removes the leading "remote.php/webdav" path from the given path
+
+        :param path: path containing the remote DAV path "remote.php/webdav"
+        :returns: path stripped of the remote DAV path
+        """
         if (path.startswith(self.__davpath)):
             return path[len(self.__davpath):]
         return path
