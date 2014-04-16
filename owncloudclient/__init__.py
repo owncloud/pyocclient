@@ -1,4 +1,4 @@
-#!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
@@ -101,18 +101,58 @@ class Client():
             return True
         return False
 
-    def put(self, target_path, data):
+    def getDirectoryAsZip(self, path, target_file):
+        path = self.__normalizePath(path)
+        res = requests.get(self.url + 'index.php/apps/files/ajax/download.php?dir=' + urllib.quote(path), auth = self.__auth, stream = True)
+        if res.status_code == 200:
+            if target_file == None:
+                # use downloaded file name from Content-Disposition
+                # targetFile = res.headers['content-disposition']
+                target_file = os.path.basename(path)
+
+            f = open(target_file, 'w', 8192)
+            for chunk in res.iter_content(8192):
+                f.write(chunk)
+            f.close()
+            return True
+        return False
+
+    def putFromString(self, target_path, data):
         return self.__makeDAVRequest('PUT', target_path, {'data': data})
 
-    def putFromFile(self, target_path, local_source_file):
+    def putFromFile(self, target_path, local_source_file, **kwargs):
+        if kwargs.get('chunked', True):
+            return self.__putFromFileChunked(target_path, local_source_file, **kwargs)
+
+        stat_result = os.stat(local_source_file)
+
+        headers = {}
+        if kwargs.get('keep_mtime', True):
+            headers['X-OC-MTIME'] = stat_result.st_mtime
+
         if target_path[-1] == '/':
             target_path += os.path.basename(local_source_file)
         f = open(local_source_file, 'r', 8192)
-        res = self.__makeDAVRequest('PUT', target_path, {'data': f})
+        res = self.__makeDAVRequest('PUT', target_path, {'data': f, 'headers': headers})
         f.close()
         return res
 
-    def putFromFileChunked(self, target_path, local_source_file, chunk_size = 10 * 1024 * 1024):
+    def putDirectory(self, target_path, local_directory, **kwargs):
+        target_path = self.__normalizePath(target_path)
+        if not target_path[-1] == '/':
+            target_path += '/'
+        gathered_files = []
+        # gather files to upload
+        for path, dirs, files in os.walk(local_directory):
+            gathered_files.append((path, files))
+
+        for path, files in gathered_files:
+            self.mkdir(target_path + path + '/')
+            for name in files:
+                self.putFromFile(target_path + path + '/', path + '/' + name, **kwargs)
+
+    def __putFromFileChunked(self, target_path, local_source_file, **kwargs):
+        chunk_size = kwargs.get('chunk_size', 10 * 1024 * 1024)
         result = True
         transfer_id = int(time.time())
 
@@ -127,20 +167,28 @@ class Client():
         size = f.tell()
         f.seek(0)
 
-        headers = {'X-OC-MTIME': stat_result.st_mtime}
+        headers = {}
+        if kwargs.get('keep_mtime', True):
+            headers['X-OC-MTIME'] = stat_result.st_mtime
 
         if size == 0:
             return self.__makeDAVRequest('PUT', target_path, {'data': '', 'headers': headers})
 
-        headers['OC-CHUNKED'] = 1
-
         chunk_count = size / chunk_size
+
+        if chunk_count > 1:
+            headers['OC-CHUNKED'] = 1
+
         if size % chunk_size > 0:
             chunk_count += 1
        
         for chunk_index in range(0, chunk_count):
             data = f.read(chunk_size)
-            chunk_name = '%s-chunking-%s-%i-%i' % (target_path, transfer_id, chunk_count, chunk_index)
+            if chunk_count > 1:
+                chunk_name = '%s-chunking-%s-%i-%i' % (target_path, transfer_id, chunk_count, chunk_index)
+            else:
+                chunk_name = target_path
+
             if not self.__makeDAVRequest('PUT', chunk_name, {'data': data, 'headers': headers}):
                 result = False
                 break
@@ -149,8 +197,12 @@ class Client():
         return result
 
     def mkdir(self, path):
-        # FIXME: doesn't work
+        if not path[-1] == '/':
+            path = path + '/'
         return self.__makeDAVRequest('MKCOL', path)
+
+    def delete(self, path):
+        return self.__makeDAVRequest('DELETE', path)
 
     def shareFileWithLink(self, path):
         path = self.__normalizePath(path)
