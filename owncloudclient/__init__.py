@@ -11,6 +11,16 @@ import requests
 import xml.etree.ElementTree as ET
 import os
 
+class PublicShare():
+    def __init__(self, share_id, target_file, link, token):
+        self.share_id = share_id
+        self.target_file = target_file
+        self.link = link
+        self.token = token
+
+    def __str__(self):
+        return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % (self.share_id, self.target_file, self.link, self.token)
+
 class File():
     __DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
 
@@ -41,12 +51,16 @@ class Client():
     __DEBUG = True
 
     def __init__(self, url):
+        if not url[-1] == '/':
+            url = url + '/'
+
         self.url = url
         self.__auth = None
 
         url_components = urlparse.urlparse(url)
-        self.__davpath = url_components.path + '/remote.php/webdav'
-        self.__webdav_url = url + '/remote.php/webdav'
+        self.__davpath = url_components.path + 'remote.php/webdav'
+        self.__webdav_url = url + 'remote.php/webdav'
+        self.__ocs_share_url = url + 'ocs/v1.php/apps/files_sharing/api/v1/'
 
     def login(self, user_id, password):
         self.__auth = (user_id, password)
@@ -106,10 +120,19 @@ class Client():
         if target_path[-1] == '/':
             target_path += os.path.basename(local_source_file)
         # TODO: empty file should still work
+        stat_result = os.stat(local_source_file)
+
         f = open(local_source_file, 'r', 8192)
         f.seek(0, os.SEEK_END)
         size = f.tell()
         f.seek(0)
+
+        headers = {'X-OC-MTIME': stat_result.st_mtime}
+
+        if size == 0:
+            return self.__makeDAVRequest('PUT', target_path, {'data': '', 'headers': headers})
+
+        headers['OC-CHUNKED'] = 1
 
         chunk_count = size / chunk_size
         if size % chunk_size > 0:
@@ -118,7 +141,7 @@ class Client():
         for chunk_index in range(0, chunk_count):
             data = f.read(chunk_size)
             chunk_name = '%s-chunking-%s-%i-%i' % (target_path, transfer_id, chunk_count, chunk_index)
-            if not self.__makeDAVRequest('PUT', chunk_name, {'data': data, 'headers': {'OC-CHUNKED': 1}}):
+            if not self.__makeDAVRequest('PUT', chunk_name, {'data': data, 'headers': headers}):
                 result = False
                 break
 
@@ -128,6 +151,22 @@ class Client():
     def mkdir(self, path):
         # FIXME: doesn't work
         return self.__makeDAVRequest('MKCOL', path)
+
+    def shareFileWithLink(self, path):
+        path = self.__normalizePath(path)
+        post_data = {'shareType': 3, 'path': path}
+
+        res = requests.post(self.__ocs_share_url + 'shares', auth = self.__auth, data = post_data)
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            data_el = tree.find('data')
+            return PublicShare(
+                int(data_el.find('id').text),
+                path,
+                data_el.find('url').text,
+                data_el.find('token').text
+            )
+        return False
 
     @staticmethod
     def __normalizePath(path):
