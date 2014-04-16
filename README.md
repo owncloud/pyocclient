@@ -3,6 +3,9 @@
 This library makes it possible to connect to an ownCloud instance and perform
 file, share and attribute operations in python.
 
+Please note that this is **not** a sync client implementation but rather a wrapper
+around various APIs.
+
 See the [ownCloud homepage](http://owncloud.org) for more information about ownCloud.
 
 ## Features
