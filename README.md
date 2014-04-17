@@ -27,6 +27,11 @@ directory creation, etc
 
 - store app data as key/values using the privatedata OCS API
 
+## Requirements
+
+- Python >= 2.7 (no support for Python 3 yet)
+- requests module (for making HTTP requests)
+
 ## Usage
 
 Example for uploading a file then sharing with link:
