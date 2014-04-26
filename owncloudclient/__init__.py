@@ -100,17 +100,23 @@ class FileInfo():
 class Client():
     """ownCloud client"""
 
-    __DEBUG = True
-
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
 
-    def __init__(self, url):
+    def __init__(self, url, **kwargs):
+        """Instantiates a client
+
+        :param url: URL of the target ownCloud instance
+        :param verify_certs: True (default) to verify SSL certificates, False otherwise
+        :param debug: set to True to print debugging messages to stdout, defaults to False
+        """
         if not url[-1] == '/':
             url = url + '/'
 
         self.url = url
         self.__session = None
+        self.__debug = kwargs.get('debug', False)
+        self.__verify_certs = kwargs.get('verify_certs', True)
 
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
@@ -125,6 +131,7 @@ class Client():
         """
 
         self.__session = requests.session()
+        self.__session.verify = self.__verify_certs
         self.__session.auth = (user_id, password)
         res = self.__session.get(self.url)
         if res.status_code == 200:
@@ -526,7 +533,7 @@ class Client():
         :returns :class:`requests.Response` instance
         """
         path = 'ocs/v1.php/' + service + '/' + action
-        if self.__DEBUG:
+        if self.__debug:
             print 'OCS request: %s %s' % (method, self.url + path)
 
         res = self.__session.request(method, self.url + path, **kwargs)
@@ -542,12 +549,12 @@ class Client():
         contains it, or True if the operation succeded, False
         if it didn't
         """
-        if self.__DEBUG:
+        if self.__debug:
             print 'DAV request: %s %s' % (method, path)
 
         path = self.__normalize_path(path)
         res = self.__session.request(method, self.__webdav_url + path, **kwargs)
-        if self.__DEBUG:
+        if self.__debug:
             print 'DAV status: %i' % res.status_code
         if res.status_code == 200 or res.status_code == 207:
             return self.__parse_dav_response(res)
