@@ -88,6 +88,9 @@ class Client():
 
     __DEBUG = True
 
+    OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
+    OCS_SERVICE_PRIVATEDATA = 'privatedata'
+
     def __init__(self, url):
         if not url[-1] == '/':
             url = url + '/'
@@ -98,7 +101,6 @@ class Client():
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
-        self.__ocs_share_url = url + 'ocs/v1.php/apps/files_sharing/api/v1/'
 
     def login(self, user_id, password):
         """Authenticate to ownCloud.
@@ -223,7 +225,7 @@ class Client():
         :param data: data to write into the remote file
         :returns: True if the operation succeeded, False otherwise
         """
-        return self.__make_dav_request('PUT', remote_path, {'data': data})
+        return self.__make_dav_request('PUT', remote_path, data = data)
 
     def put_file(self, remote_path, local_source_file, **kwargs):
         """Upload a file
@@ -256,7 +258,8 @@ class Client():
         res = self.__make_dav_request(
                 'PUT',
                 remote_path,
-                {'data': file_handle, 'headers': headers}
+                data = file_handle,
+                headers = headers
                 )
         file_handle.close()
         return res
@@ -319,7 +322,8 @@ class Client():
             return self.__make_dav_request(
                     'PUT',
                     remote_path,
-                    {'data': '', 'headers': headers}
+                    data = '',
+                    headers = headers
                     )
 
         chunk_count = size / chunk_size
@@ -341,7 +345,8 @@ class Client():
             if not self.__make_dav_request(
                     'PUT',
                     chunk_name,
-                    {'data': data, 'headers': headers}
+                    data = data,
+                    headers = headers
                 ):
                 result = False
                 break
@@ -377,10 +382,13 @@ class Client():
         path = self.__normalize_path(path)
         post_data = {'shareType': 3, 'path': path}
 
-        res = self.__session.post(
-                self.__ocs_share_url + 'shares',
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_SHARE,
+                'shares',
                 data = post_data
                 )
+
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             data_el = tree.find('data')
@@ -401,12 +409,16 @@ class Client():
         :returns: attribute value if key was specified, or an array of tuples
         (key, value) for each attribute
         """
-        url = self.url + 'ocs/v1.php/privatedata/getattribute'
+        path = 'getattribute'
         if app != None:
-            url += '/' + urllib.quote(app)
+            path += '/' + urllib.quote(app)
             if key != None:
-                url += '/' + urllib.quote(key)
-        res = self.__session.get(url)
+                path += '/' + urllib.quote(key)
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_PRIVATEDATA,
+                path
+                )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             values = []
@@ -433,10 +445,13 @@ class Client():
         :param value: value to set
         :returns: True if the operation succeeded, False otherwise
         """
-        url = self.url + 'ocs/v1.php/privatedata/setattribute/'
-        url += urllib.quote(app) + '/' + urllib.quote(key)
-        print url
-        res = self.__session.post(url, data = {'value': value})
+        path = 'setattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_PRIVATEDATA,
+                path,
+                data = {'value': value}
+                )
         if res.status_code == 200:
             return True
         return False
@@ -448,10 +463,12 @@ class Client():
         :param key: key of the attribute to delete
         :returns: True if the operation succeeded, False otherwise
         """
-        url = self.url + 'ocs/v1.php/privatedata/deleteattribute/'
-        url += urllib.quote(app) + '/' + urllib.quote(key)
-        print url
-        res = self.__session.post(url)
+        path = 'deleteattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_PRIVATEDATA,
+                path
+                )
         if res.status_code == 200:
             return True
         return False
@@ -468,12 +485,28 @@ class Client():
             path = '/' + path
         return path
 
-    def __make_dav_request(self, method, path, attributes = None):
+    def __make_ocs_request(self, method, service, action, **kwargs):
+        """Makes a OCS API request
+
+        :param method: HTTP method
+        :param service: service name
+        :param action: action path
+        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
+        :returns :class:`requests.Response` instance
+        """
+        path = 'ocs/v1.php/' + service + '/' + action
+        if self.__DEBUG:
+            print 'OCS request: %s %s' % (method, self.url + path)
+
+        res = self.__session.request(method, self.url + path, **kwargs)
+        return res
+
+    def __make_dav_request(self, method, path, **kwargs):
         """Makes a WebDAV request
 
         :param method: HTTP method
         :param path: remote path of the targetted file
-        :param attributes: optional attributes (kwargs)
+        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
         :returns array of :class:`FileInfo` if the response
         contains it, or True if the operation succeded, False
         if it didn't
@@ -482,11 +515,7 @@ class Client():
             print 'DAV request: %s %s' % (method, path)
 
         path = self.__normalize_path(path)
-        if attributes != None:
-            attributes = attributes.copy()
-        else:
-            attributes = {}
-        res = self.__session.request(method, self.__webdav_url + path, **attributes)
+        res = self.__session.request(method, self.__webdav_url + path, **kwargs)
         if self.__DEBUG:
             print 'DAV status: %i' % res.status_code
         if res.status_code == 200 or res.status_code == 207:
