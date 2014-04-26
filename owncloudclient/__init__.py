@@ -93,7 +93,7 @@ class Client():
             url = url + '/'
 
         self.url = url
-        self.__auth = None
+        self.__session = None
 
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
@@ -101,28 +101,32 @@ class Client():
         self.__ocs_share_url = url + 'ocs/v1.php/apps/files_sharing/api/v1/'
 
     def login(self, user_id, password):
-        """Authenticate to ownCloud
+        """Authenticate to ownCloud.
+        This will create a session on the server.
 
         :param user_id: user id
         :param password: password
         """
 
-        self.__auth = (user_id, password)
-        res = requests.get(self.url, auth = self.__auth)
+        self.__session = requests.session()
+        self.__session.auth = (user_id, password)
+        res = self.__session.get(self.url)
         if res.status_code == 200:
+            # Remove auth, no need to re-auth every call
+            self.__session.auth = None
             return True
-        self.__auth = None
+        self.__session.close()
+        self.__session = None
         return False
 
     def logout(self):
-        """Log out the authenticated user
+        """Log out the authenticated user and close the session.
 
-        :param user_id: user id
-        :param password: password
         :returns: True if the operation succeeded, False otherwise
         """
-        # TODO
-        return False
+        # TODO actual logout ?
+        self.__session.close()
+        return True
 
     def file_info(self, path):
         """Returns the file info for the given remote file
@@ -154,7 +158,7 @@ class Client():
         :rtype: binary data
         """
         path = self.__normalize_path(path)
-        res = requests.get(self.__webdav_url + path, auth = self.__auth)
+        res = self.__session.get(self.__webdav_url + path)
         if res.status_code == 200:
             return res.content
         return False
@@ -168,9 +172,8 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         """
         remote_path = self.__normalize_path(remote_path)
-        res = requests.get(
+        res = self.__session.get(
                 self.__webdav_url + remote_path,
-                auth = self.__auth,
                 stream = True
                 )
         if res.status_code == 200:
@@ -196,9 +199,8 @@ class Client():
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
             + urllib.quote(remote_path)
-        res = requests.get(
+        res = self.__session.get(
                 url,
-                auth = self.__auth,
                 stream = True
                 )
         if res.status_code == 200:
@@ -375,9 +377,8 @@ class Client():
         path = self.__normalize_path(path)
         post_data = {'shareType': 3, 'path': path}
 
-        res = requests.post(
+        res = self.__session.post(
                 self.__ocs_share_url + 'shares',
-                auth = self.__auth,
                 data = post_data
                 )
         if res.status_code == 200:
@@ -405,7 +406,7 @@ class Client():
             url += '/' + urllib.quote(app)
             if key != None:
                 url += '/' + urllib.quote(key)
-        res = requests.get(url, auth = self.__auth)
+        res = self.__session.get(url)
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             values = []
@@ -435,7 +436,7 @@ class Client():
         url = self.url + 'ocs/v1.php/privatedata/setattribute/'
         url += urllib.quote(app) + '/' + urllib.quote(key)
         print url
-        res = requests.post(url, auth = self.__auth, data = {'value': value})
+        res = self.__session.post(url, data = {'value': value})
         if res.status_code == 200:
             return True
         return False
@@ -450,7 +451,7 @@ class Client():
         url = self.url + 'ocs/v1.php/privatedata/deleteattribute/'
         url += urllib.quote(app) + '/' + urllib.quote(key)
         print url
-        res = requests.post(url, auth = self.__auth)
+        res = self.__session.post(url)
         if res.status_code == 200:
             return True
         return False
@@ -485,8 +486,7 @@ class Client():
             attributes = attributes.copy()
         else:
             attributes = {}
-        attributes['auth'] = self.__auth
-        res = requests.request(method, self.__webdav_url + path, **attributes)
+        res = self.__session.request(method, self.__webdav_url + path, **attributes)
         if self.__DEBUG:
             print 'DAV status: %i' % res.status_code
         if res.status_code == 200 or res.status_code == 207:
