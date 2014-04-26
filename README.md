@@ -54,3 +54,13 @@ Example for uploading a file then sharing with link:
 
 To run the unit tests, simply run the script `runtests.py`
 
+## Building the documentation
+
+To build the documentation, you will need to install Sphinx and docutil.
+Then run the following commands:
+```bash
+    cd doc
+    make html
+```
+You can then find the documentation inside of "doc/build/html".
+
