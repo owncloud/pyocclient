@@ -115,7 +115,9 @@ class Client():
         res = self.__session.get(self.url)
         if res.status_code == 200:
             # Remove auth, no need to re-auth every call
-            self.__session.auth = None
+            # FIXME: OCS API doesn't seem to recognize the session cookie,
+            # so sending the auth every time for now
+            # self.__session.auth = None
             return True
         self.__session.close()
         self.__session = None
