@@ -4,6 +4,7 @@
 #
 import os
 import owncloudclient
+import time
 
 # Change this to your ownCloud's URL
 owncloud_url = 'http://localhost/owncloud'
@@ -11,10 +12,11 @@ owncloud_url = 'http://localhost/owncloud'
 owncloud_login = 'root'
 # ownCloud password
 owncloud_password = 'admin'
+test_id = int(time.time())
 # remote root path to use for this demo
-test_root = 'pyoctestroot'
+test_root = 'pyoctestroot%s' % test_id
 # app name to use when testing privatedata API
-app_name = 'pyocclient_demo'
+app_name = 'pyocclient_demo%s' % test_id
 
 def create_file(target_file, size):
     file_handle = open(target_file, 'w')
@@ -89,7 +91,10 @@ def run_demo():
     # Share test file with link
     print "Share test file with link: ",
     share_info = oc.share_file_with_link(test_root + 'test.txt')
-    print share_info.link
+    if share_info:
+        print share_info.link
+    else:
+        print False
     print
 
     # Download directory as zip
