@@ -35,15 +35,23 @@ class FileInfo():
 
     def __init__(self, path, file_type = 'file', attributes = None):
         self.path = path
+        if path[-1] == '/':
+            path = path[0:-1]
+        self.name = os.path.basename(path)
         self.file_type = file_type
         self.attributes = attributes or {}
+
+    def get_name(self):
+        return self.name
 
     def get_size(self):
         """Returns the size of the file
         
         :returns: size of the file
         """
-        return int(self.attributes['{DAV:}getcontentlength'])
+        if (self.attributes.has_key('{DAV:}getcontentlength')):
+            return int(self.attributes['{DAV:}getcontentlength'])
+        return None
 
     def get_etag(self):
         """Returns the file etag
@@ -57,7 +65,13 @@ class FileInfo():
         
         :returns: file content type
         """
-        return self.attributes['{DAV:}getcontenttype']
+        if self.attributes.has_key('{DAV:}getcontenttype'):
+            return self.attributes['{DAV:}getcontenttype']
+
+        if self.is_dir():
+            return 'httpd/unix-directory'
+
+        return None
 
     def get_last_modified(self):
         """Returns the last modified time
@@ -137,13 +151,16 @@ class Client():
         
         :param path: path to the remote file 
         :returns: file info
-        :rtype: :class:`FileInfo` object
+        :rtype: :class:`FileInfo` object or `None` if file
+        was not found
         """
         res = self.__make_dav_request('PROPFIND', path)
-        return res[0]
+        if res:
+            return res[0]
+        return None
 
     def list(self, path):
-        """Returns the listing for the given remote directory
+        """Returns the listing/contents of the given remote directory
         
         :param path: path to the remote directory 
         :returns: directory listing
@@ -152,7 +169,10 @@ class Client():
         if not path[-1] == '/':
             path += '/'
         res = self.__make_dav_request('PROPFIND', path)
-        return res
+        # first one is always the root, remove it from listing
+        if res:
+            return res[1:]
+        return None
 
     def get_file_contents(self, path):
         """Returns the contents of a remote file
@@ -278,18 +298,25 @@ class Client():
         if not target_path[-1] == '/':
             target_path += '/'
         gathered_files = []
+
+        if not local_directory[-1] == '/':
+            local_directory += '/'
+
+        basedir = os.path.basename(local_directory[0: -1]) + '/'
         # gather files to upload
         for path, _, files in os.walk(local_directory):
-            gathered_files.append((path, files))
+            gathered_files.append((path, basedir + path[len(local_directory):], files))
 
-        for path, files in gathered_files:
-            self.mkdir(target_path + path + '/')
+        for path, remote_path, files in gathered_files:
+            self.mkdir(target_path + remote_path + '/')
             for name in files:
-                self.put_file(
-                        target_path + path + '/',
+                if not self.put_file(
+                        target_path + remote_path + '/',
                         path + '/' + name,
                         **kwargs
-                        )
+                        ):
+                    return False
+        return True
 
     def __put_file_chunked(self, remote_path, local_source_file, **kwargs):
         """Uploads a file using chunks. If the file is smaller than
@@ -427,7 +454,7 @@ class Client():
             for element in tree.find('data').iter('element'):
                 app_text = element.find('app').text
                 key_text = element.find('key').text
-                value_text = element.find('value').text
+                value_text = element.find('value').text or ''
                 if key == None:
                     if app == None:
                         values.append((app_text, key_text, value_text))
@@ -436,6 +463,8 @@ class Client():
                 else:
                     return value_text
 
+            if len(values) == 0 and key != None:
+                return None
             return values
         return False
 
@@ -550,11 +579,9 @@ class Client():
         href = urllib.unquote(
                 self.__strip_dav_path(dav_response.find('{DAV:}href').text)
                 )
-        is_collection = dav_response.find('{DAV:}collection')
-        if is_collection:
+        file_type = 'file'
+        if href[-1] == '/':
             file_type = 'dir'
-        else:
-            file_type = 'file'
 
         file_attrs = {}
         attrs = dav_response.find('{DAV:}propstat')
