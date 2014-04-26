@@ -50,6 +50,7 @@ Example for uploading a file then sharing with link:
 	print "Here is your link: http://domain.tld/owncloud/" + link_info.link
 ```
 
-More examples can be found in the file "example.py" that actually runs a few tests
-with most supported operations.
+## Running the unit tests
+
+To run the unit tests, simply run the script `runtests.py`
 
