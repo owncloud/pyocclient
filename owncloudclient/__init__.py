@@ -2,7 +2,7 @@
 #
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
-"""ownCloud client package
+"""ownCloud client module
 
 Makes it possible to access files on a remote ownCloud instance,
 share them or access application attributes.
@@ -42,6 +42,10 @@ class FileInfo():
         self.attributes = attributes or {}
 
     def get_name(self):
+        """Returns the base name of the file (without path)
+        
+        :returns: name of the file
+        """
         return self.name
 
     def get_size(self):
@@ -92,7 +96,8 @@ class FileInfo():
         return self.file_type != 'file'
 
     def __str__(self):
-        return 'File(path=%s,file_type=%s,attributes=%s)' % (self.path, self.file_type, self.attributes)
+        return 'File(path=%s,file_type=%s,attributes=%s)' % \
+            (self.path, self.file_type, self.attributes)
 
     def __repr__(self):
         return self.__str__()
@@ -312,7 +317,9 @@ class Client():
         basedir = os.path.basename(local_directory[0: -1]) + '/'
         # gather files to upload
         for path, _, files in os.walk(local_directory):
-            gathered_files.append((path, basedir + path[len(local_directory):], files))
+            gathered_files.append(
+                    (path, basedir + path[len(local_directory):], files)
+                    )
 
         for path, remote_path, files in gathered_files:
             self.mkdir(target_path + remote_path + '/')
