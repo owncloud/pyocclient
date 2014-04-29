@@ -141,9 +141,8 @@ class Client():
         res = self.__session.get(self.url)
         if res.status_code == 200:
             # Remove auth, no need to re-auth every call
-            # FIXME: OCS API doesn't seem to recognize the session cookie,
             # so sending the auth every time for now
-            # self.__session.auth = None
+            self.__session.auth = None
             return True
         self.__session.close()
         self.__session = None
@@ -543,7 +542,14 @@ class Client():
         if self.__debug:
             print 'OCS request: %s %s' % (method, self.url + path)
 
-        res = self.__session.request(method, self.url + path, **kwargs)
+        attributes = kwargs.copy()
+
+        if not attributes.has_key('headers'):
+            attributes['headers'] = {}
+
+        attributes['headers']['OCS-APIREQUEST'] = 'true'
+
+        res = self.__session.request(method, self.url + path, **attributes)
         return res
 
     def __make_dav_request(self, method, path, **kwargs):
