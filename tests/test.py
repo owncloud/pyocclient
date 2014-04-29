@@ -9,6 +9,7 @@ import owncloudclient
 import datetime
 import time
 import tempfile
+import requests
 
 from config import Config
 
@@ -256,6 +257,26 @@ class TestPrivateDataAccess(unittest.TestCase):
         self.assertIsNone(self.client.get_attribute(self.app_name, 'attr1'))
         self.assertEquals(self.client.get_attribute(self.app_name), [])
 
+class TestSession(unittest.TestCase):
+    def setUp(self):
+        self.client = owncloudclient.Client(Config['owncloud_url'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+        self.app_name = Config['app_name']
+
+    def tearDown(self):
+        self.client.logout()
+
+    def test_reuse_session(self):
+        print requests.utils.dict_from_cookiejar(self.client.session().cookies)
+        self.client.set_attribute(self.app_name, 'attr1', 'value1')
+        print requests.utils.dict_from_cookiejar(self.client.session().cookies)
+        self.client.set_attribute(self.app_name, 'attr1', 'value2')
+        print requests.utils.dict_from_cookiejar(self.client.session().cookies)
+        self.client.set_attribute(self.app_name, 'attr1', 'value3')
+        print requests.utils.dict_from_cookiejar(self.client.session().cookies)
+
 if __name__ == '__main__':
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestSession)
+    unittest.TextTestRunner(verbosity=2).run(suite)
+#    unittest.main()
 

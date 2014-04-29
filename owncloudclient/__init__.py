@@ -127,6 +127,15 @@ class Client():
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
 
+    def session(self):
+        """Returns the current session object, can be useful to make
+        arbitrary authenticated requests
+
+        :returns: `requests.Session`
+        """
+        return self.__session
+
+
     def login(self, user_id, password):
         """Authenticate to ownCloud.
         This will create a session on the server.
