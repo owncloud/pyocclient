@@ -43,7 +43,9 @@ Installation
 
 To install pyocclient, simply:
 
-$ pip install pyocclient
+.. code-block:: bash
+
+    $ pip install pyocclient
 
 Usage
 =====
