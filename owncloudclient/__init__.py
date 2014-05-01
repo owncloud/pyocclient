@@ -163,7 +163,7 @@ class Client():
         :param path: path to the remote file 
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
-        was not found
+            was not found
         """
         res = self.__make_dav_request('PROPFIND', path)
         if res:
@@ -203,7 +203,7 @@ class Client():
 
         :param remote_path: path to the remote file
         :param local_file: optional path to the local file. If none specified,
-        the file will be downloaded into the current directory
+            the file will be downloaded into the current directory
         :returns: True if the operation succeeded, False otherwise
         """
         remote_path = self.__normalize_path(remote_path)
@@ -264,12 +264,12 @@ class Client():
         """Upload a file
 
         :param remote_path: path to the target file. A target directory can
-        also be specified instead by appending a "/"
+            also be specified instead by appending a "/"
         :param local_source_file: path to the local file to upload
         :param chunked: (optional) use file chunking (defaults to True)
         :param chunk_size: (optional) chunk size in bytes, defaults to 10 MB
         :param keep_mtime: (optional) also update the remote file to the same
-        mtime as the local one, defaults to True
+            mtime as the local one, defaults to True
         :returns: True if the operation succeeded, False otherwise
         """
         if kwargs.get('chunked', True):
@@ -419,7 +419,7 @@ class Client():
 
         :param path: path to the remote file to share
         :returns: instance of :class:`PublicShare` with the share info
-        or False if the operation failed
+            or False if the operation failed
         """
         path = self.__normalize_path(path)
         post_data = {'shareType': 3, 'path': path}
@@ -447,9 +447,9 @@ class Client():
 
         :param app: application id
         :param key: attribute key or None to retrieve all values for the
-        given application
+            given application
         :returns: attribute value if key was specified, or an array of tuples
-        (key, value) for each attribute
+            (key, value) for each attribute
         """
         path = 'getattribute'
         if app != None:
