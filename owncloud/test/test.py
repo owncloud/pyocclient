@@ -5,7 +5,7 @@
 import unittest
 import os
 import shutil
-import owncloudclient
+import owncloud
 import datetime
 import time
 import tempfile
@@ -16,7 +16,7 @@ class TestFileAccess(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
         os.mkdir(self.temp_dir)
-        self.client = owncloudclient.Client(Config['owncloud_url'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.test_root = Config['test_root']
         if not self.test_root[-1] == '/':
@@ -63,8 +63,8 @@ class TestFileAccess(unittest.TestCase):
         file_info = self.client.file_info(self.test_root + 'test.txt')
         dir_info = self.client.file_info(self.test_root + 'subdir')
 
-        self.assertTrue(isinstance(file_info, owncloudclient.FileInfo))
-        self.assertTrue(isinstance(dir_info, owncloudclient.FileInfo))
+        self.assertTrue(isinstance(file_info, owncloud.FileInfo))
+        self.assertTrue(isinstance(dir_info, owncloud.FileInfo))
 
         self.assertEquals(file_info.get_name(), 'test.txt')
         self.assertEquals(file_info.get_size(), 12)
@@ -208,7 +208,7 @@ class TestFileAccess(unittest.TestCase):
 
         share_info = self.client.share_file_with_link(self.test_root + 'test.txt')
 
-        self.assertTrue(isinstance(share_info, owncloudclient.PublicShare))
+        self.assertTrue(isinstance(share_info, owncloud.PublicShare))
         self.assertTrue(type(share_info.share_id) is int)
         self.assertEquals(share_info.target_file, self.test_root + 'test.txt')
         self.assertTrue(type(share_info.link) is str)
@@ -216,7 +216,7 @@ class TestFileAccess(unittest.TestCase):
 
 class TestPrivateDataAccess(unittest.TestCase):
     def setUp(self):
-        self.client = owncloudclient.Client(Config['owncloud_url'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.app_name = Config['app_name']
 

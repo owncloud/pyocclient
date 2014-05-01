@@ -54,9 +54,9 @@ Example for uploading a file then sharing with link:
 
 .. code-block:: python
 
-    import owncloudclient
+    import owncloud
 
-    oc = owncloudclient.Client('http://domain.tld/owncloud')
+    oc = owncloud.Client('http://domain.tld/owncloud')
 
     oc.login('user', 'password')
 
@@ -71,13 +71,13 @@ Example for uploading a file then sharing with link:
 Running the unit tests
 ======================
 
-To run the unit tests, edit the config file in owncloudclient/test/config.py to
+To run the unit tests, edit the config file in "owncloud/test/config.py" to
 point to a running ownCloud instance to test against.
 Then run the script "runtests.py":
 
 .. code-block:: bash
 
-    ./runtests.py
+    $ ./runtests.py
 
 Building the documentation
 ==========================
@@ -87,8 +87,8 @@ Then run the following commands:
 
 .. code-block:: bash
 
-    cd doc
-    make html
+    $ cd doc
+    $ make html
 
 You can then find the documentation inside of "doc/build/html".
 

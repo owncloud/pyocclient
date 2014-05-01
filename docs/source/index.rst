@@ -11,7 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   owncloudclient
+   owncloud
 
 Indices and tables
 ==================

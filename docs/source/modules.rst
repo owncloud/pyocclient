@@ -1,7 +1,7 @@
-owncloudclient
-==============
+owncloud
+========
 
 .. toctree::
    :maxdepth: 4
 
-   owncloudclient
+   owncloud

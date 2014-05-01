@@ -1,10 +1,10 @@
-owncloudclient package
-======================
+owncloud package
+================
 
 Module contents
 ---------------
 
-.. automodule:: owncloudclient
+.. automodule:: owncloud
     :members:
     :undoc-members:
     :show-inheritance:

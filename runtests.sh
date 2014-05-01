@@ -1,3 +1,3 @@
 #!/bin/bash
 
-PYTHONPATH=. python owncloudclient/test/test.py
+PYTHONPATH=. python owncloud/test/test.py
