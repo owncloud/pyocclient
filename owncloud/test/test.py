@@ -9,6 +9,7 @@ import owncloud
 import datetime
 import time
 import tempfile
+import requests
 
 from config import Config
 
@@ -82,7 +83,9 @@ class TestFileAccess(unittest.TestCase):
 
     def test_get_file_info_non_existing(self):
         """Test getting file info for non existing file"""
-        self.assertIsNone(self.client.file_info(self.test_root + 'unexist'))
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.file_info(self.test_root + 'unexist')
+        self.assertEquals(e.exception.status_code, 404)
 
     def test_get_file_listing(self):
         """Test getting file listing"""
@@ -106,7 +109,9 @@ class TestFileAccess(unittest.TestCase):
 
     def test_get_file_listing_non_existing(self):
         """Test getting file listing for non existing directory"""
-        self.assertIsNone(self.client.list(self.test_root + 'unexist'))
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.list(self.test_root + 'unexist')
+        self.assertEquals(e.exception.status_code, 404)
 
     def test_upload_small_file(self):
         """Test simple upload"""
@@ -192,15 +197,21 @@ class TestFileAccess(unittest.TestCase):
         """Test file deletion"""
         self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
         self.assertTrue(self.client.delete(self.test_root + 'test.txt'))
-        self.assertIsNone(self.client.file_info(self.test_root + 'test.txt'))
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.file_info(self.test_root + 'test.txt')
+        self.assertEquals(e.exception.status_code, 404)
 
     def test_delete_dir(self):
         """Test directory deletion"""
         self.assertTrue(self.client.mkdir(self.test_root + 'subdir'))
         self.assertTrue(self.client.put_file_contents(self.test_root + 'subdir/test.txt', 'hello world!'))
         self.assertTrue(self.client.delete(self.test_root + 'subdir'))
-        self.assertIsNone(self.client.file_info(self.test_root + 'subdir/test.txt'))
-        self.assertIsNone(self.client.file_info(self.test_root + 'subdir'))
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.file_info(self.test_root + 'subdir/test.txt')
+        self.assertEquals(e.exception.status_code, 404)
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.file_info(self.test_root + 'subdir')
+        self.assertEquals(e.exception.status_code, 404)
 
     def test_share_with_link(self):
         """Test sharing a file with link"""
@@ -213,6 +224,12 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.target_file, self.test_root + 'test.txt')
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
+
+    def test_share_with_link_non_existing_file(self):
+        """Test sharing a file with link"""
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.share_file_with_link(self.test_root + 'unexist.txt')
+        self.assertEquals(e.exception.status_code, 404)
 
 class TestPrivateDataAccess(unittest.TestCase):
     def setUp(self):

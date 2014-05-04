@@ -16,6 +16,12 @@ import requests
 import xml.etree.ElementTree as ET
 import os
 
+class ResponseError(Exception):
+    def __init__(self, res):
+        # TODO: how to retrieve the error message ?
+        Exception.__init__(self, "HTTP error: %i" % res.status_code)
+        self.status_code = res.status_code
+
 class PublicShare():
     """Public share information"""
     def __init__(self, share_id, target_file, link, token):
@@ -138,15 +144,16 @@ class Client():
         self.__session = requests.session()
         self.__session.verify = self.__verify_certs
         self.__session.auth = (user_id, password)
+        # TODO: use another path to prevent that the server renders the file list page
         res = self.__session.get(self.url)
         if res.status_code == 200:
             # Remove auth, no need to re-auth every call
             # so sending the auth every time for now
             self.__session.auth = None
-            return True
+            return
         self.__session.close()
         self.__session = None
-        return False
+        raise ResponseError(res)
 
     def logout(self):
         """Log out the authenticated user and close the session.
@@ -440,7 +447,7 @@ class Client():
                 data_el.find('url').text,
                 data_el.find('token').text
             )
-        return False
+        raise ResponseError(res)
 
     def get_attribute(self, app = None, key = None):
         """Returns an application attribute
@@ -479,7 +486,7 @@ class Client():
             if len(values) == 0 and key != None:
                 return None
             return values
-        return False
+        raise ResponseError(res)
 
     def set_attribute(self, app, key, value):
         """Sets an application attribute
@@ -498,7 +505,7 @@ class Client():
                 )
         if res.status_code == 200:
             return True
-        return False
+        raise ResponseError(res)
 
     def delete_attribute(self, app, key):
         """Deletes an application attribute
@@ -515,7 +522,7 @@ class Client():
                 )
         if res.status_code == 200:
             return True
-        return False
+        raise ResponseError(res)
 
     @staticmethod
     def __normalize_path(path):
@@ -573,7 +580,7 @@ class Client():
             return self.__parse_dav_response(res)
         if res.status_code == 204 or res.status_code == 201:
             return True
-        return False
+        raise ResponseError(res)
 
     def __parse_dav_response(self, res):
         """Parses the DAV responses from a multi-status response
