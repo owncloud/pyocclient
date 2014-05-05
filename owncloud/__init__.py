@@ -19,8 +19,12 @@ import os
 class ResponseError(Exception):
     def __init__(self, res):
         # TODO: how to retrieve the error message ?
-        Exception.__init__(self, "HTTP error: %i" % res.status_code)
-        self.status_code = res.status_code
+        if type(res) is int:
+            code = res
+        else:
+            code = res.status_code
+        Exception.__init__(self, "HTTP error: %i" % code)
+        self.status_code = code
 
 class PublicShare():
     """Public share information"""
@@ -139,6 +143,7 @@ class Client():
 
         :param user_id: user id
         :param password: password
+        :raises: ResponseError in case an HTTP error status was returned
         """
 
         self.__session = requests.session()
@@ -159,6 +164,7 @@ class Client():
         """Log out the authenticated user and close the session.
 
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         # TODO actual logout ?
         self.__session.close()
@@ -171,6 +177,7 @@ class Client():
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
+        :raises: ResponseError in case an HTTP error status was returned
         """
         res = self.__make_dav_request('PROPFIND', path)
         if res:
@@ -183,6 +190,7 @@ class Client():
         :param path: path to the remote directory 
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
+        :raises: ResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path += '/'
@@ -198,6 +206,7 @@ class Client():
         :param path: path to the remote file
         :returns: file contents
         :rtype: binary data
+        :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
         res = self.__session.get(self.__webdav_url + path)
@@ -212,6 +221,7 @@ class Client():
         :param local_file: optional path to the local file. If none specified,
             the file will be downloaded into the current directory
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
         res = self.__session.get(
@@ -237,6 +247,7 @@ class Client():
         :param remote_path: path to the remote directory to download
         :param local_file: path and name of the target local file
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
@@ -264,6 +275,7 @@ class Client():
         :param remote_path: path of the remote file
         :param data: data to write into the remote file
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         return self.__make_dav_request('PUT', remote_path, data = data)
 
@@ -278,6 +290,7 @@ class Client():
         :param keep_mtime: (optional) also update the remote file to the same
             mtime as the local one, defaults to True
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         if kwargs.get('chunked', True):
             return self.__put_file_chunked(
@@ -311,6 +324,7 @@ class Client():
         :param local_directory: path to the local directory to upload
         :param \*\*kwargs: optional arguments that ``put_file`` accepts
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         target_path = self.__normalize_path(target_path)
         if not target_path[-1] == '/':
@@ -347,6 +361,7 @@ class Client():
         :param local_source_file: path to the local file to upload
         :param \*\*kwargs: optional arguments that ``put_file`` accepts
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         chunk_size = kwargs.get('chunk_size', 10 * 1024 * 1024)
         result = True
@@ -408,6 +423,7 @@ class Client():
 
         :param path: path to the remote directory to create
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path = path + '/'
@@ -418,6 +434,7 @@ class Client():
 
         :param path: path to the file or directory to delete
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         return self.__make_dav_request('DELETE', path)
 
@@ -427,6 +444,7 @@ class Client():
         :param path: path to the remote file to share
         :returns: instance of :class:`PublicShare` with the share info
             or False if the operation failed
+        :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
         post_data = {'shareType': 3, 'path': path}
@@ -437,9 +455,9 @@ class Client():
                 'shares',
                 data = post_data
                 )
-
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return PublicShare(
                 int(data_el.find('id').text),
@@ -457,6 +475,7 @@ class Client():
             given application
         :returns: attribute value if key was specified, or an array of tuples
             (key, value) for each attribute
+        :raises: ResponseError in case an HTTP error status was returned
         """
         path = 'getattribute'
         if app != None:
@@ -470,6 +489,7 @@ class Client():
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
             values = []
             for element in tree.find('data').iter('element'):
                 app_text = element.find('app').text
@@ -495,6 +515,7 @@ class Client():
         :param key: key of the attribute to set
         :param value: value to set
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         path = 'setattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
         res = self.__make_ocs_request(
@@ -504,6 +525,8 @@ class Client():
                 data = {'value': value}
                 )
         if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
             return True
         raise ResponseError(res)
 
@@ -513,6 +536,7 @@ class Client():
         :param app: application id
         :param key: key of the attribute to delete
         :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
         """
         path = 'deleteattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
         res = self.__make_ocs_request(
@@ -521,6 +545,8 @@ class Client():
                 path
                 )
         if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
             return True
         raise ResponseError(res)
 
@@ -535,6 +561,17 @@ class Client():
         if path[0] != '/':
             path = '/' + path
         return path
+
+    @staticmethod
+    def __check_ocs_status(tree):
+        """Checks the status code of an OCS request
+
+        :param tree: response parsed with elementtree
+        :raises: ResponseError if the status is not 200
+        """
+        code_el = tree.find('meta/statuscode')
+        if code_el is not None and code_el.text != '100':
+            raise ResponseError(int(code_el.text))
 
     def __make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
