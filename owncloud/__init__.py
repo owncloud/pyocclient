@@ -610,7 +610,9 @@ class Client():
         :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
         :returns :class:`requests.Response` instance
         """
-        path = 'ocs/v1.php/' + service + '/' + action
+        slash = ''
+        if service: slash = '/'
+        path = 'ocs/v1.php/' + service + slash + action
         if self.__debug:
             print 'OCS request: %s %s' % (method, self.url + path)
 
