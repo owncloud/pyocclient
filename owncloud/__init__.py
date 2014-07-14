@@ -467,6 +467,34 @@ class Client():
             )
         raise ResponseError(res)
 
+    def get_config(self):
+        """Returns ownCloud config information as JSON
+        :returns: JSON object with config information
+            e.g. {'website': 'ownCloud', 'ssl': 'false', 'host': 'cloud.example.com', 'version': '1.7', 'contact': ''}
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+	path = 'config'
+	res = self.__make_ocs_request(
+		'GET',
+		'',
+		path
+		)
+	if res.status_code == 200:
+	    tree = ET.fromstring(res.text)
+	    self.__check_ocs_status(tree)
+	    values = []
+
+	    element = tree.find('data')
+	    if element != None:
+		keys = [ 'version', 'website', 'host', 'contact', 'ssl' ]
+		for key in keys:
+		    text = element.find(key).text or ''
+		    values.append(text)
+		return dict(zip(keys, values))
+	    else:
+		return None
+	raise ResponseError(res)
+
     def get_attribute(self, app = None, key = None):
         """Returns an application attribute
 
