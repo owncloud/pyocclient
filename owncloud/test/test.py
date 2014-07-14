@@ -273,6 +273,18 @@ class TestPrivateDataAccess(unittest.TestCase):
         self.assertIsNone(self.client.get_attribute(self.app_name, 'attr1'))
         self.assertEquals(self.client.get_attribute(self.app_name), [])
 
+class TestGetConfig(unittest.TestCase):
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+
+    def test_get_config(self):
+        """Test get_config() function"""
+        self.assertIsNotNone(self.client.get_config())
+
+    def tearDown(self):
+        self.client.logout()
+
 if __name__ == '__main__':
     unittest.main()
 
