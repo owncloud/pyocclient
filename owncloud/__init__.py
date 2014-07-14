@@ -468,6 +468,11 @@ class Client():
         raise ResponseError(res)
 
     def get_config(self):
+        """Returns ownCloud config information as JSON
+        :returns: JSON object with config information
+            e.g. {'website': 'ownCloud', 'ssl': 'false', 'host': 'cloud.example.com', 'version': '1.7', 'contact': ''}
+        :raises: ResponseError in case an HTTP error status was returned
+        """
 	path = 'config'
 	res = self.__make_ocs_request(
 		'GET',
