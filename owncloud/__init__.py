@@ -468,9 +468,9 @@ class Client():
         raise ResponseError(res)
 
     def get_config(self):
-        """Returns ownCloud config information as JSON
-        :returns: JSON object with config information
-            e.g. {'website': 'ownCloud', 'ssl': 'false', 'host': 'cloud.example.com', 'version': '1.7', 'contact': ''}
+        """Returns ownCloud config information
+        :returns: array of tuples (key, value) for each information
+            e.g. [('version', '1.7'), ('website', 'ownCloud'), ('host', 'cloud.example.com'), ('contact', ''), ('ssl', 'false')]
         :raises: ResponseError in case an HTTP error status was returned
         """
 	path = 'config'
@@ -490,7 +490,7 @@ class Client():
 		for key in keys:
 		    text = element.find(key).text or ''
 		    values.append(text)
-		return dict(zip(keys, values))
+		return zip(keys, values)
 	    else:
 		return None
 	raise ResponseError(res)
