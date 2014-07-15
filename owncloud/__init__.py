@@ -118,6 +118,18 @@ class Client():
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
 
+    # constants from lib/public/constants.php
+    OCS_PERMISSION_READ = 1
+    OCS_PERMISSION_UPDATE = 2
+    OCS_PERMISSION_CREATE = 4
+    OCS_PERMISSION_DELETE = 8
+    OCS_PERMISSION_SHARE = 16
+    OCS_PERMISSION_ALL = 31
+    # constants from lib/public/share.php
+    OCS_SHARE_TYPE_USER = 0
+    OCS_SHARE_TYPE_GROUP = 1
+    OCS_SHARE_TYPE_LINK = 3
+
     def __init__(self, url, **kwargs):
         """Instantiates a client
 
