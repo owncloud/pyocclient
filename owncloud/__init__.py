@@ -123,6 +123,8 @@ class Client():
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
+        :param single_session: True to use a single session for every call
+            (default, recommended), False to reauthenticate every call (use with ownCloud 5)
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
         if not url[-1] == '/':
@@ -132,6 +134,7 @@ class Client():
         self.__session = None
         self.__debug = kwargs.get('debug', False)
         self.__verify_certs = kwargs.get('verify_certs', True)
+        self.__single_session = kwargs.get('single_session', True);
 
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
@@ -152,9 +155,9 @@ class Client():
         # TODO: use another path to prevent that the server renders the file list page
         res = self.__session.get(self.url)
         if res.status_code == 200:
-            # Remove auth, no need to re-auth every call
-            # so sending the auth every time for now
-            self.__session.auth = None
+            if self.__single_session:
+                # Keep the same session, no need to re-auth every call
+                self.__session.auth = None
             return
         self.__session.close()
         self.__session = None
