@@ -118,6 +118,18 @@ class Client():
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
 
+    # constants from lib/public/constants.php
+    OCS_PERMISSION_READ = 1
+    OCS_PERMISSION_UPDATE = 2
+    OCS_PERMISSION_CREATE = 4
+    OCS_PERMISSION_DELETE = 8
+    OCS_PERMISSION_SHARE = 16
+    OCS_PERMISSION_ALL = 31
+    # constants from lib/public/share.php
+    OCS_SHARE_TYPE_USER = 0
+    OCS_SHARE_TYPE_GROUP = 1
+    OCS_SHARE_TYPE_LINK = 3
+
     def __init__(self, url, **kwargs):
         """Instantiates a client
 
@@ -470,6 +482,34 @@ class Client():
             )
         raise ResponseError(res)
 
+    def get_config(self):
+        """Returns ownCloud config information
+        :returns: array of tuples (key, value) for each information
+            e.g. [('version', '1.7'), ('website', 'ownCloud'), ('host', 'cloud.example.com'), ('contact', ''), ('ssl', 'false')]
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+	path = 'config'
+	res = self.__make_ocs_request(
+		'GET',
+		'',
+		path
+		)
+	if res.status_code == 200:
+	    tree = ET.fromstring(res.text)
+	    self.__check_ocs_status(tree)
+	    values = []
+
+	    element = tree.find('data')
+	    if element != None:
+		keys = [ 'version', 'website', 'host', 'contact', 'ssl' ]
+		for key in keys:
+		    text = element.find(key).text or ''
+		    values.append(text)
+		return zip(keys, values)
+	    else:
+		return None
+	raise ResponseError(res)
+
     def get_attribute(self, app = None, key = None):
         """Returns an application attribute
 
@@ -585,7 +625,9 @@ class Client():
         :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
         :returns :class:`requests.Response` instance
         """
-        path = 'ocs/v1.php/' + service + '/' + action
+        slash = ''
+        if service: slash = '/'
+        path = 'ocs/v1.php/' + service + slash + action
         if self.__debug:
             print 'OCS request: %s %s' % (method, self.url + path)
 
