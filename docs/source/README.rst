@@ -37,6 +37,15 @@ App data
 
 - store app data as key/values using the privatedata OCS API
 
+ExtendedAPI
+-----------
+
+There is a ExtendedAPI app avaiable which adds more API calls. It needs to be installed within the ownCloud Server:
+
+.. code-block::
+
+    $ git clone https://github.com/Gomez/extendedapi
+
 Requirements
 ============
 
