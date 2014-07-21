@@ -97,3 +97,9 @@ Then run the following commands:
 
 You can then find the documentation inside of "doc/build/html".
 
+Authors
+=======
+
+- Vincent Petry (@pvince81)
+- Steffen Lindner (@gomezr)
+- Soal (@soalhn)
