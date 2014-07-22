@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
@@ -9,11 +8,11 @@ test_id = int(time.time())
 
 Config = {
     # Change this to your ownCloud's URL
-    'owncloud_url': 'http://localhost/owncloud',
+    'owncloud_url': 'https://cloud.portknox.net',
     # ownCloud login
-    'owncloud_login': 'root',
+    'owncloud_login': 'gomez',
     # ownCloud password
-    'owncloud_password': 'admin',
+    'owncloud_password': '1Schibardo9@',
     # remote root path to use for testing 
     'test_root': 'pyoctestroot%s' % test_id,
     # app name to use when testing privatedata API
