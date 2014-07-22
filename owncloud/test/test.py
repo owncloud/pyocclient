@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
@@ -9,7 +8,6 @@ import owncloud
 import datetime
 import time
 import tempfile
-import requests
 
 from config import Config
 
