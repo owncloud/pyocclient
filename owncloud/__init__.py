@@ -487,22 +487,20 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        data = {'path': path}
 
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_SHARE,
-                'shares',
-                data = data
+                'shares?path=' + path,
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             code_el = tree.find('meta/statuscode')
             if code_el is not None:
-                 if code_el.text == '404':
-                     return False
-                 elif code_el.text == '100':
-                     return True
+                if code_el.text == '404':
+                    return False
+                elif code_el.text == '100':
+                    return True
             raise ResponseError(res)
         raise ResponseError(res)
 
