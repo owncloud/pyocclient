@@ -8,11 +8,11 @@ test_id = int(time.time())
 
 Config = {
     # Change this to your ownCloud's URL
-    'owncloud_url': 'https://cloud.portknox.net',
+    'owncloud_url': 'http://localhost/owncloud',
     # ownCloud login
-    'owncloud_login': 'gomez',
+    'owncloud_login': 'root',
     # ownCloud password
-    'owncloud_password': '1Schibardo9@',
+    'owncloud_password': 'admin',
     # remote root path to use for testing 
     'test_root': 'pyoctestroot%s' % test_id,
     # app name to use when testing privatedata API
