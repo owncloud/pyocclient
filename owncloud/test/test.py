@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
@@ -9,7 +8,6 @@ import owncloud
 import datetime
 import time
 import tempfile
-import requests
 
 from config import Config
 
@@ -17,7 +15,8 @@ class TestFileAccess(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
         os.mkdir(self.temp_dir)
-        self.client = owncloud.Client(Config['owncloud_url'])
+
+        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.test_root = Config['test_root']
         if not self.test_root[-1] == '/':
@@ -233,7 +232,7 @@ class TestFileAccess(unittest.TestCase):
 
 class TestPrivateDataAccess(unittest.TestCase):
     def setUp(self):
-        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.app_name = Config['app_name']
 

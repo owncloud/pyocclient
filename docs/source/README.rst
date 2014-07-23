@@ -13,6 +13,11 @@ See the `ownCloud homepage <http://owncloud.org>`_ for more information about ow
 Features
 ========
 
+Supports connecting to ownCloud 5, 6 and 7.
+
+Please note that ownCloud 5 will require setting the "single_session"
+constructor option to False for some API calls.
+
 Accessing files
 ---------------
 
@@ -92,3 +97,9 @@ Then run the following commands:
 
 You can then find the documentation inside of "doc/build/html".
 
+Authors
+=======
+
+- Vincent Petry (@pvince81)
+- Steffen Lindner (@gomezr)
+- Soal (@soalhn)
