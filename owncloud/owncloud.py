@@ -482,6 +482,31 @@ class Client():
             )
         raise ResponseError(res)
 
+    def is_shared(self, path):
+        """Checks whether a path is already shared
+
+        :param path: path to the share to be checked
+        :returns: True if the path is already shared, else False
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        path = self.__normalize_path(path)
+
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                'shares?path=' + path,
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            code_el = tree.find('meta/statuscode')
+            if code_el is not None:
+                if code_el.text == '404':
+                    return False
+                elif code_el.text == '100':
+                    return True
+            raise ResponseError(res)
+        raise ResponseError(res)
+
     def get_config(self):
         """Returns ownCloud config information
         :returns: array of tuples (key, value) for each information
