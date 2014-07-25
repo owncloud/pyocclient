@@ -489,23 +489,57 @@ class Client():
         :returns: True if the path is already shared, else False
         :raises: ResponseError in case an HTTP error status was returned
         """
-        path = self.__normalize_path(path)
-        path = urllib.urlencode({'path': path})
+        result = self.get_shares(path)
+        if result:
+            return (len(result) > 0)
+        return False
+        raise ResponseError(res)
+
+    def get_shares(self, path='', **kwargs):
+        """Returns array of shares
+
+        :param path: path to the share to be checked
+        :param reshares: (optional, boolean) returns not only the shares from
+            the current user but all shares from the given file (default: False)
+        :param subfiles: (optional, boolean) returns all shares within
+            a folder, given that path defines a folder (default: False)
+        :returns: array of shares or empty array if the operation failed
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if not (isinstance(path, basestring)):
+            return None
+
+        data = 'shares'
+        if (path != ''):
+            path = self.__normalize_path(path)
+            path = urllib.urlencode({'path': path})
+            data = '%s?%s' % (data, path)
+            reshares = kwargs.get('reshares', False)
+            if (isinstance(reshares, bool) and (reshares == True)):
+                data += '&reshares=%s' % reshares
+            subfiles = kwargs.get('subfiles', False)
+            if (isinstance(subfiles, bool) and (subfiles == True)):
+                data += '&subfiles=%s' % subfiles
 
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_SHARE,
-                'shares?%s' % path,
+                data
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            code_el = tree.find('meta/statuscode')
-            if code_el is not None:
-                if code_el.text == '404':
-                    return False
-                elif code_el.text == '100':
-                    return True
-            raise ResponseError(res)
+            self.__check_ocs_status(tree)
+            shares = []
+            for element in tree.find('data').iter('element'):
+                share_attr = {}
+                for child in element:
+                    key = child.tag
+                    value = child.text
+                    share_attr[key] = value
+                shares.append(share_attr)
+            if len(shares) > 0:
+                return shares
+        return []
         raise ResponseError(res)
 
     def get_config(self):
