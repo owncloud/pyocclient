@@ -146,7 +146,7 @@ class Client():
         self.__session = None
         self.__debug = kwargs.get('debug', False)
         self.__verify_certs = kwargs.get('verify_certs', True)
-        self.__single_session = kwargs.get('single_session', True);
+        self.__single_session = kwargs.get('single_session', True)
 
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
