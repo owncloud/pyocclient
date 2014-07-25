@@ -490,11 +490,12 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
+        path = urllib.urlencode({'path': path})
 
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_SHARE,
-                'shares?path=' + path,
+                'shares?%s' % path,
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
