@@ -1,0 +1,18 @@
+language: python
+python:
+  - 2.7
+
+env:
+  global:
+    - CORE_BRANCH=master
+
+branches:
+  only:
+    - master
+
+install:
+  - bash ./before_install.sh $CORE_BRANCH
+
+script:
+  # execute unit tests
+  - ./runtests.sh
