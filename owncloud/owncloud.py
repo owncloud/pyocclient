@@ -492,7 +492,6 @@ class Client():
         result = self.get_shares(path)
         if result:
             return (len(result) > 0)
-        return False
         raise ResponseError(res)
 
     def get_shares(self, path='', **kwargs):
