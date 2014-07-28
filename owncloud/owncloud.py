@@ -510,15 +510,16 @@ class Client():
 
         data = 'shares'
         if (path != ''):
+            data += '?'
             path = self.__normalize_path(path)
-            path = urllib.urlencode({'path': path})
-            data = '%s?%s' % (data, path)
+            args = { 'path': path }
             reshares = kwargs.get('reshares', False)
             if (isinstance(reshares, bool) and (reshares == True)):
-                data += '&reshares=%s' % reshares
+                args['reshares'] = reshares
             subfiles = kwargs.get('subfiles', False)
             if (isinstance(subfiles, bool) and (subfiles == True)):
-                data += '&subfiles=%s' % subfiles
+                args['subfiles'] = subfiles
+            data += urllib.urlencode(args)
 
         res = self.__make_ocs_request(
                 'GET',
