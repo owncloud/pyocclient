@@ -230,6 +230,52 @@ class TestFileAccess(unittest.TestCase):
             self.client.share_file_with_link(self.test_root + 'unexist.txt')
         self.assertEquals(e.exception.status_code, 404)
 
+    def test_is_shared_non_existing_path(self):
+        """Test is_shared - path does not exist"""
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.is_shared(self.test_root + 'does_not_exist')
+        self.assertEquals(e.exception.status_code, 404)
+
+    def test_is_shared(self):
+        """Test is_shared"""
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
+
+        self.client.share_file_with_link(self.test_root + 'test.txt')
+        self.assertTrue(self.client.is_shared(self.test_root + 'test.txt'))
+
+    def test_get_shares_non_existing_path(self):
+        """Test get_shares - path does not exist"""
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.get_shares(self.test_root + 'does_not_exist')
+        self.assertEquals(e.exception.status_code, 404)
+
+    def test_get_shares(self):
+        """Test get_shares"""
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
+
+        self.client.share_file_with_link(self.test_root + 'test.txt')
+        shares = self.client.get_shares(self.test_root + 'test.txt')
+        self.assertIsNotNone(shares)
+        self.assertIsInstance(shares, list)
+
+        shares = None
+        with self.assertRaises(owncloud.ResponseError) as e:
+            shares = self.client.get_shares(self.test_root + 'test.txt', subfiles=True)
+        self.assertIsNone(shares)
+        self.assertEquals(e.exception.status_code, 400)
+
+        shares = self.client.get_shares(self.test_root, reshares=True, subfiles=True)
+        self.assertIsNotNone(shares)
+        self.assertIsInstance(shares, list)
+        self.assertGreater(len(shares), 0)
+
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'test2.txt', 'hello world!'))
+        self.client.share_file_with_link(self.test_root + 'test2.txt')
+        shares = self.client.get_shares(self.test_root, reshares=True, subfiles=True)
+        self.assertIsNotNone(shares)
+        self.assertIsInstance(shares, list)
+        self.assertGreater(len(shares), 1)
+
 class TestPrivateDataAccess(unittest.TestCase):
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
