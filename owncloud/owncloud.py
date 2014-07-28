@@ -473,11 +473,13 @@ class Client():
         """
         if not isinstance(share_id, int): return False
 
-        return self.__make_ocs_request(
+        res = self.__make_ocs_request(
                 'DELETE',
                 self.OCS_SERVICE_SHARE,
                 'shares/' + str(share_id)
                 )
+        if res.status_code == 200:
+            return res
         raise ResponseError(res)
 
     def share_file_with_link(self, path):
