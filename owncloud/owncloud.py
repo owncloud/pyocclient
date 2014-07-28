@@ -538,7 +538,6 @@ class Client():
                 shares.append(share_attr)
             if len(shares) > 0:
                 return shares
-        return []
         raise ResponseError(res)
 
     def get_config(self):
