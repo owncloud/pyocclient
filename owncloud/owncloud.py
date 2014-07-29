@@ -482,6 +482,65 @@ class Client():
             )
         raise ResponseError(res)
 
+    def is_shared(self, path):
+        """Checks whether a path is already shared
+
+        :param path: path to the share to be checked
+        :returns: True if the path is already shared, else False
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        result = self.get_shares(path)
+        if result:
+            return (len(result) > 0)
+        raise ResponseError(res)
+
+    def get_shares(self, path='', **kwargs):
+        """Returns array of shares
+
+        :param path: path to the share to be checked
+        :param reshares: (optional, boolean) returns not only the shares from
+            the current user but all shares from the given file (default: False)
+        :param subfiles: (optional, boolean) returns all shares within
+            a folder, given that path defines a folder (default: False)
+        :returns: array of shares or empty array if the operation failed
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if not (isinstance(path, basestring)):
+            return None
+
+        data = 'shares'
+        if (path != ''):
+            data += '?'
+            path = self.__normalize_path(path)
+            args = { 'path': path }
+            reshares = kwargs.get('reshares', False)
+            if (isinstance(reshares, bool) and (reshares == True)):
+                args['reshares'] = reshares
+            subfiles = kwargs.get('subfiles', False)
+            if (isinstance(subfiles, bool) and (subfiles == True)):
+                args['subfiles'] = subfiles
+            data += urllib.urlencode(args)
+
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                data
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
+            shares = []
+            for element in tree.find('data').iter('element'):
+                share_attr = {}
+                for child in element:
+                    key = child.tag
+                    value = child.text
+                    share_attr[key] = value
+                shares.append(share_attr)
+            if len(shares) > 0:
+                return shares
+        raise ResponseError(res)
+
     def get_config(self):
         """Returns ownCloud config information
         :returns: array of tuples (key, value) for each information

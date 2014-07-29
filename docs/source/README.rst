@@ -30,7 +30,8 @@ Accessing files
 Sharing
 -------
 
-- share a file with public link using the OCS Share API
+- share a file/directory via public link (OCS Share API)
+- retrieve information about ownCloud instance (e.g. version, host, URL, etc.)
 
 App data
 --------
