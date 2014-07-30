@@ -28,7 +28,7 @@ setup(
     description='Python client library for ownCloud',
     long_description=long_description,
     install_requires=[
-        "requests >= 2.0.1",
+        "requests >= 1.2.3",
     ],
 	classifiers=[
 		'Programming Language :: Python',
