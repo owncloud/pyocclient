@@ -18,6 +18,11 @@ Supports connecting to ownCloud 5, 6 and 7.
 Please note that ownCloud 5 will require setting the "single_session"
 constructor option to False for some API calls.
 
+General information
+-------------------
+
+- retrieve information about ownCloud instance (e.g. version, host, URL, etc.)
+
 Accessing files
 ---------------
 
@@ -27,11 +32,12 @@ Accessing files
 - upload whole directories
 - directory download as zip
 
-Sharing
--------
+Sharing (OCS Share API)
+-----------------------
 
-- share a file/directory via public link (OCS Share API)
-- retrieve information about ownCloud instance (e.g. version, host, URL, etc.)
+- share a file/directory via public link
+- check if a file/directory is already shared
+- get information about a shared resource
 
 App data
 --------
