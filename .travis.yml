@@ -27,4 +27,5 @@ before_install:
 
 script:
   # execute unit tests
+  - echo "Testing against ownCloud branch $CORE_BRANCH"
   - ./runtests.sh
