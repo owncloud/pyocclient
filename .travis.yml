@@ -6,10 +6,6 @@ env:
   global:
     - CORE_BRANCH=stable7
 
-branches:
-  only:
-    - travis_ci
-
 before_install:
 - sudo apt-get update
 - sudo pip install requests
@@ -27,5 +23,4 @@ before_install:
 
 script:
   # execute unit tests
-  - echo "Testing against ownCloud branch $CORE_BRANCH"
   - ./runtests.sh
