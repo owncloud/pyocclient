@@ -215,13 +215,16 @@ class TestFileAccess(unittest.TestCase):
 
     def test_share_with_link(self):
         """Test sharing a file with link"""
-        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
 
-        share_info = self.client.share_file_with_link(self.test_root + 'test.txt')
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
+        share_info = self.client.share_file_with_link(path)
+
+        self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))
         self.assertTrue(type(share_info.share_id) is int)
-        self.assertEquals(share_info.target_file, self.test_root + 'test.txt')
+        self.assertEquals(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
 
@@ -234,12 +237,14 @@ class TestFileAccess(unittest.TestCase):
     def test_share_with_user(self):
         """Test sharing a file to user"""
 
-        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_user(self.test_root + 'test.txt', self.share2user)
+        share_info = self.client.share_file_with_user(path, self.share2user)
 
+        self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.UserShare))
-        self.assertEquals(share_info.share, self.test_root + 'test.txt')
+        self.assertEquals(share_info.share, path)
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(type(share_info.share) is str)
         self.assertTrue(type(share_info.perms) is int)
