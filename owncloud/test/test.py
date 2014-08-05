@@ -248,11 +248,14 @@ class TestFileAccess(unittest.TestCase):
     def test_delete_share(self):
         """Test deleting a share (by id)"""
 
-        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_user(self.test_root + 'test.txt', self.share2user)
+        share_info = self.client.share_file_with_user(path, self.share2user)
 
+        self.assertTrue(self.client.is_shared(path))
         self.assertIsNotNone(self.client.delete_share(share_info.share_id))
+        self.assertFalse(self.client.is_shared(path))
 
     def test_is_shared_non_existing_path(self):
         """Test is_shared - path does not exist"""
