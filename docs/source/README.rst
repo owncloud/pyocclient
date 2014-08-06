@@ -43,6 +43,7 @@ Sharing (OCS Share API)
 - unshare a file or directory
 - check if a file/directory is already shared
 - get information about a shared resource
+- update properties of a known share
 
 App data
 --------
