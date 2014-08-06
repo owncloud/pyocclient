@@ -465,7 +465,7 @@ class Client():
         return self.__make_dav_request('DELETE', path)
 
     def delete_share(self, share_id):
-        """Deletes a shared file of directory
+        """Unshares a file or directory
 
         :param share_id: Share ID (int)
         :returns: True if the operation succeeded, False otherwise
