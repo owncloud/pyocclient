@@ -482,6 +482,45 @@ class Client():
             return res
         raise ResponseError(res)
 
+    def update_share(self, share_id, **kwargs):
+        """Updates a given share
+
+        :param share_id: (int) Share ID
+        :param perms: (int) update permissions (see share_file_with_user() below)
+        :param password: (string) updated password for public link Share
+        :param public_upload: (boolean) enable/disable public upload for public shares
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+
+        perms = kwargs.get('perms', None)
+        password = kwargs.get('password', None)
+        public_upload = kwargs.get('public_upload', None)
+        if ((isinstance(perms, int)) and (perms > self.OCS_PERMISSION_ALL)):
+            perms = None
+        if (not (perms or password or (public_upload != None))):
+            return False
+        if not isinstance(share_id, int):
+            return False
+
+        data = {}
+        if perms:
+            data['permissions'] = perms
+        if isinstance(password, basestring):
+            data['password'] = password
+        if ((public_upload != None) and (isinstance(public_upload, bool))):
+            data['publicUpload'] = public_upload
+
+        res = self.__make_ocs_request(
+                'PUT',
+                self.OCS_SERVICE_SHARE,
+                'shares/' + str(share_id),
+                data = data
+                )
+        if res.status_code == 200:
+            return True
+        raise ResponseError(res)
+
     def share_file_with_link(self, path):
         """Shares a remote file with link
 
