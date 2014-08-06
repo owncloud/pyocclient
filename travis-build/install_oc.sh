@@ -34,6 +34,9 @@ DBCONFIGS="sqlite"
 # use tmpfs for datadir - should speedup unit test execution
 DATADIR=$BASEDIR/data-autotest
 
+# users to create (with unusable password)
+USERS="share"
+
 echo "Using database $DATABASENAME"
 
 cat > ./tests/autoconfig-sqlite.php <<DELIM
@@ -70,6 +73,10 @@ function execute_tests {
     php -f index.php
     echo "END INDEX"
 
+	echo "Insert test users"
+	for USER in $USERS; do
+		sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_users (uid,displayname,password) VALUES ('$USER','$USER','x');"
+	done
 }
 
 #
