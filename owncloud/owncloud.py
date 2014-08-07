@@ -495,8 +495,9 @@ class Client():
             result = self.get_shares(path)
             if result:
                 return (len(result) > 0)
-        except:
-            pass
+        except ResponseError as e:
+            if e.status_code != 404:
+                raise e
         return False
 
     def get_shares(self, path='', **kwargs):
