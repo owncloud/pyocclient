@@ -582,9 +582,10 @@ class Client():
             or False if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
-        perms = kwargs.get('perms') or self.OCS_PERMISSION_READ
-        if ((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL)): perms = self.OCS_PERMISSION_READ
-        if ((not isinstance(user, basestring)) or (user == '')): return False
+        perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
+        if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
+            or ((not isinstance(user, basestring)) or (user == ''))):
+            return False
 
         path = self.__normalize_path(path)
         post_data = {'shareType': self.OCS_SHARE_TYPE_USER, 'shareWith': user, 'path': path, 'permissions': perms}
