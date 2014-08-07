@@ -489,10 +489,17 @@ class Client():
         :returns: True if the path is already shared, else False
         :raises: ResponseError in case an HTTP error status was returned
         """
-        result = self.get_shares(path)
-        if result:
-            return (len(result) > 0)
-        raise ResponseError(res)
+        # make sure that the path exist - if not, raise ResponseError
+        self.file_info(path)
+        try:
+            result = self.get_shares(path)
+            if result:
+                return (len(result) > 0)
+        except ResponseError as e:
+            if e.status_code != 404:
+                raise e
+            return False
+        return False
 
     def get_shares(self, path='', **kwargs):
         """Returns array of shares

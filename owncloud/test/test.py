@@ -236,12 +236,20 @@ class TestFileAccess(unittest.TestCase):
             self.client.is_shared(self.test_root + 'does_not_exist')
         self.assertEquals(e.exception.status_code, 404)
 
+    def test_is_shared_not_shared_path(self):
+        """Test is_shared - path does exist, but it's not shared yet"""
+        path = self.test_root + 'not_shared_path.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+        self.assertFalse(self.client.is_shared(path))
+
     def test_is_shared(self):
         """Test is_shared"""
-        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        self.client.share_file_with_link(self.test_root + 'test.txt')
-        self.assertTrue(self.client.is_shared(self.test_root + 'test.txt'))
+        self.client.share_file_with_link(path)
+        self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(self.client.delete(path))
 
     def test_get_shares_non_existing_path(self):
         """Test get_shares - path does not exist"""
