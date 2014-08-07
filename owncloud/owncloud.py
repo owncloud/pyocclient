@@ -493,7 +493,6 @@ class Client():
         self.file_info(path)
         try:
             result = self.get_shares(path)
-            print "[debug] is_shared - result: %s" % result
             if result:
                 return (len(result) > 0)
         except ResponseError as e:

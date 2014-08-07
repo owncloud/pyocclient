@@ -249,6 +249,7 @@ class TestFileAccess(unittest.TestCase):
 
         self.client.share_file_with_link(path)
         self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(self.client.delete(path))
 
     def test_get_shares_non_existing_path(self):
         """Test get_shares - path does not exist"""
