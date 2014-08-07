@@ -238,7 +238,7 @@ class TestFileAccess(unittest.TestCase):
 
     def test_is_shared_not_shared_path(self):
         """Test is_shared - path does exist, but it's not shared yet"""
-        path = self.test_root + 'test.txt'
+        path = self.test_root + 'not_shared_path.txt'
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
         self.assertFalse(self.client.is_shared(path))
 
