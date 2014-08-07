@@ -10,7 +10,7 @@ before_install:
 - sudo apt-get update
 - sudo pip install requests
 - sudo apt-get install apache2 libapache2-mod-fastcgi
-- bash ./install_oc.sh $CORE_BRANCH
+- bash travis-build/install_oc.sh $CORE_BRANCH
 # enable php-fpm
 - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
 - sudo a2enmod rewrite actions fastcgi alias
