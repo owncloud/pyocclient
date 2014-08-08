@@ -115,4 +115,3 @@ Authors
 - Vincent Petry (@pvince81)
 - Steffen Lindner (@gomezr)
 - Soal (@soalhn)
-
