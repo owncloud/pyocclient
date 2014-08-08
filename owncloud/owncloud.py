@@ -550,10 +550,10 @@ class Client():
             path = self.__normalize_path(path)
             args = { 'path': path }
             reshares = kwargs.get('reshares', False)
-            if (isinstance(reshares, bool) and (reshares == True)):
+            if (isinstance(reshares, bool) and reshares):
                 args['reshares'] = reshares
             subfiles = kwargs.get('subfiles', False)
-            if (isinstance(subfiles, bool) and (subfiles == True)):
+            if (isinstance(subfiles, bool) and subfiles):
                 args['subfiles'] = subfiles
             data += urllib.urlencode(args)
 
