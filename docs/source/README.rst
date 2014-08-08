@@ -39,6 +39,8 @@ Sharing (OCS Share API)
 -----------------------
 
 - share a file/directory via public link
+- share a resource with another user
+- unshare a file or directory
 - check if a file/directory is already shared
 - get information about a shared resource
 

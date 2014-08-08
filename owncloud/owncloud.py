@@ -38,6 +38,17 @@ class PublicShare():
         return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
                 (self.share_id, self.target_file, self.link, self.token)
 
+class UserShare():
+    """User share information"""
+    def __init__(self, share_id, share, perms):
+        self.share_id = share_id
+        self.share = share
+        self.perms = perms
+
+    def __str__(self):
+        return "UserShare(id=%i,path='%s',perms=%s)" % \
+                (self.share_id, self.share, self.perms)
+
 class FileInfo():
     """File information"""
 
@@ -453,6 +464,24 @@ class Client():
         """
         return self.__make_dav_request('DELETE', path)
 
+    def delete_share(self, share_id):
+        """Unshares a file or directory
+
+        :param share_id: Share ID (int)
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if not isinstance(share_id, int): return False
+
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_SHARE,
+                'shares/' + str(share_id)
+                )
+        if res.status_code == 200:
+            return res
+        raise ResponseError(res)
+
     def share_file_with_link(self, path):
         """Shares a remote file with link
 
@@ -462,7 +491,7 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        post_data = {'shareType': 3, 'path': path}
+        post_data = {'shareType': self.OCS_SHARE_TYPE_LINK, 'path': path}
 
         res = self.__make_ocs_request(
                 'POST',
@@ -546,6 +575,43 @@ class Client():
                 shares.append(share_attr)
             if len(shares) > 0:
                 return shares
+        raise ResponseError(res)
+
+    def share_file_with_user(self, path, user, **kwargs):
+        """Shares a remote file with specified user
+
+        :param path: path to the remote file to share
+        :param user: name of the user whom we want to share a file/folder
+        :param perms (optional): permissions of the shared object
+            defaults to read only (1)
+            http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+        :returns: instance of :class:`UserShare` with the share info
+            or False if the operation failed
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
+        if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
+            or ((not isinstance(user, basestring)) or (user == ''))):
+            return False
+
+        path = self.__normalize_path(path)
+        post_data = {'shareType': self.OCS_SHARE_TYPE_USER, 'shareWith': user, 'path': path, 'permissions': perms}
+
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_SHARE,
+                'shares',
+                data = post_data
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
+            data_el = tree.find('data')
+            return UserShare(
+                int(data_el.find('id').text),
+                path,
+                perms
+            )
         raise ResponseError(res)
 
     def get_config(self):

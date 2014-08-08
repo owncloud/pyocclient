@@ -24,6 +24,7 @@ class TestFileAccess(unittest.TestCase):
         if not self.test_root[0] == '/':
             self.test_root = '/' + self.test_root
         self.client.mkdir(self.test_root)
+        self.share2user = Config['owncloud_share2user']
 
     def tearDown(self):
         self.client.delete(self.test_root)
@@ -214,13 +215,16 @@ class TestFileAccess(unittest.TestCase):
 
     def test_share_with_link(self):
         """Test sharing a file with link"""
-        self.assertTrue(self.client.put_file_contents(self.test_root + 'test.txt', 'hello world!'))
 
-        share_info = self.client.share_file_with_link(self.test_root + 'test.txt')
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
+        share_info = self.client.share_file_with_link(path)
+
+        self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))
         self.assertTrue(type(share_info.share_id) is int)
-        self.assertEquals(share_info.target_file, self.test_root + 'test.txt')
+        self.assertEquals(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
 
@@ -229,6 +233,34 @@ class TestFileAccess(unittest.TestCase):
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.share_file_with_link(self.test_root + 'unexist.txt')
         self.assertEquals(e.exception.status_code, 404)
+
+    def test_share_with_user(self):
+        """Test sharing a file to user"""
+
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_user(path, self.share2user)
+
+        self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(isinstance(share_info, owncloud.UserShare))
+        self.assertEquals(share_info.share, path)
+        self.assertTrue(type(share_info.share_id) is int)
+        self.assertTrue(type(share_info.share) is str)
+        self.assertTrue(type(share_info.perms) is int)
+        self.share_id = share_info.share_id
+
+    def test_delete_share(self):
+        """Test deleting a share (by id)"""
+
+        path = self.test_root + 'test.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_user(path, self.share2user)
+
+        self.assertTrue(self.client.is_shared(path))
+        self.assertIsNotNone(self.client.delete_share(share_info.share_id))
+        self.assertFalse(self.client.is_shared(path))
 
     def test_is_shared_non_existing_path(self):
         """Test is_shared - path does not exist"""
