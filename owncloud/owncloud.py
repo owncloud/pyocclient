@@ -498,7 +498,7 @@ class Client():
         public_upload = kwargs.get('public_upload', None)
         if ((isinstance(perms, int)) and (perms > self.OCS_PERMISSION_ALL)):
             perms = None
-        if (not (perms or password or (public_upload != None))):
+        if (not (perms or password or (public_upload is not None))):
             return False
         if not isinstance(share_id, int):
             return False
@@ -508,7 +508,7 @@ class Client():
             data['permissions'] = perms
         if isinstance(password, basestring):
             data['password'] = password
-        if ((public_upload != None) and (isinstance(public_upload, bool))):
+        if ((public_upload is not None) and (isinstance(public_upload, bool))):
             data['publicUpload'] = public_upload
 
         res = self.__make_ocs_request(
