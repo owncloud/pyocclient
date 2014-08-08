@@ -244,7 +244,7 @@ class Client():
                 stream = True
                 )
         if res.status_code == 200:
-            if local_file == None:
+            if local_file is None:
                 # use downloaded file name from Content-Disposition
                 # local_file = res.headers['content-disposition']
                 local_file = os.path.basename(remote_path)
@@ -272,7 +272,7 @@ class Client():
                 stream = True
                 )
         if res.status_code == 200:
-            if local_file == None:
+            if local_file is None:
                 # use downloaded file name from Content-Disposition
                 # targetFile = res.headers['content-disposition']
                 local_file = os.path.basename(remote_path)
@@ -566,7 +566,7 @@ class Client():
             values = []
 
             element = tree.find('data')
-            if element != None:
+            if element is not None:
                 keys = [ 'version', 'website', 'host', 'contact', 'ssl' ]
                 for key in keys:
                     text = element.find(key).text or ''
@@ -587,9 +587,9 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = 'getattribute'
-        if app != None:
+        if app is not None:
             path += '/' + urllib.quote(app)
-            if key != None:
+            if key is not None:
                 path += '/' + urllib.quote(key)
         res = self.__make_ocs_request(
                 'GET',
@@ -604,15 +604,15 @@ class Client():
                 app_text = element.find('app').text
                 key_text = element.find('key').text
                 value_text = element.find('value').text or ''
-                if key == None:
-                    if app == None:
+                if key is None:
+                    if app is None:
                         values.append((app_text, key_text, value_text))
                     else:
                         values.append((key_text, value_text))
                 else:
                     return value_text
 
-            if len(values) == 0 and key != None:
+            if len(values) == 0 and key is not None:
                 return None
             return values
         raise ResponseError(res)
