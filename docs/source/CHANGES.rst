@@ -3,7 +3,10 @@ Changelog
 
 0.2
 ---
-
+- Added status check function [soalhn]
+- Added share API functions [soalhn]
+- Travis integration [Gomez]
+- Added session handling workaround for OC 5 [PVince81]
 
 0.1
 ---
