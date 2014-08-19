@@ -104,7 +104,7 @@ Then run the following commands:
 
 .. code-block:: bash
 
-    $ cd doc
+    $ cd docs
     $ make html
 
 You can then find the documentation inside of "doc/build/html".
