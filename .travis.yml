@@ -3,8 +3,8 @@ php:
   - "5.4"
 
 env:
-  global:
-    - CORE_BRANCH=stable7
+  - CORE_BRANCH=stable6
+  - CORE_BRANCH=stable7
 
 before_install:
 - sudo apt-get update
