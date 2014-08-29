@@ -58,11 +58,20 @@ Requirements
 Installation
 ============
 
-To install pyocclient, simply:
+Automatic installation with pip:
 
 .. code-block:: bash
 
     $ pip install pyocclient
+
+Manual installation of development version with git:
+
+.. code-block:: bash
+
+    $ pip install requests
+    $ cd ~
+    $ git clone https://github.com/PVince81/pyocclient.git
+    $ ln -s ~/pyocclient/owncloud/ /usr/local/lib/python2.7/site-packages/owncloud
 
 Usage
 =====
