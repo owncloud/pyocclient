@@ -71,7 +71,8 @@ Manual installation of development version with git:
     $ pip install requests
     $ cd ~
     $ git clone https://github.com/PVince81/pyocclient.git
-    $ ln -s ~/pyocclient/owncloud/ /usr/local/lib/python2.7/site-packages/owncloud
+    $ cd ~/pyocclient
+    $ python setup.py install
 
 Usage
 =====
