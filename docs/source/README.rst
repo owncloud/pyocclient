@@ -58,11 +58,20 @@ Requirements
 Installation
 ============
 
-To install pyocclient, simply:
+Automatic installation with pip:
 
 .. code-block:: bash
 
     $ pip install pyocclient
+
+Manual installation of development version with git:
+
+.. code-block:: bash
+
+    $ pip install requests
+    $ git clone https://github.com/PVince81/pyocclient.git
+    $ cd pyocclient
+    $ python setup.py install
 
 Usage
 =====
