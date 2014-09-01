@@ -761,7 +761,7 @@ class Client():
         if service: slash = '/'
         path = 'ocs/v1.php/' + service + slash + action
         if self.__debug:
-            print 'OCS request: %s %s' % (method, self.url + path)
+            print('OCS request: %s %s' % (method, self.url + path))
 
         attributes = kwargs.copy()
 
@@ -784,12 +784,12 @@ class Client():
         if it didn't
         """
         if self.__debug:
-            print 'DAV request: %s %s' % (method, path)
+            print('DAV request: %s %s' % (method, path))
 
         path = self.__normalize_path(path)
         res = self.__session.request(method, self.__webdav_url + path, **kwargs)
         if self.__debug:
-            print 'DAV status: %i' % res.status_code
+            print('DAV status: %i' % res.status_code)
         if res.status_code == 200 or res.status_code == 207:
             return self.__parse_dav_response(res)
         if res.status_code == 204 or res.status_code == 201:
