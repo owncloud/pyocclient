@@ -69,9 +69,8 @@ Manual installation of development version with git:
 .. code-block:: bash
 
     $ pip install requests
-    $ cd ~
     $ git clone https://github.com/PVince81/pyocclient.git
-    $ cd ~/pyocclient
+    $ cd pyocclient
     $ python setup.py install
 
 Usage
