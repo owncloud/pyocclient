@@ -521,6 +521,30 @@ class Client():
             return True
         raise ResponseError(res)
 
+    def move(self, remote_path_target, remote_path_source):
+        """Deletes a remote file or directory
+
+        :param remote_path_target: target file to which to move
+        the source file. A target directory can also be specified
+        instead by appending a "/" 
+        :param remote_path_source: source file or folder to move
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if remote_path_target[-1] == '/':
+            remote_path_target += os.path.basename(remote_path_source)
+
+        remote_path_source = self.__normalize_path(remote_path_source)
+        headers = {
+            'Destination': self.__webdav_url + self.__urlencode_path(remote_path_target)
+        }
+
+        return self.__make_dav_request(
+            'MOVE',
+            remote_path_source,
+            headers = headers
+        )
+
     def share_file_with_link(self, path):
         """Shares a remote file with link
 
@@ -775,6 +799,21 @@ class Client():
         if path[0] != '/':
             path = '/' + path
         return path
+
+    @staticmethod
+    def __urlencode_path(path):
+        """URL encode path sections but keep the path separators as is.
+           Also convert unicode strings to utf-8.
+
+        :param path: path to encode
+        :returns: encoded path
+        """
+
+        result = []
+        for section in path.split('/'):
+            result.append(urllib.quote(section.encode('utf-8')))
+
+        return '/'.join(result)
 
     @staticmethod
     def __check_ocs_status(tree):

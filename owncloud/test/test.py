@@ -225,6 +225,182 @@ class TestFileAccess(unittest.TestCase):
             self.client.file_info(self.test_root + 'subdir')
         self.assertEquals(e.exception.status_code, 404)
 
+    def test_move_rename_in_place(self):
+        """Test rename in place"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'rename this file!.txt',
+                'to rename'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + 'renamed in place.txt',
+                self.test_root + 'rename this file!.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'renamed in place.txt'
+            ),
+            'to rename'
+        )
+
+    def test_move_and_rename(self):
+        """Test rename into subdir"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'move and rename.txt',
+                'first file'
+            )
+        )
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + 'subdir/file renamed.txt',
+                self.test_root + 'move and rename.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'subdir/file renamed.txt'
+            ),
+            'first file'
+        )
+
+    def test_move_to_dir(self):
+        """Test move into directory"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'movetodir.txt',
+                'z file'
+            )
+        )
+        # move to subdir
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + 'subdir/',
+                self.test_root + 'movetodir.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'subdir/movetodir.txt'
+            ),
+            'z file'
+        )
+
+    def test_move_subdir(self):
+        """Test move subdir"""
+
+        # subdir to move
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir_to_move'
+            )
+        )
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'subdir_to_move/file two.txt',
+                'second file'
+            )
+        )
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + 'subdir/',
+                self.test_root + 'subdir_to_move'
+            )
+        )
+
+    def test_rename_unicode(self):
+        """Test rename unicode"""
+
+        # rename
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + u'中文.txt',
+                '1'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + u'更多中文.txt',
+                self.test_root + u'中文.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + u'更多中文.txt'
+            ),
+            '1'
+        )
+
+    def test_move_unicode(self):
+        """Test move unicode to dir"""
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + u'中文.txt',
+                '2'
+            )
+        )
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + u'subdir/中文.txt',
+                self.test_root + u'中文.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + u'subdir/中文.txt'
+            ),
+            '2'
+        )
+
+    def test_move_to_non_existing_dir(self):
+        """Test error when moving to non existing dir"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'move not possible.txt',
+                'x'
+            )
+        )
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.move(
+                self.test_root + 'non-existing-dir/subdir/x.txt',
+                self.test_root + 'move not possible.txt'
+            )
+        self.assertEquals(e.exception.status_code, 409)
+
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'move not possible.txt'
+            ),
+            'x'
+        )
+
     def test_share_with_link(self):
         """Test sharing a file with link"""
 
