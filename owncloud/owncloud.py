@@ -863,6 +863,8 @@ class Client():
         """
         if self.__debug:
             print('DAV request: %s %s' % (method, path))
+            if kwargs.get('headers'):
+                print('Headers: ', kwargs.get('headers'))
 
         path = self.__normalize_path(path)
         res = self.__session.request(method, self.__webdav_url + path, **kwargs)
