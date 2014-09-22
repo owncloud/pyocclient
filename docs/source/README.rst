@@ -2,7 +2,7 @@
 Python client library for ownCloud
 ==================================
 
-.. image:: https://travis-ci.org/PVince81/pyocclient.svg?branch=stable7
+.. image:: https://travis-ci.org/PVince81/pyocclient.svg?branch=master
     :target: https://travis-ci.org/PVince81/pyocclient
 
 This pure python library makes it possible to connect to an ownCloud instance
