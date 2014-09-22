@@ -2,14 +2,14 @@
 Python client library for ownCloud
 ==================================
 
-.. image:: https://travis-ci.org/PVince81/pyocclient.svg?branch=master
+.. image:: https://travis-ci.org/PVince81/pyocclient.svg?branch=stable7
     :target: https://travis-ci.org/PVince81/pyocclient
 
-This library makes it possible to connect to an ownCloud instance and perform
-file, share and attribute operations in python.
+This pure python library makes it possible to connect to an ownCloud instance
+and perform file, share and attribute operations.
 
-Please note that this is **not** a sync client implementation but rather a wrapper
-around various APIs.
+Please note that this is **not** a sync client implementation but a library
+that provides functions to abstract away HTTP calls for various ownCloud APIs.
 
 See the `ownCloud homepage <http://owncloud.org>`_ for more information about ownCloud.
 
