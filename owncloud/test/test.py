@@ -248,7 +248,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(type(share_info.share) is str)
         self.assertTrue(type(share_info.perms) is int)
-        self.share_id = share_info.share_id
+        self.assertTrue(self.client.delete(path))
 
     def test_delete_share(self):
         """Test deleting a share (by id)"""
@@ -315,6 +315,72 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNotNone(shares)
         self.assertIsInstance(shares, list)
         self.assertGreater(len(shares), 1)
+
+    def test_update_share_wo_params(self):
+        self.assertFalse(self.client.update_share(0))
+
+    def test_update_share_user(self):
+        """Test updating a share parameters - user share"""
+        path = self.test_root + 'update_share_user.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_user(path, self.share2user)
+        share_id = share_info.share_id
+        self.assertTrue(self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL))
+        perms = self.client.get_shares(path)[0]['permissions']
+        # now the permissions should be OCS_PERMISSION_ALL,
+        # because we've shared it with a user
+        self.assertEqual(int(perms), self.client.OCS_PERMISSION_ALL)
+        self.assertTrue(self.client.delete_share(share_id))
+
+    def test_update_share_public(self):
+        """Test updating a share parameters - public share"""
+        path = self.test_root + 'update_share_public.txt'
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_link(path)
+        share_id = share_info.share_id
+        self.assertTrue(self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL))
+        perms = self.client.get_shares(path)[0]['permissions']
+        # permissions should still be OCS_PERMISSION_READ not OCS_PERMISSION_ALL,
+        # because it's a public share
+        self.assertEqual(int(perms), self.client.OCS_PERMISSION_READ)
+        self.assertTrue(self.client.delete_share(share_id))
+
+    def test_update_share_public_upload(self):
+        """Test updating a share parameters - public upload"""
+        path = self.test_root + 'update_share_public_upload'
+        self.client.mkdir(path)
+
+        share_info = self.client.share_file_with_link(path)
+        share_id = share_info.share_id
+        self.assertTrue(self.client.update_share(share_id, public_upload=True))
+        perms = self.client.get_shares(path)[0]['permissions']
+        # the permissions should be 7 = 1(read) + 2(update) + 4(create)
+        perms_public_upload = self.client.OCS_PERMISSION_READ + \
+                              self.client.OCS_PERMISSION_UPDATE + \
+                              self.client.OCS_PERMISSION_CREATE
+        self.assertEqual(int(perms), perms_public_upload)
+
+        # test reverting to read only
+        self.assertTrue(self.client.update_share(share_id, public_upload=False))
+        perms = self.client.get_shares(path)[0]['permissions']
+        self.assertEqual(int(perms), self.client.OCS_PERMISSION_READ)
+        self.assertTrue(self.client.delete_share(share_id))
+
+    def test_update_share_password(self):
+        """Test updating a share parameters - password"""
+        path = self.test_root + 'update_share_password'
+        self.client.mkdir(path)
+
+        share_info = self.client.share_file_with_link(path)
+        share_id = share_info.share_id
+        self.assertTrue(self.client.update_share(share_id, password="2hard2guess"))
+        share_info = self.client.get_shares(path)[0]
+        self.assertTrue('share_with_displayname' in share_info)
+        self.assertTrue(share_info['share_with_displayname'].startswith("$2"))
+        self.assertTrue(self.client.delete_share(share_id))
+
 
 class TestPrivateDataAccess(unittest.TestCase):
     def setUp(self):
