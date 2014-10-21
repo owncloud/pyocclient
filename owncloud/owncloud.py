@@ -418,11 +418,11 @@ class Client():
 
         chunk_count = size / chunk_size
 
-        if chunk_count > 1:
-            headers['OC-CHUNKED'] = 1
-
         if size % chunk_size > 0:
             chunk_count += 1
+
+        if chunk_count > 1:
+            headers['OC-CHUNKED'] = 1
        
         for chunk_index in range(0, chunk_count):
             data = file_handle.read(chunk_size)
