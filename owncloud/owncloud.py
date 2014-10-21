@@ -509,7 +509,7 @@ class Client():
         if isinstance(password, basestring):
             data['password'] = password
         if ((public_upload is not None) and (isinstance(public_upload, bool))):
-            data['publicUpload'] = public_upload
+            data['publicUpload'] = str(public_upload).lower()
 
         res = self.__make_ocs_request(
                 'PUT',
