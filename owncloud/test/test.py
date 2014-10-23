@@ -236,8 +236,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + 'renamed in place.txt',
-                self.test_root + 'rename this file!.txt'
+                self.test_root + 'rename this file!.txt',
+                self.test_root + 'renamed in place.txt'
             )
         )
         self.assertEquals(
@@ -263,8 +263,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + 'subdir/file renamed.txt',
-                self.test_root + 'move and rename.txt'
+                self.test_root + 'move and rename.txt',
+                self.test_root + 'subdir/file renamed.txt'
             )
         )
         self.assertEquals(
@@ -291,8 +291,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + 'subdir/',
-                self.test_root + 'movetodir.txt'
+                self.test_root + 'movetodir.txt',
+                self.test_root + 'subdir/'
             )
         )
         self.assertEquals(
@@ -324,8 +324,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + 'subdir/',
-                self.test_root + 'subdir_to_move'
+                self.test_root + 'subdir_to_move',
+                self.test_root + 'subdir/'
             )
         )
 
@@ -341,8 +341,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + u'更多中文.txt',
-                self.test_root + u'中文.txt'
+                self.test_root + u'中文.txt',
+                self.test_root + u'更多中文.txt'
             )
         )
         self.assertEquals(
@@ -367,8 +367,8 @@ class TestFileAccess(unittest.TestCase):
         )
         self.assertTrue(
             self.client.move(
-                self.test_root + u'subdir/中文.txt',
-                self.test_root + u'中文.txt'
+                self.test_root + u'中文.txt',
+                self.test_root + u'subdir/中文.txt'
             )
         )
         self.assertEquals(
@@ -389,8 +389,8 @@ class TestFileAccess(unittest.TestCase):
         )
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.move(
-                self.test_root + 'non-existing-dir/subdir/x.txt',
-                self.test_root + 'move not possible.txt'
+                self.test_root + 'move not possible.txt',
+                self.test_root + 'non-existing-dir/subdir/x.txt'
             )
         self.assertEquals(e.exception.status_code, 409)
 

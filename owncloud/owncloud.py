@@ -521,13 +521,13 @@ class Client():
             return True
         raise ResponseError(res)
 
-    def move(self, remote_path_target, remote_path_source):
+    def move(self, remote_path_source, remote_path_target):
         """Deletes a remote file or directory
 
+        :param remote_path_source: source file or folder to move
         :param remote_path_target: target file to which to move
         the source file. A target directory can also be specified
         instead by appending a "/" 
-        :param remote_path_source: source file or folder to move
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
