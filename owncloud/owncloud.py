@@ -536,7 +536,7 @@ class Client():
 
         remote_path_source = self.__normalize_path(remote_path_source)
         headers = {
-            'Destination': self.__webdav_url + self.__urlencode_path(remote_path_target)
+            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
         }
 
         return self.__make_dav_request(
@@ -554,16 +554,19 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        post_data = {'shareType': self.OCS_SHARE_TYPE_LINK, 'path': path}
+        post_data = {
+            'shareType': self.OCS_SHARE_TYPE_LINK,
+            'path': self.__encode_string(path)
+        }
 
         res = self.__make_ocs_request(
-                'POST',
-                self.OCS_SERVICE_SHARE,
-                'shares',
-                data = post_data
-                )
+            'POST',
+            self.OCS_SERVICE_SHARE,
+            'shares',
+            data = post_data
+        )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return PublicShare(
@@ -610,7 +613,7 @@ class Client():
         data = 'shares'
         if (path != ''):
             data += '?'
-            path = self.__normalize_path(path)
+            path = self.__encode_string(self.__normalize_path(path))
             args = { 'path': path }
             reshares = kwargs.get('reshares', False)
             if (isinstance(reshares, bool) and reshares):
@@ -626,7 +629,7 @@ class Client():
                 data
                 )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             shares = []
             for element in tree.find('data').iter('element'):
@@ -658,16 +661,21 @@ class Client():
             return False
 
         path = self.__normalize_path(path)
-        post_data = {'shareType': self.OCS_SHARE_TYPE_USER, 'shareWith': user, 'path': path, 'permissions': perms}
+        post_data = {
+            'shareType': self.OCS_SHARE_TYPE_USER,
+            'shareWith': user,
+            'path': self.__encode_string(path),
+            'permissions': perms
+        }
 
         res = self.__make_ocs_request(
-                'POST',
-                self.OCS_SERVICE_SHARE,
-                'shares',
-                data = post_data
-                )
+            'POST',
+            self.OCS_SERVICE_SHARE,
+            'shares',
+            data = post_data
+        )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return UserShare(
@@ -690,7 +698,7 @@ class Client():
                 path
                 )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             values = []
 
@@ -717,16 +725,16 @@ class Client():
         """
         path = 'getattribute'
         if app is not None:
-            path += '/' + urllib.quote(app)
+            path += '/' + urllib.quote(app, '')
             if key is not None:
-                path += '/' + urllib.quote(key)
+                path += '/' + urllib.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_PRIVATEDATA,
                 path
                 )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             values = []
             for element in tree.find('data').iter('element'):
@@ -755,15 +763,15 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        path = 'setattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        path = 'setattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'POST',
                 self.OCS_SERVICE_PRIVATEDATA,
                 path,
-                data = {'value': value}
+                data = {'value': self.__encode_string(value)}
                 )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             return True
         raise ResponseError(res)
@@ -776,14 +784,14 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        path = 'deleteattribute/' + urllib.quote(app) + '/' + urllib.quote(key)
+        path = 'deleteattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'POST',
                 self.OCS_SERVICE_PRIVATEDATA,
                 path
                 )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             return True
         raise ResponseError(res)
@@ -801,19 +809,16 @@ class Client():
         return path
 
     @staticmethod
-    def __urlencode_path(path):
-        """URL encode path sections but keep the path separators as is.
-           Also convert unicode strings to utf-8.
+    def __encode_string(s):
+        """Encodes a unicode instance to utf-8. If a str is passed it will
+        simply be returned
 
-        :param path: path to encode
-        :returns: encoded path
+        :param s: str or unicode to encode
+        :returns: encoded output as str
         """
-
-        result = []
-        for section in path.split('/'):
-            result.append(urllib.quote(section.encode('utf-8')))
-
-        return '/'.join(result)
+        if isinstance(s, unicode):
+            return s.encode('utf-8')
+        return s
 
     @staticmethod
     def __check_ocs_status(tree):
@@ -867,7 +872,11 @@ class Client():
                 print('Headers: ', kwargs.get('headers'))
 
         path = self.__normalize_path(path)
-        res = self.__session.request(method, self.__webdav_url + path, **kwargs)
+        res = self.__session.request(
+            method,
+            self.__webdav_url + urllib.quote(self.__encode_string(path)),
+            **kwargs
+        )
         if self.__debug:
             print('DAV status: %i' % res.status_code)
         if res.status_code == 200 or res.status_code == 207:
@@ -884,7 +893,7 @@ class Client():
         the operation did not succeed
         """
         if res.status_code == 207:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             items = []
             for child in tree:
                 items.append(self.__parse_dav_element(child))
@@ -899,7 +908,7 @@ class Client():
         """
         href = urllib.unquote(
                 self.__strip_dav_path(dav_response.find('{DAV:}href').text)
-                )
+                ).decode('utf-8')
         file_type = 'file'
         if href[-1] == '/':
             file_type = 'dir'

@@ -100,6 +100,13 @@ Running the unit tests
 
 To run the unit tests, edit the config file in "owncloud/test/config.py" to
 point to a running ownCloud instance to test against.
+
+You might also need to install the unittest-data-provider package:
+
+.. code-block:: bash
+
+    $ pip install unittest-data-provider
+
 Then run the script "runtests.py":
 
 .. code-block:: bash

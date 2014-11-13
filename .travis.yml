@@ -8,7 +8,7 @@ env:
 
 before_install:
 - sudo apt-get update
-- sudo pip install requests
+- sudo pip install requests unittest-data-provider
 - sudo apt-get install apache2 libapache2-mod-fastcgi
 - bash travis-build/install_oc.sh $CORE_BRANCH
 # enable php-fpm
