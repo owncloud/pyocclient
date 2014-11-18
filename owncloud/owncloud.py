@@ -63,11 +63,19 @@ class FileInfo():
         self.attributes = attributes or {}
 
     def get_name(self):
-        """Returns the base name of the file (without path)
+        """Returns the base name of the file without path
         
         :returns: name of the file
         """
         return self.name
+
+    def get_path(self):
+        """Returns the full path to the file without name and without
+        trailing slash
+
+        :returns: path to the file
+        """
+        return os.path.dirname(self.path)
 
     def get_size(self):
         """Returns the size of the file
