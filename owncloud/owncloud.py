@@ -260,7 +260,7 @@ class Client():
                 # local_file = res.headers['content-disposition']
                 local_file = os.path.basename(remote_path)
 
-            file_handle = open(local_file, 'w', 8192)
+            file_handle = open(local_file, 'wb', 8192)
             for chunk in res.iter_content(8192):
                 file_handle.write(chunk)
             file_handle.close()
@@ -288,7 +288,7 @@ class Client():
                 # targetFile = res.headers['content-disposition']
                 local_file = os.path.basename(remote_path)
 
-            file_handle = open(local_file, 'w', 8192)
+            file_handle = open(local_file, 'wb', 8192)
             for chunk in res.iter_content(8192):
                 file_handle.write(chunk)
             file_handle.close()
@@ -333,7 +333,7 @@ class Client():
 
         if remote_path[-1] == '/':
             remote_path += os.path.basename(local_source_file)
-        file_handle = open(local_source_file, 'r', 8192)
+        file_handle = open(local_source_file, 'rb', 8192)
         res = self.__make_dav_request(
                 'PUT',
                 remote_path,
@@ -399,7 +399,7 @@ class Client():
 
         stat_result = os.stat(local_source_file)
 
-        file_handle = open(local_source_file, 'r', 8192)
+        file_handle = open(local_source_file, 'rb', 8192)
         file_handle.seek(0, os.SEEK_END)
         size = file_handle.tell()
         file_handle.seek(0)
