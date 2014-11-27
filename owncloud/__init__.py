@@ -2,5 +2,5 @@
 #
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
-from owncloud import *
+from .owncloud import *
 
