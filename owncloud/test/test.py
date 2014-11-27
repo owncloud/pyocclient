@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
+from __future__ import division
 import unittest
 from unittest_data_provider import data_provider
 import os
@@ -9,6 +10,7 @@ import owncloud
 import datetime
 import time
 import tempfile
+import six
 
 from config import Config
 
@@ -47,12 +49,13 @@ class TestFileAccess(unittest.TestCase):
 
     @staticmethod
     def __create_file(target_file, size):
-        file_handle = open(target_file, 'w')
+        file_handle = open(target_file, 'wb')
         dummy_data = ''
         for i in range(0, 1024):
             dummy_data += 'X'
+        dummy_data = six.b(dummy_data)
 
-        for i in range(0, size / 1024):
+        for i in range(0, size // 1024):
             # write in 1kb blocks
             file_handle.write(dummy_data)
         file_handle.close()
