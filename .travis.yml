@@ -27,6 +27,9 @@ before_install:
 - dpkg-query -L sqlite3
 - cat /etc/php5/conf.d/pdo_sqlite.ini
 - cat /etc/php5/conf.d/sqlite3.ini
+- ls -la /etc/php5/fpm
+- ls -la /etc/php5/fpm/conf.d
+- grep -i sqlite /etc/php5/fpm/php.ini
 
 install:
   - pip install requests unittest-data-provider
