@@ -8,13 +8,14 @@ Makes it possible to access files on a remote ownCloud instance,
 share them or access application attributes.
 """
 
+from __future__ import division
 import datetime
 import time
-import urllib
-import urlparse
 import requests
 import xml.etree.ElementTree as ET
 import os
+import six
+from six.moves import urllib
 
 class ResponseError(Exception):
     def __init__(self, res):
@@ -64,33 +65,33 @@ class FileInfo():
 
     def get_name(self):
         """Returns the base name of the file (without path)
-        
+
         :returns: name of the file
         """
         return self.name
 
     def get_size(self):
         """Returns the size of the file
-        
+
         :returns: size of the file
         """
-        if (self.attributes.has_key('{DAV:}getcontentlength')):
+        if '{DAV:}getcontentlength' in self.attributes:
             return int(self.attributes['{DAV:}getcontentlength'])
         return None
 
     def get_etag(self):
         """Returns the file etag
-        
+
         :returns: file etag
         """
         return self.attributes['{DAV:}getetag']
 
     def get_content_type(self):
         """Returns the file content type
-        
+
         :returns: file content type
         """
-        if self.attributes.has_key('{DAV:}getcontenttype'):
+        if '{DAV:}getcontenttype' in self.attributes:
             return self.attributes['{DAV:}getcontenttype']
 
         if self.is_dir():
@@ -100,7 +101,7 @@ class FileInfo():
 
     def get_last_modified(self):
         """Returns the last modified time
-        
+
         :returns: last modified time
         :rtype: datetime object
         """
@@ -159,7 +160,7 @@ class Client():
         self.__verify_certs = kwargs.get('verify_certs', True)
         self.__single_session = kwargs.get('single_session', True)
 
-        url_components = urlparse.urlparse(url)
+        url_components = urllib.parse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
 
@@ -198,8 +199,8 @@ class Client():
 
     def file_info(self, path):
         """Returns the file info for the given remote file
-        
-        :param path: path to the remote file 
+
+        :param path: path to the remote file
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
@@ -212,8 +213,8 @@ class Client():
 
     def list(self, path):
         """Returns the listing/contents of the given remote directory
-        
-        :param path: path to the remote directory 
+
+        :param path: path to the remote directory
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
         :raises: ResponseError in case an HTTP error status was returned
@@ -277,7 +278,7 @@ class Client():
         """
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
-            + urllib.quote(remote_path)
+            + urllib.parse.quote(remote_path)
         res = self.__session.get(
                 url,
                 stream = True
@@ -416,14 +417,14 @@ class Client():
                     headers = headers
                     )
 
-        chunk_count = size / chunk_size
+        chunk_count = size // chunk_size
 
         if size % chunk_size > 0:
             chunk_count += 1
 
         if chunk_count > 1:
             headers['OC-CHUNKED'] = 1
-       
+
         for chunk_index in range(0, chunk_count):
             data = file_handle.read(chunk_size)
             if chunk_count > 1:
@@ -506,7 +507,7 @@ class Client():
         data = {}
         if perms:
             data['permissions'] = perms
-        if isinstance(password, basestring):
+        if isinstance(password, six.string_types):
             data['password'] = password
         if ((public_upload is not None) and (isinstance(public_upload, bool))):
             data['publicUpload'] = str(public_upload).lower()
@@ -527,7 +528,7 @@ class Client():
         :param remote_path_source: source file or folder to move
         :param remote_path_target: target file to which to move
         the source file. A target directory can also be specified
-        instead by appending a "/" 
+        instead by appending a "/"
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
@@ -536,7 +537,7 @@ class Client():
 
         remote_path_source = self.__normalize_path(remote_path_source)
         headers = {
-            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
+            'Destination': self.__webdav_url + urllib.parse.quote(self.__encode_string(remote_path_target))
         }
 
         return self.__make_dav_request(
@@ -607,7 +608,7 @@ class Client():
         :returns: array of shares or empty array if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
-        if not (isinstance(path, basestring)):
+        if not (isinstance(path, six.string_types)):
             return None
 
         data = 'shares'
@@ -621,7 +622,7 @@ class Client():
             subfiles = kwargs.get('subfiles', False)
             if (isinstance(subfiles, bool) and subfiles):
                 args['subfiles'] = subfiles
-            data += urllib.urlencode(args)
+            data += urllib.parse.urlencode(args)
 
         res = self.__make_ocs_request(
                 'GET',
@@ -657,7 +658,7 @@ class Client():
         """
         perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
         if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
-            or ((not isinstance(user, basestring)) or (user == ''))):
+            or ((not isinstance(user, six.string_types)) or (user == ''))):
             return False
 
         path = self.__normalize_path(path)
@@ -725,9 +726,9 @@ class Client():
         """
         path = 'getattribute'
         if app is not None:
-            path += '/' + urllib.quote(app, '')
+            path += '/' + urllib.parse.quote(app, '')
             if key is not None:
-                path += '/' + urllib.quote(self.__encode_string(key), '')
+                path += '/' + urllib.parse.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_PRIVATEDATA,
@@ -763,7 +764,7 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        path = 'setattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
+        path = 'setattribute/' + urllib.parse.quote(app, '') + '/' + urllib.parse.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'POST',
                 self.OCS_SERVICE_PRIVATEDATA,
@@ -784,7 +785,7 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        path = 'deleteattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
+        path = 'deleteattribute/' + urllib.parse.quote(app, '') + '/' + urllib.parse.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
                 'POST',
                 self.OCS_SERVICE_PRIVATEDATA,
@@ -816,7 +817,7 @@ class Client():
         :param s: str or unicode to encode
         :returns: encoded output as str
         """
-        if isinstance(s, unicode):
+        if isinstance(s, six.text_type):
             return s.encode('utf-8')
         return s
 
@@ -848,7 +849,7 @@ class Client():
 
         attributes = kwargs.copy()
 
-        if not attributes.has_key('headers'):
+        if not 'headers' in attributes:
             attributes['headers'] = {}
 
         attributes['headers']['OCS-APIREQUEST'] = 'true'
@@ -874,7 +875,7 @@ class Client():
         path = self.__normalize_path(path)
         res = self.__session.request(
             method,
-            self.__webdav_url + urllib.quote(self.__encode_string(path)),
+            self.__webdav_url + urllib.parse.quote(self.__encode_string(path)),
             **kwargs
         )
         if self.__debug:
@@ -906,9 +907,12 @@ class Client():
         :param el: ElementTree element containing a single DAV response
         :returns :class:`FileInfo`
         """
-        href = urllib.unquote(
-                self.__strip_dav_path(dav_response.find('{DAV:}href').text)
-                ).decode('utf-8')
+        href = urllib.parse.unquote(
+                self.__strip_dav_path(dav_response.find('{DAV:}href').text
+                    ))
+        if isinstance(href, six.binary_type):
+            href = href.decode('utf-8')
+
         file_type = 'file'
         if href[-1] == '/':
             file_type = 'dir'

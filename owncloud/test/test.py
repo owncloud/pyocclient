@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
+from __future__ import division
 import unittest
 from unittest_data_provider import data_provider
 import os
@@ -9,6 +10,7 @@ import owncloud
 import datetime
 import time
 import tempfile
+import six
 
 from config import Config
 
@@ -47,12 +49,13 @@ class TestFileAccess(unittest.TestCase):
 
     @staticmethod
     def __create_file(target_file, size):
-        file_handle = open(target_file, 'w')
+        file_handle = open(target_file, 'wb')
         dummy_data = ''
         for i in range(0, 1024):
             dummy_data += 'X'
+        dummy_data = six.b(dummy_data)
 
-        for i in range(0, size / 1024):
+        for i in range(0, size // 1024):
             # write in 1kb blocks
             file_handle.write(dummy_data)
         file_handle.close()
@@ -74,7 +77,7 @@ class TestFileAccess(unittest.TestCase):
         """Test reading remote file"""
         self.assertTrue(self.client.mkdir(self.test_root + subdir))
         self.assertTrue(self.client.put_file_contents(self.test_root + subdir + '/' + file_name, content))
-        self.assertEquals(self.client.get_file_contents(self.test_root + subdir + '/' + file_name), content)
+        self.assertEqual(self.client.get_file_contents(self.test_root + subdir + '/' + file_name), content)
 
     @data_provider(files_content)
     def test_get_file_info(self, file_name, content, subdir):
@@ -84,19 +87,19 @@ class TestFileAccess(unittest.TestCase):
 
         file_info = self.client.file_info(self.test_root + file_name)
         self.assertTrue(isinstance(file_info, owncloud.FileInfo))
-        self.assertEquals(file_info.get_name(), file_name)
-        self.assertEquals(file_info.get_size(), len(content))
+        self.assertEqual(file_info.get_name(), file_name)
+        self.assertEqual(file_info.get_size(), len(content))
         self.assertIsNotNone(file_info.get_etag())
-        self.assertEquals(file_info.get_content_type(), 'text/plain')
+        self.assertEqual(file_info.get_content_type(), 'text/plain')
         self.assertTrue(type(file_info.get_last_modified()) is datetime.datetime)
         self.assertFalse(file_info.is_dir())
 
         dir_info = self.client.file_info(self.test_root + subdir)
         self.assertTrue(isinstance(dir_info, owncloud.FileInfo))
-        self.assertEquals(dir_info.get_name(), subdir)
+        self.assertEqual(dir_info.get_name(), subdir)
         self.assertIsNone(dir_info.get_size())
         self.assertIsNotNone(dir_info.get_etag())
-        self.assertEquals(dir_info.get_content_type(), 'httpd/unix-directory')
+        self.assertEqual(dir_info.get_content_type(), 'httpd/unix-directory')
         self.assertTrue(type(dir_info.get_last_modified()) is datetime.datetime)
         self.assertTrue(dir_info.is_dir())
 
@@ -104,7 +107,7 @@ class TestFileAccess(unittest.TestCase):
         """Test getting file info for non existing file"""
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.file_info(self.test_root + 'unexist')
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     def test_get_file_listing(self):
         """Test getting file listing"""
@@ -116,12 +119,12 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.put_file_contents(self.test_root + 'subdir/in dir.txt', ''))
 
         listing = self.client.list(self.test_root)
-        self.assertEquals(len(listing), 5)
-        self.assertEquals(listing[0].get_name(), 'abc.txt')
-        self.assertEquals(listing[1].get_name(), 'file one.txt')
-        self.assertEquals(listing[2].get_name(), 'subdir')
-        self.assertEquals(listing[3].get_name(), 'zz+z.txt')
-        self.assertEquals(listing[4].get_name(), u'中文.txt')
+        self.assertEqual(len(listing), 5)
+        self.assertEqual(listing[0].get_name(), 'abc.txt')
+        self.assertEqual(listing[1].get_name(), 'file one.txt')
+        self.assertEqual(listing[2].get_name(), 'subdir')
+        self.assertEqual(listing[3].get_name(), 'zz+z.txt')
+        self.assertEqual(listing[4].get_name(), u'中文.txt')
 
         self.assertTrue(listing[2].is_dir())
         self.assertFalse(listing[3].is_dir())
@@ -130,7 +133,7 @@ class TestFileAccess(unittest.TestCase):
         """Test getting file listing for non existing directory"""
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.list(self.test_root + 'unexist')
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     @data_provider(files)
     def test_upload_small_file(self, file_name):
@@ -142,7 +145,7 @@ class TestFileAccess(unittest.TestCase):
 
         file_info = self.client.file_info(self.test_root + file_name)
         self.assertIsNotNone(file_info)
-        self.assertEquals(file_info.get_size(), 2 * 1024)
+        self.assertEqual(file_info.get_size(), 2 * 1024)
 
     def test_upload_two_chunks(self):
         """Test chunked upload with two chunks"""
@@ -154,7 +157,7 @@ class TestFileAccess(unittest.TestCase):
         file_info = self.client.file_info(self.test_root + 'chunk_test.dat')
 
         self.assertIsNotNone(file_info)
-        self.assertEquals(file_info.get_size(), 18 * 1024 * 1024)
+        self.assertEqual(file_info.get_size(), 18 * 1024 * 1024)
 
     @data_provider(files)
     def test_upload_big_file(self, file_name):
@@ -166,7 +169,7 @@ class TestFileAccess(unittest.TestCase):
 
         file_info = self.client.file_info(self.test_root + file_name)
         self.assertIsNotNone(file_info)
-        self.assertEquals(file_info.get_size(), 22 * 1024 * 1024)
+        self.assertEqual(file_info.get_size(), 22 * 1024 * 1024)
 
     def test_upload_timestamp(self):
         # TODO: test with keeping timestamp and not keeping it
@@ -200,14 +203,14 @@ class TestFileAccess(unittest.TestCase):
         temp_file = self.temp_dir + 'pyoctest.dat'
         self.assertTrue(self.client.mkdir(self.test_root + subdir))
         self.assertTrue(self.client.put_file_contents(self.test_root + subdir + '/' + file_name, content))
-       
+
         self.assertTrue(self.client.get_file(self.test_root + subdir + '/' + file_name, temp_file))
 
         f = open(temp_file, 'r')
         s = f.read()
         f.close()
         os.unlink(temp_file)
-        self.assertEquals(s, content)
+        self.assertEqual(s, content)
 
     def test_download_dir(self):
         import zipfile
@@ -224,8 +227,8 @@ class TestFileAccess(unittest.TestCase):
 
         zip_info = zipfile.ZipFile(temp_file)
         listing = zip_info.namelist()
-        
-        self.assertEquals(len(listing), 3)
+
+        self.assertEqual(len(listing), 3)
         os.unlink(temp_file)
 
     @data_provider(files_content)
@@ -236,7 +239,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.delete(self.test_root + subdir + '/' + file_name))
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.file_info(self.test_root + subdir + '/' + file_name)
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     @data_provider(files_content)
     def test_delete_dir(self, file_name, content, subdir):
@@ -246,10 +249,10 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.delete(self.test_root + subdir))
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.file_info(self.test_root + subdir + '/' + file_name)
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.file_info(self.test_root + subdir)
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     def test_move_rename_in_place(self):
         """Test rename in place"""
@@ -266,7 +269,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + 'renamed in place.txt'
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + 'renamed in place.txt'
             ),
@@ -293,7 +296,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + 'subdir/file renamed.txt'
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + 'subdir/file renamed.txt'
             ),
@@ -321,7 +324,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + 'subdir/'
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + 'subdir/movetodir.txt'
             ),
@@ -371,7 +374,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + u'更多中文.txt'
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + u'更多中文.txt'
             ),
@@ -397,7 +400,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + u'subdir/中文.txt'
             )
         )
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + u'subdir/中文.txt'
             ),
@@ -418,9 +421,9 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + 'move not possible.txt',
                 self.test_root + 'non-existing-dir/subdir/x.txt'
             )
-        self.assertEquals(e.exception.status_code, 409)
+        self.assertEqual(e.exception.status_code, 409)
 
-        self.assertEquals(
+        self.assertEqual(
             self.client.get_file_contents(
                 self.test_root + 'move not possible.txt'
             ),
@@ -439,7 +442,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))
         self.assertTrue(type(share_info.share_id) is int)
-        self.assertEquals(share_info.target_file, path)
+        self.assertEqual(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
 
@@ -447,7 +450,7 @@ class TestFileAccess(unittest.TestCase):
         """Test sharing a file with link"""
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.share_file_with_link(self.test_root + 'unexist.txt')
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     @data_provider(files)
     def test_share_with_user(self, file_name):
@@ -460,7 +463,7 @@ class TestFileAccess(unittest.TestCase):
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.UserShare))
-        self.assertEquals(share_info.share, path)
+        self.assertEqual(share_info.share, path)
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(share_info.perms, 31)
         self.assertTrue(self.client.delete(path))
@@ -482,7 +485,7 @@ class TestFileAccess(unittest.TestCase):
         """Test is_shared - path does not exist"""
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.is_shared(self.test_root + 'does_not_exist')
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     def test_is_shared_not_shared_path(self):
         """Test is_shared - path does exist, but it's not shared yet"""
@@ -504,7 +507,7 @@ class TestFileAccess(unittest.TestCase):
         """Test get_shares - path does not exist"""
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.get_shares(self.test_root + 'does_not_exist')
-        self.assertEquals(e.exception.status_code, 404)
+        self.assertEqual(e.exception.status_code, 404)
 
     @data_provider(files)
     def test_get_shares(self, file_name):
@@ -520,7 +523,7 @@ class TestFileAccess(unittest.TestCase):
         with self.assertRaises(owncloud.ResponseError) as e:
             shares = self.client.get_shares(self.test_root + file_name, subfiles=True)
         self.assertIsNone(shares)
-        self.assertEquals(e.exception.status_code, 400)
+        self.assertEqual(e.exception.status_code, 400)
 
         shares = self.client.get_shares(self.test_root, reshares=True, subfiles=True)
         self.assertIsNotNone(shares)
@@ -627,8 +630,8 @@ class TestPrivateDataAccess(unittest.TestCase):
         """Test getting an attribute"""
         self.assertTrue(self.client.set_attribute(self.app_name, attr1, value1))
 
-        self.assertEquals(self.client.get_attribute(self.app_name, attr1), value1)
-        self.assertEquals(self.client.get_attribute(self.app_name), [(attr1, value1)])
+        self.assertEqual(self.client.get_attribute(self.app_name, attr1), value1)
+        self.assertEqual(self.client.get_attribute(self.app_name), [(attr1, value1)])
         self.assertTrue(self.client.delete_attribute(self.app_name, attr1))
 
     def test_get_non_existing_attribute(self):
@@ -639,20 +642,20 @@ class TestPrivateDataAccess(unittest.TestCase):
     def test_set_attribute_empty(self, attr1, value1):
         """Test setting an attribute to an empty value"""
         self.assertTrue(self.client.set_attribute(self.app_name, attr1, ''))
-        self.assertEquals(self.client.get_attribute(self.app_name, attr1), '')
-        self.assertEquals(self.client.get_attribute(self.app_name), [(attr1, '')])
+        self.assertEqual(self.client.get_attribute(self.app_name, attr1), '')
+        self.assertEqual(self.client.get_attribute(self.app_name), [(attr1, '')])
         self.assertTrue(self.client.delete_attribute(self.app_name, attr1))
 
     @data_provider(attrs)
     def test_delete_attribute(self, attr1, value1):
         """Test deleting an attribute"""
         self.assertTrue(self.client.set_attribute(self.app_name, attr1, value1))
-        self.assertEquals(self.client.get_attribute(self.app_name, attr1), value1)
+        self.assertEqual(self.client.get_attribute(self.app_name, attr1), value1)
 
         self.assertTrue(self.client.delete_attribute(self.app_name, attr1))
 
         self.assertIsNone(self.client.get_attribute(self.app_name, attr1))
-        self.assertEquals(self.client.get_attribute(self.app_name), [])
+        self.assertEqual(self.client.get_attribute(self.app_name), [])
 
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
