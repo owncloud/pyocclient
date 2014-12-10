@@ -23,6 +23,10 @@ before_install:
 - bash travis-build/install_oc.sh $CORE_BRANCH
 - sudo chown -R www-data:www-data core/{config,data}
 - sudo chmod -R g+w core/{config,data}
+- dpkg-query -L php5-sqlite
+- dpkg-query -L sqlite3
+- cat /etc/php5/conf.d/pdo_sqlite.ini
+- cat /etc/php5/conf.d/sqlite3.ini
 
 install:
   - pip install requests unittest-data-provider
