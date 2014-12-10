@@ -8,6 +8,7 @@ Changelog
 - Travis integration [Gomez]
 - Added session handling workaround for OC 5 [PVince81]
 - Fixed many issues related to unicode path names [PVince81]
+- Client now works properly on Windows [PVince81]
 
 0.1
 ---
