@@ -16,7 +16,7 @@ before_install:
 # enable php-fpm
 - sudo a2enmod rewrite actions fastcgi alias
 - echo "cgi.fix_pathinfo = 1" | sudo tee --append /etc/php5/fpm/php.ini
-- sudo service php5-fpm start
+- sudo service php5-fpm restart
 # configure apache virtual hosts
 - sudo cp -f travis-build/travis-ci-apache /etc/apache2/sites-available/default
 - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
