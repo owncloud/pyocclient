@@ -3,7 +3,7 @@
   DocumentRoot %TRAVIS_BUILD_DIR%/core
 
   <Directory "%TRAVIS_BUILD_DIR%/core">
-    Options Indexes FollowSymLinks MultiViews ExecCGI
+    Options Indexes FollowSymLinks MultiViews ExecCGI -Limit
     AllowOverride All
     Require all granted
 #    Order deny,allow
