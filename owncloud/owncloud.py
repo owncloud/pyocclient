@@ -155,7 +155,7 @@ class Client():
 
         self.url = url
         self.__session = None
-        self.__debug = kwargs.get('debug', False)
+        self.__debug = kwargs.get('debug', True)
         self.__verify_certs = kwargs.get('verify_certs', True)
         self.__single_session = kwargs.get('single_session', True)
 
