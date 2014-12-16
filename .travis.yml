@@ -10,7 +10,7 @@ env:
 
 before_install:
 - sudo apt-get update
-- sudo apt-get install apache2 php5 php5-cli php5-sqlite php5-fpm php5-gd php5-json sqlite3 libapache2-mod-fastcgi
+- sudo apt-get install apache2 php5 php5-cli php5-sqlite php5-fpm php5-gd php5-json php5-mcrypt sqlite3 libapache2-mod-fastcgi
 # enable php-fpm
 - sudo a2enmod rewrite actions fastcgi alias
 - echo "cgi.fix_pathinfo = 1" | sudo tee --append /etc/php5/fpm/php.ini
