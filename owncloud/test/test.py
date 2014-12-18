@@ -598,7 +598,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.update_share(share_id, password="2hard2guess"))
         share_info = self.client.get_shares(path)[0]
         self.assertTrue('share_with_displayname' in share_info)
-        self.assertTrue(share_info['share_with_displayname'].startswith("$2"))
+        self.assertIsNotNone(share_info['share_with_displayname'])
         self.assertTrue(self.client.delete_share(share_id))
 
 
