@@ -134,8 +134,10 @@ class FileInfo():
 class Client():
     """ownCloud client"""
 
+    OCS_BASEPATH = 'ocs/v1.php/'
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
+    OCS_SERVICE_CLOUD = 'cloud'
 
     # constants from lib/public/constants.php
     OCS_PERMISSION_READ = 1
@@ -154,8 +156,6 @@ class Client():
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
-        :param single_session: True to use a single session for every call
-            (default, recommended), False to reauthenticate every call (use with ownCloud 5)
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
         if not url[-1] == '/':
@@ -165,11 +165,13 @@ class Client():
         self.__session = None
         self.__debug = kwargs.get('debug', False)
         self.__verify_certs = kwargs.get('verify_certs', True)
-        self.__single_session = kwargs.get('single_session', True)
 
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
+
+        self.__capabilities = None
+        self.__version = None
 
     def login(self, user_id, password):
         """Authenticate to ownCloud.
@@ -183,16 +185,25 @@ class Client():
         self.__session = requests.session()
         self.__session.verify = self.__verify_certs
         self.__session.auth = (user_id, password)
-        # TODO: use another path to prevent that the server renders the file list page
-        res = self.__session.get(self.url)
-        if res.status_code == 200:
-            if self.__single_session:
-                # Keep the same session, no need to re-auth every call
-                self.__session.auth = None
-            return
-        self.__session.close()
-        self.__session = None
-        raise ResponseError(res)
+        try:
+            # this will make an OCS API call but also
+            # implicit authenticate with basic auth
+            # through self.__session.auth
+            self.__update_capabilities()
+        except ResponseError as e:
+            self.__session.close()
+            self.__session = None
+            raise e
+
+        version_parts = self.get_version().split('.')
+        major_version = int(version_parts[0])
+        # for OC <= 5 the session needs to be re-authenticated
+        # due to bugs in the OCS API
+        if major_version < 5:
+            raise Exception('ownCloud version from the server is too old, must be >= 5')
+        if major_version >= 6:
+            # Keep the same session, no need to re-auth every call
+            self.__session.auth = None
 
     def logout(self):
         """Log out the authenticated user and close the session.
@@ -804,6 +815,54 @@ class Client():
             return True
         raise ResponseError(res)
 
+    def get_version(self):
+        """Gets the ownCloud version of the connected server
+
+        :returns: ownCloud version as string
+        """
+        if self.__version is None:
+            self.__update_capabilities()
+        return self.__version
+
+    def get_capabilities(self):
+        """Gets the ownCloud app capabilities
+
+        :returns: capabilities dictionary that maps from
+        app name to another dictionary containing the capabilities
+        """
+        if self.__capabilities is None:
+            self.__update_capabilities()
+        return self.__capabilities
+
+    def __update_capabilities(self):
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'capabilities'
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+
+            data_el = tree.find('data')
+            apps = {}
+            for app_el in data_el.find('capabilities'):
+                app_caps = {}
+                for cap_el in app_el:
+                    app_caps[cap_el.tag] = cap_el.text
+                apps[app_el.tag] = app_caps
+
+            self.__capabilities = apps
+
+            version_el = data_el.find('version/string')
+            edition_el = data_el.find('version/edition')
+            self.__version = version_el.text
+            if edition_el.text is not None:
+                self.__version += '-' + edition_el.text
+
+            return self.__capabilities 
+        raise ResponseError(res)
+
     @staticmethod
     def __normalize_path(path):
         """Makes sure the path starts with a "/"
@@ -850,7 +909,7 @@ class Client():
         """
         slash = ''
         if service: slash = '/'
-        path = 'ocs/v1.php/' + service + slash + action
+        path = self.OCS_BASEPATH + service + slash + action
         if self.__debug:
             print('OCS request: %s %s' % (method, self.url + path))
 

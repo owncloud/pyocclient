@@ -30,7 +30,7 @@ class TestFileAccess(unittest.TestCase):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
         os.mkdir(self.temp_dir)
 
-        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.test_root = Config['test_root']
         if not self.test_root[-1] == '/':
@@ -610,7 +610,7 @@ class TestPrivateDataAccess(unittest.TestCase):
     )
 
     def setUp(self):
-        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.app_name = Config['app_name']
 
@@ -664,6 +664,21 @@ class TestGetConfig(unittest.TestCase):
     def test_get_config(self):
         """Test get_config() function"""
         self.assertIsNotNone(self.client.get_config())
+
+    def test_get_version(self):
+        """Test get_version() function"""
+        version = self.client.get_version()
+        self.assertIsNotNone(version)
+        version_parts = version.split('.')
+        self.assertGreaterEqual(int(version_parts[0]), 5)
+
+    def test_get_capabilities(self):
+        """Test get_capabilities() function"""
+        caps = self.client.get_capabilities()
+        # files app is always enabled
+        self.assertIsNotNone(caps['files'])
+        # and always has big file chunking enabled
+        self.assertEquals(caps['files']['bigfilechunking'], '1')
 
     def tearDown(self):
         self.client.logout()
