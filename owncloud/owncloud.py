@@ -52,6 +52,22 @@ class HTTPResponseError(ResponseError):
     def __init__(self, res):
         ResponseError.__init__(self,res, "HTTP")
 
+class ShareInfo():
+    """Share information"""
+    def __init__(self, share_info):
+        self.share_info = share_info
+
+    def __str__(self):
+        keys_cnt = len(self.share_info)
+        keys_idx = 0
+        info = ''
+        for k, v in self.share_info.iteritems():
+            info += '%s=%s' % (k, v)
+            keys_idx += 1
+            if (keys_idx < keys_cnt):
+                info += ','
+        return 'ShareInfo(%s)' % info
+
 class PublicShare():
     """Public share information"""
 
@@ -735,6 +751,32 @@ class Client():
                 raise e
             return False
         return False
+
+    def get_share(self, share_id):
+        """Returns share information about known share
+
+        :param share_id: id of the share to be checked
+        :returns: instance of ShareInfo class
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if (share_id is None) or not (isinstance(share_id, int)):
+            return None
+
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                'shares/' + str(share_id)
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+            data_el = tree.find('data')
+            share_info = {}
+            for info in data_el[0]:
+                if info.text is not None:
+                    share_info[info.tag] = info.text
+            return ShareInfo(share_info)
+        raise ResponseError(res)
 
     def get_shares(self, path='', **kwargs):
         """Returns array of shares
