@@ -58,15 +58,10 @@ class ShareInfo():
         self.share_info = share_info
 
     def __str__(self):
-        keys_cnt = len(self.share_info)
-        keys_idx = 0
         info = ''
         for k, v in self.share_info.iteritems():
-            info += '%s=%s' % (k, v)
-            keys_idx += 1
-            if (keys_idx < keys_cnt):
-                info += ','
-        return 'ShareInfo(%s)' % info
+            info += '%s=%s,' % (k, v)
+        return 'ShareInfo(%s)' % info[:-1]
 
 class PublicShare():
     """Public share information"""
