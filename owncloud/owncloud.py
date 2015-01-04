@@ -57,11 +57,100 @@ class ShareInfo():
     def __init__(self, share_info):
         self.share_info = share_info
 
+    def get_id(self):
+        if 'id' in self.share_info:
+            return self.share_info['id']
+        return None
+
+    def get_item_type(self):
+        if 'item_type' in self.share_info:
+            return self.share_info['item_type']
+        return None
+
+    def get_item_source(self):
+        if 'item_source' in self.share_info:
+            return self.share_info['item_source']
+        return None
+
+    def get_parent(self):
+        if 'parent' in self.share_info:
+            return self.share_info['parent']
+        return None
+
+    def get_share_type(self):
+        if 'share_type' in self.share_info:
+            return self.share_info['share_type']
+        return None
+
+    def get_type(self):
+        return self.get_share_type()
+
+    def get_share_with(self):
+        if 'share_with' in self.share_info:
+            return self.share_info['share_with']
+        return None
+
+    def get_with(self):
+        return self.get_share_with()
+
+    def get_file_source(self):
+        if 'file_source' in self.share_info:
+            return self.share_info['file_source']
+        return None
+
+    def get_path(self):
+        if 'path' in self.share_info:
+            return self.share_info['path']
+        return None
+
+    def get_permissions(self):
+        if 'permissions' in self.share_info:
+            return self.share_info['permissions']
+        return None
+
+    def get_stime(self):
+        if 'stime' in self.share_info:
+            return self.share_info['stime']
+        return None
+
+    def get_expiration(self):
+        if 'expiration' in self.share_info:
+            return self.share_info['expiration']
+        return None
+
+    def get_token(self):
+        if 'token' in self.share_info:
+            return self.share_info['token']
+        return None
+
+    def get_storage(self):
+        if 'storage' in self.share_info:
+            return self.share_info['storage']
+        return None
+
+    def get_mail_send(self):
+        if 'mail_send' in self.share_info:
+            return self.share_info['mail_send']
+        return None
+
+    def get_uid_owner(self):
+        if 'uid_owner' in self.share_info:
+            return self.share_info['uid_owner']
+        return None
+
+    def get_displayname_owner(self):
+        if 'displayname_owner' in self.share_info:
+            return self.share_info['displayname_owner']
+        return None
+
     def __str__(self):
         info = ''
         for k, v in self.share_info.iteritems():
             info += '%s=%s,' % (k, v)
         return 'ShareInfo(%s)' % info[:-1]
+
+    def __repr__(self):
+        return self.__str__()
 
 class PublicShare():
     """Public share information"""
@@ -768,8 +857,7 @@ class Client():
             data_el = tree.find('data')
             share_info = {}
             for info in data_el[0]:
-                if info.text is not None:
-                    share_info[info.tag] = info.text
+                share_info[info.tag] = info.text
             return ShareInfo(share_info)
         raise ResponseError(res)
 
