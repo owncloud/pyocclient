@@ -59,12 +59,12 @@ class ShareInfo():
 
     def get_id(self):
         if 'id' in self.share_info:
-            return self.share_info['id']
+            return int(self.share_info['id'])
         return None
 
     def get_item_type(self):
         if 'item_type' in self.share_info:
-            return self.share_info['item_type']
+            return int(self.share_info['item_type'])
         return None
 
     def get_item_source(self):
@@ -141,6 +141,11 @@ class ShareInfo():
     def get_displayname_owner(self):
         if 'displayname_owner' in self.share_info:
             return self.share_info['displayname_owner']
+        return None
+
+    def get_url(self):
+        if 'url' in self.share_info:
+            return self.share_info['url']
         return None
 
     def __str__(self):
@@ -854,11 +859,7 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
-            data_el = tree.find('data')
-            share_info = {}
-            for info in data_el[0]:
-                share_info[info.tag] = info.text
-            return ShareInfo(share_info)
+            return self.__get_shareinfo(tree.find('data'))
         raise ResponseError(res)
 
     def get_shares(self, path='', **kwargs):
@@ -1720,4 +1721,16 @@ class Client():
             else:
                 return_dict[el.tag] = el.text
         return return_dict
+    
+    def __get_shareinfo(self, data_el):
+        """Simple helper which returns instance of ShareInfo class
 
+        :param data_el: 'data' element extracted from __make_ocs_request
+        :returns: instance of ShareInfo class
+        """
+        if (data_el is None) or not (isinstance(data_el, ET.Element)):
+            return None
+        share_info = {}
+        for info in data_el[0]:
+            share_info[info.tag] = info.text
+        return ShareInfo(share_info)
