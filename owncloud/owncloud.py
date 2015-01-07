@@ -32,29 +32,21 @@ class ShareInfo():
         self.share_info = share_info
 
     def get_id(self):
-        if 'id' in self.share_info:
-            return int(self.share_info['id'])
-        return None
+        return self.__get_int('id')
 
     def get_item_type(self):
         if 'item_type' in self.share_info:
-            return int(self.share_info['item_type'])
+            return self.share_info['item_type']
         return None
 
     def get_item_source(self):
-        if 'item_source' in self.share_info:
-            return self.share_info['item_source']
-        return None
+        return self.__get_int('item_source')
 
     def get_parent(self):
-        if 'parent' in self.share_info:
-            return self.share_info['parent']
-        return None
+        return self.__get_int('parent')
 
     def get_share_type(self):
-        if 'share_type' in self.share_info:
-            return self.share_info['share_type']
-        return None
+        return self.__get_int('share_type')
 
     def get_type(self):
         return self.get_share_type()
@@ -68,9 +60,7 @@ class ShareInfo():
         return self.get_share_with()
 
     def get_file_source(self):
-        if 'file_source' in self.share_info:
-            return self.share_info['file_source']
-        return None
+        return self.__get_int('file_source')
 
     def get_path(self):
         if 'path' in self.share_info:
@@ -78,19 +68,13 @@ class ShareInfo():
         return None
 
     def get_permissions(self):
-        if 'permissions' in self.share_info:
-            return self.share_info['permissions']
-        return None
+        return self.__get_int('permissions')
 
     def get_stime(self):
-        if 'stime' in self.share_info:
-            return self.share_info['stime']
-        return None
+        return self.__get_int('stime')
 
     def get_expiration(self):
-        if 'expiration' in self.share_info:
-            return self.share_info['expiration']
-        return None
+        return self.__get_int('expiration')
 
     def get_token(self):
         if 'token' in self.share_info:
@@ -98,14 +82,10 @@ class ShareInfo():
         return None
 
     def get_storage(self):
-        if 'storage' in self.share_info:
-            return self.share_info['storage']
-        return None
+        return self.__get_int('storage')
 
     def get_mail_send(self):
-        if 'mail_send' in self.share_info:
-            return self.share_info['mail_send']
-        return None
+        return self.__get_int('mail_send')
 
     def get_uid_owner(self):
         if 'uid_owner' in self.share_info:
@@ -130,6 +110,15 @@ class ShareInfo():
 
     def __repr__(self):
         return self.__str__()
+
+    def __get_int(self, key):
+        """Simple wrapper which converts value to Integer
+           in silently manner (w/o raising exception)"""
+        try:
+            value = int(self.share_info[key])
+            return value
+        except:
+            return None
 
 class PublicShare():
     """Public share information"""
