@@ -12,19 +12,19 @@ import tempfile
 
 from config import Config
 
-class TestFileAccess(unittest.TestCase):
+files = lambda: (
+    ['test.txt'],
+    ['test space and +.txt'],
+    [u'文件.txt']
+)
 
-    files = lambda: (
-        ['test.txt'],
-        ['test space and +.txt'],
-        [u'文件.txt']
-    )
+files_content = lambda: (
+    ['test.txt', 'Hello world!', 'subdir'],
+    ['test space and +.txt', 'Hello space with+plus!', 'subdir with space + plus'],
+    [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
+)
 
-    files_content = lambda: (
-        ['test.txt', 'Hello world!', 'subdir'],
-        ['test space and +.txt', 'Hello space with+plus!', 'subdir with space + plus'],
-        [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
-    )
+class TestBaseFileTests(unittest.TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
@@ -38,12 +38,17 @@ class TestFileAccess(unittest.TestCase):
         if not self.test_root[0] == '/':
             self.test_root = '/' + self.test_root
         self.client.mkdir(self.test_root)
-        self.share2user = Config['owncloud_share2user']
 
     def tearDown(self):
         self.client.delete(self.test_root)
         self.client.logout()
         shutil.rmtree(self.temp_dir)
+
+class TestFileAccess(TestBaseFileTests):
+
+    def setUp(self):
+        super(TestFileAccess, self).setUp()
+        self.share2user = Config['owncloud_share2user']
 
     @staticmethod
     def __create_file(target_file, size):
@@ -600,6 +605,75 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue('share_with_displayname' in share_info)
         self.assertIsNotNone(share_info['share_with_displayname'])
         self.assertTrue(self.client.delete_share(share_id))
+
+class TestFileTags(TestBaseFileTests):
+    tag_names = lambda: (
+        [['tag1', 'tag2']],
+        [['标签1', '标签2']],
+    )
+
+    def setUp(self):
+        super(TestFileTags, self).setUp()
+
+        self.test_file = self.test_root + 'test.txt'
+        self.client.put_file_contents(self.test_file, 'dummy data')
+
+    def tearDown(self):
+        # TODO: auto-delete tags whenever such API becomes available
+        self.client.set_extended_file_info(self.test_file, tags=[], favorite=False)
+        super(TestFileTags, self).tearDown()
+
+    def test_get_no_extended_info(self):
+        info = self.client.file_info(self.test_file)
+        self.assertIsInstance(info, owncloud.FileInfo)
+
+        results = self.client.list(self.test_root)
+        self.assertIsInstance(results[0], owncloud.FileInfo)
+
+    def test_get_extended_info(self):
+        self.client.set_extended_file_info(self.test_file, tags=['abc'], favorite=True)
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertIsInstance(info, owncloud.ExtendedFileInfo)
+
+        results = self.client.list(self.test_root, extended_info=True)
+        self.assertIsInstance(results[0], owncloud.ExtendedFileInfo)
+
+        self.assertEquals(results[0].get_tags(), ['abc'])
+        self.assertTrue(results[0].is_favorite(), True)
+
+    def test_set_favorite(self):
+        self.client.set_extended_file_info(self.test_file, favorite=True)
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertTrue(info.is_favorite())
+
+        # tags unchanged
+        info = self.client.set_extended_file_info(self.test_file, tags=['abc'])
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertTrue(info.is_favorite())
+
+        self.client.set_extended_file_info(self.test_file, favorite=False)
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertFalse(info.is_favorite())
+
+    @data_provider(tag_names)
+    def test_set_tags(self, tags):
+        self.client.set_extended_file_info(self.test_file, tags=tags)
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertEquals(info.get_tags(), tags)
+
+        # tags unchanged
+        self.client.set_extended_file_info(self.test_file, favorite=True)
+
+        info = self.client.file_info(self.test_file, extended_info=True)
+        self.assertEquals(info.get_tags(), tags)
+
+        self.client.set_extended_file_info(self.test_file, tags=[])
+        self.assertEquals(info.get_tags(), [])
 
 
 class TestPrivateDataAccess(unittest.TestCase):
