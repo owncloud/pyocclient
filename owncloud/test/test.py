@@ -502,6 +502,37 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(self.client.delete(path))
 
+    @data_provider(files)
+    def test_get_share(self, file_name):
+        """Test get_share()"""
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        sinfo_run = self.client.share_file_with_link(path)
+        sinfo = self.client.get_share(sinfo_run.share_id)
+        self.assertIsInstance(sinfo, owncloud.ShareInfo)
+        share_id = sinfo.get_id()
+        self.assertGreater(share_id, 0)
+        self.assertEquals(sinfo_run.share_id, share_id)
+        self.assertIsInstance(sinfo.get_id(), int)
+        self.assertIsInstance(sinfo.get_share_type(), int)
+        self.assertIsNone(sinfo.get_share_with())
+        self.assertIsInstance(sinfo.get_file_source(), int)
+        self.assertIsInstance(sinfo.get_path(), basestring)
+        self.assertIsInstance(sinfo.get_permissions(), int)
+        self.assertIsInstance(sinfo.get_share_time(), int)
+        self.assertIsNone(sinfo.get_expiration())
+        self.assertIsInstance(sinfo.get_token(), basestring)
+        self.assertIsInstance(sinfo.get_uid_owner(), basestring)
+        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+        self.assertIsNone(sinfo.get_url())
+
+    def test_get_share_non_existing(self):
+        """Test get_share - share with specified id does not exist"""
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.get_share(-1)
+        self.assertEquals(e.exception.status_code, 404)
+
     def test_get_shares_non_existing_path(self):
         """Test get_shares - path does not exist"""
         with self.assertRaises(owncloud.ResponseError) as e:

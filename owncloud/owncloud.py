@@ -26,6 +26,82 @@ class ResponseError(Exception):
         Exception.__init__(self, "HTTP error: %i" % code)
         self.status_code = code
 
+class ShareInfo():
+    """Share information"""
+    def __init__(self, share_info):
+        self.share_info = {}
+        # remove unneeded attributes
+        del_attrs = [ 'item_type', 'item_source', 'parent', 'storage', 'mail_send' ]
+        for k, v in share_info.iteritems():
+            if k not in del_attrs:
+                self.share_info[k] = v
+
+    def get_id(self):
+        return self.__get_int('id')
+
+    def get_share_type(self):
+        return self.__get_int('share_type')
+
+    def get_share_with(self):
+        if 'share_with' in self.share_info:
+            return self.share_info['share_with']
+        return None
+
+    def get_file_source(self):
+        return self.__get_int('file_source')
+
+    def get_path(self):
+        if 'path' in self.share_info:
+            return self.share_info['path']
+        return None
+
+    def get_permissions(self):
+        return self.__get_int('permissions')
+
+    def get_share_time(self):
+        return self.__get_int('stime')
+
+    def get_expiration(self):
+        return self.__get_int('expiration')
+
+    def get_token(self):
+        if 'token' in self.share_info:
+            return self.share_info['token']
+        return None
+
+    def get_uid_owner(self):
+        if 'uid_owner' in self.share_info:
+            return self.share_info['uid_owner']
+        return None
+
+    def get_displayname_owner(self):
+        if 'displayname_owner' in self.share_info:
+            return self.share_info['displayname_owner']
+        return None
+
+    def get_url(self):
+        if 'url' in self.share_info:
+            return self.share_info['url']
+        return None
+
+    def __str__(self):
+        info = ''
+        for k, v in self.share_info.iteritems():
+            info += '%s=%s,' % (k, v)
+        return 'ShareInfo(%s)' % info[:-1]
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __get_int(self, key):
+        """Simple wrapper which converts value to Integer
+           in silently manner (w/o raising exception)"""
+        try:
+            value = int(self.share_info[key])
+            return value
+        except:
+            return None
+
 class PublicShare():
     """Public share information"""
     def __init__(self, share_id, target_file, link, token):
@@ -604,6 +680,27 @@ class Client():
             return False
         return False
 
+    def get_share(self, share_id):
+        """Returns share information about known share
+
+        :param share_id: id of the share to be checked
+        :returns: instance of ShareInfo class
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if (share_id is None) or not (isinstance(share_id, int)):
+            return None
+
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                'shares/' + str(share_id)
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+            return self.__get_shareinfo(tree.find('data'))
+        raise ResponseError(res)
+
     def get_shares(self, path='', **kwargs):
         """Returns array of shares
 
@@ -939,3 +1036,15 @@ class Client():
             return path[len(self.__davpath):]
         return path
 
+    def __get_shareinfo(self, data_el):
+        """Simple helper which returns instance of ShareInfo class
+
+        :param data_el: 'data' element extracted from __make_ocs_request
+        :returns: instance of ShareInfo class
+        """
+        if (data_el is None) or not (isinstance(data_el, ET.Element)):
+            return None
+        share_info = {}
+        for info in data_el[0]:
+            share_info[info.tag] = info.text
+        return ShareInfo(share_info)
