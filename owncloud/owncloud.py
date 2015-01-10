@@ -29,35 +29,23 @@ class ResponseError(Exception):
 class ShareInfo():
     """Share information"""
     def __init__(self, share_info):
-        self.share_info = share_info
+        self.share_info = {}
+        # remove unneeded attributes
+        del_attrs = [ 'item_type', 'item_source', 'parent', 'storage', 'mail_send' ]
+        for k, v in share_info.iteritems():
+            if k not in del_attrs:
+                self.share_info[k] = v
 
     def get_id(self):
         return self.__get_int('id')
 
-    def get_item_type(self):
-        if 'item_type' in self.share_info:
-            return self.share_info['item_type']
-        return None
-
-    def get_item_source(self):
-        return self.__get_int('item_source')
-
-    def get_parent(self):
-        return self.__get_int('parent')
-
     def get_share_type(self):
         return self.__get_int('share_type')
-
-    def get_type(self):
-        return self.get_share_type()
 
     def get_share_with(self):
         if 'share_with' in self.share_info:
             return self.share_info['share_with']
         return None
-
-    def get_with(self):
-        return self.get_share_with()
 
     def get_file_source(self):
         return self.__get_int('file_source')
@@ -70,7 +58,7 @@ class ShareInfo():
     def get_permissions(self):
         return self.__get_int('permissions')
 
-    def get_stime(self):
+    def get_share_time(self):
         return self.__get_int('stime')
 
     def get_expiration(self):
@@ -80,12 +68,6 @@ class ShareInfo():
         if 'token' in self.share_info:
             return self.share_info['token']
         return None
-
-    def get_storage(self):
-        return self.__get_int('storage')
-
-    def get_mail_send(self):
-        return self.__get_int('mail_send')
 
     def get_uid_owner(self):
         if 'uid_owner' in self.share_info:
