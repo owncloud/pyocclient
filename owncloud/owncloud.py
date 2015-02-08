@@ -54,41 +54,82 @@ class HTTPResponseError(ResponseError):
 
 class ShareInfo():
     """Share information"""
+
     def __init__(self, share_info):
         self.share_info = {}
         # remove unneeded attributes
-        del_attrs = [ 'item_type', 'item_source', 'parent', 'storage', 'mail_send' ]
+        del_attrs = ['item_type', 'item_source', 'file_source', 'parent', 'storage', 'mail_send']
         for k, v in share_info.iteritems():
             if k not in del_attrs:
                 self.share_info[k] = v
 
     def get_id(self):
+        """Returns the id of the share
+
+        :returns: id of the share
+        """
         return self.__get_int('id')
 
     def get_share_type(self):
+        """Returns the type of the share.
+        See OCS_SHARE_TYPE_* constants.
+
+        :returns: share type
+        """
         return self.__get_int('share_type')
 
     def get_share_with(self):
+        """Returns the share recipient.
+        If share type is OCS_SHARE_TYPE_USER, then the recipient is the name of the user.
+        For OCS_SHARE_TYPE_GROUP it is the name of the group.
+        Otherwise this value is None.
+
+        :returns: name of the share recipient
+        """
         if 'share_with' in self.share_info:
             return self.share_info['share_with']
         return None
 
-    def get_file_source(self):
-        return self.__get_int('file_source')
-
     def get_path(self):
+        """Returns the path of the shared file/folder relative to the
+        caller's filesystem.
+
+        :returns: path to the shared file/folder
+        """
         if 'path' in self.share_info:
             return self.share_info['path']
         return None
 
     def get_permissions(self):
+        """Returns the share permissions.
+        See OCS_PERMISSION_* constants.
+
+        :returns: share permissions
+        """
         return self.__get_int('permissions')
 
     def get_share_time(self):
-        return self.__get_int('stime')
+        """Returns the share time.
+
+        :returns: share timestamp
+        :rtype: datetime object
+        """
+        return datetime.datetime.fromtimestamp(
+            self.__get_int('stime')
+        )
 
     def get_expiration(self):
-        return self.__get_int('expiration')
+        """Returns the expiration date.
+
+        :returns: expiration date
+        :rtype: datetime object
+        """
+        exp = self.__get_int('expiration')
+        if exp is not None:
+            return datetime.datetime.fromtimestamp(
+                exp
+            )
+        return None
 
     def get_token(self):
         if 'token' in self.share_info:
@@ -96,18 +137,21 @@ class ShareInfo():
         return None
 
     def get_uid_owner(self):
+        """Returns the user id of the owner.
+
+        :returns: owner user id
+        """
         if 'uid_owner' in self.share_info:
             return self.share_info['uid_owner']
         return None
 
     def get_displayname_owner(self):
+        """Returns the display name of the owner.
+
+        :returns: display name of owner
+        """
         if 'displayname_owner' in self.share_info:
             return self.share_info['displayname_owner']
-        return None
-
-    def get_url(self):
-        if 'url' in self.share_info:
-            return self.share_info['url']
         return None
 
     def __str__(self):

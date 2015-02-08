@@ -656,8 +656,38 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
-    def test_get_share(self, file_name):
-        """Test get_share()"""
+    def test_get_share_user(self, file_name):
+        """Test get_share() for user share"""
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        sinfo_run = self.client.share_file_with_user(
+            path,
+            self.share2user,
+            perms=self.client.OCS_PERMISSION_READ | self.client.OCS_PERMISSION_SHARE
+        )
+        sinfo = self.client.get_share(sinfo_run.share_id)
+        self.assertIsInstance(sinfo, owncloud.ShareInfo)
+        share_id = sinfo.get_id()
+        self.assertGreater(share_id, 0)
+        self.assertEquals(sinfo_run.share_id, share_id)
+        self.assertIsInstance(sinfo.get_id(), int)
+        self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_USER)
+        self.assertEquals(sinfo.get_share_with(), self.share2user)
+        self.assertEquals(sinfo.get_path(), path)
+        self.assertEquals(
+            sinfo.get_permissions(),
+            self.client.OCS_PERMISSION_READ | self.client.OCS_PERMISSION_SHARE
+        )
+        self.assertIsInstance(sinfo.get_share_time(), datetime.datetime)
+        self.assertIsNone(sinfo.get_expiration())
+        self.assertIsNone(sinfo.get_token())
+        self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
+        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+
+    @data_provider(files)
+    def test_get_share_public_link(self, file_name):
+        """Test get_share() for public link share"""
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
@@ -668,17 +698,15 @@ class TestFileAccess(unittest.TestCase):
         self.assertGreater(share_id, 0)
         self.assertEquals(sinfo_run.share_id, share_id)
         self.assertIsInstance(sinfo.get_id(), int)
-        self.assertIsInstance(sinfo.get_share_type(), int)
+        self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_LINK)
         self.assertIsNone(sinfo.get_share_with())
-        self.assertIsInstance(sinfo.get_file_source(), int)
-        self.assertIsInstance(sinfo.get_path(), basestring)
-        self.assertIsInstance(sinfo.get_permissions(), int)
-        self.assertIsInstance(sinfo.get_share_time(), int)
+        self.assertEquals(sinfo.get_path(), path)
+        self.assertEquals(sinfo.get_permissions(), self.client.OCS_PERMISSION_READ)
+        self.assertIsInstance(sinfo.get_share_time(), datetime.datetime)
         self.assertIsNone(sinfo.get_expiration())
         self.assertIsInstance(sinfo.get_token(), basestring)
-        self.assertIsInstance(sinfo.get_uid_owner(), basestring)
+        self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
         self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
-        self.assertIsNone(sinfo.get_url())
 
     def test_get_share_non_existing(self):
         """Test get_share - share with specified id does not exist"""
