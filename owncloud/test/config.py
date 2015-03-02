@@ -8,9 +8,9 @@ test_id = int(time.time())
 
 Config = {
     # Change this to your ownCloud's URL
-    'owncloud_url': 'http://127.0.0.1/owncloud',
+    'owncloud_url': 'http://127.0.0.1/',
     # ownCloud login
-    'owncloud_login': 'root',
+    'owncloud_login': 'admin',
     # ownCloud password
     'owncloud_password': 'admin',
     # test user whom we want to share a file
