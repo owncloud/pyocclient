@@ -49,7 +49,7 @@ class UserShare():
         return "UserShare(id=%i,path='%s',perms=%s)" % \
                 (self.share_id, self.share, self.perms)
 
-class FileInfo():
+class FileInfo(object):
     """File information"""
 
     __DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
@@ -125,14 +125,32 @@ class FileInfo():
         return self.file_type != 'file'
 
     def __str__(self):
-        return 'File(path=%s,file_type=%s,attributes=%s)' % \
+        return 'FileInfo(path=%s,file_type=%s,attributes=%s)' % \
             (self.path, self.file_type, self.attributes)
 
     def __repr__(self):
         return self.__str__()
 
+class ExtendedFileInfo(FileInfo):
+    """Extended file information"""
+
+    def __init__(self, path, file_type = 'file', attributes = None, tags = None):
+        super(ExtendedFileInfo, self).__init__(path, file_type, attributes)
+        self.tags = tags
+
+    def get_tags(self):
+        return self.tags
+
+    def is_favorite(self):
+        return self.attributes['{' + Client.NS_OWNCLOUD + '}favorite'] is not None
+
+    def __str__(self):
+        return 'ExtendedFileInfo(path=%s,file_type=%s,attributes=%s,tags=[%s])' % \
+            (self.path, self.file_type, self.attributes, ','.join(self.tags))
+
 class Client():
     """ownCloud client"""
+    NS_OWNCLOUD = 'http://owncloud.org/ns'
 
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
@@ -148,6 +166,14 @@ class Client():
     OCS_SHARE_TYPE_USER = 0
     OCS_SHARE_TYPE_GROUP = 1
     OCS_SHARE_TYPE_LINK = 3
+
+    __DAV_REQUEST_PROPFIND_ATTRIBUTES = '<?xml version="1.0"?> \
+        <a:propfind xmlns:a="DAV:" xmlns:oc="http://owncloud.org/ns"> \
+        <a:prop><a:getcontenttype/></a:prop> \
+        <a:prop><oc:tags/></a:prop> \
+        <a:prop><oc:favorite/></a:prop> \
+        </a:propfind>\
+        '
 
     def __init__(self, url, **kwargs):
         """Instantiates a client
@@ -204,31 +230,76 @@ class Client():
         self.__session.close()
         return True
 
-    def file_info(self, path):
+    def file_info(self, path, **kwargs):
         """Returns the file info for the given remote file
         
         :param path: path to the remote file 
+        :param extended_info: True to return extended info like tags and
+        favorite, false otherwise
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
         :raises: ResponseError in case an HTTP error status was returned
         """
-        res = self.__make_dav_request('PROPFIND', path)
+        data = None
+        if kwargs.get('extended_info', False):
+            data = self.__DAV_REQUEST_PROPFIND_ATTRIBUTES
+
+        res = self.__make_dav_request('PROPFIND', path, data = data)
         if res:
             return res[0]
         return None
 
-    def list(self, path):
+    def set_extended_file_info(self, path, **kwargs):
+        """Sets extended file info like tags or favorite
+
+        :param path: path to the remote file
+        :param tags: list of tag strings to set or None to leave unchanged
+        :param favorite: True to mark the file as favorite, False to unmark,
+        None to leave unchanged
+        :return None
+        """
+
+        xml_root = ET.Element('{DAV:}propertyupdate')
+        xml_set = ET.SubElement(xml_root, '{DAV:}set')
+        xml_proplist = ET.SubElement(xml_set, '{DAV:}prop')
+        favorite = kwargs.get('favorite')
+        if favorite is not None:
+            xml_prop = ET.SubElement(xml_proplist, '{' + self.NS_OWNCLOUD + '}favorite')
+            if favorite == True:
+                xml_prop.text = '1'
+            else:
+                xml_prop.text = '0'
+
+        tags = kwargs.get('tags')
+        if tags is not None:
+            xml_tags = ET.SubElement(xml_proplist, '{' + self.NS_OWNCLOUD + '}tags')
+            for tag in tags:
+                xml_tag = ET.SubElement(xml_tags, '{' + self.NS_OWNCLOUD + '}tag')
+                xml_tag.text = tag
+
+        data = '<?xml version="1.0"?>' + ET.tostring(xml_root, encoding = 'utf-8')
+        self.__make_dav_request('PROPPATCH', path, data = data)
+        return None
+
+    def list(self, path, **kwargs):
         """Returns the listing/contents of the given remote directory
         
         :param path: path to the remote directory 
+        :param extended_info: True to return extended info like tags and
+        favorite, false otherwise
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
         :raises: ResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path += '/'
-        res = self.__make_dav_request('PROPFIND', path)
+
+        data = None
+        if kwargs.get('extended_info', False):
+            data = self.__DAV_REQUEST_PROPFIND_ATTRIBUTES
+
+        res = self.__make_dav_request('PROPFIND', path, data = data)
         # first one is always the root, remove it from listing
         if res:
             return res[1:]
@@ -901,6 +972,8 @@ class Client():
         the operation did not succeed
         """
         if res.status_code == 207:
+            if self.__debug:
+                print(res.content)
             tree = ET.fromstring(res.content)
             items = []
             for child in tree:
@@ -926,6 +999,13 @@ class Client():
         attrs = attrs.find('{DAV:}prop')
         for attr in attrs:
             file_attrs[attr.tag] = attr.text
+
+        tags_el = attrs.find('{' + self.NS_OWNCLOUD + '}tags')
+        if tags_el is not None:
+            tags = []
+            for tag_el in tags_el:
+                tags.append(tag_el.text)
+            return ExtendedFileInfo(href, file_type, file_attrs, tags)
 
         return FileInfo(href, file_type, file_attrs)
 
