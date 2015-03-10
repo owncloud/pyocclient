@@ -1146,15 +1146,21 @@ class Client():
         return s
 
     @staticmethod
-    def __check_ocs_status(tree):
+    def __check_ocs_status(tree, accepted_codes=[100]):
         """Checks the status code of an OCS request
 
         :param tree: response parsed with elementtree
-        :raises: ResponseError if the status is not 200
+        :param accepted_codes: list of statuscodes we consider good. E.g. [100,102] can be used to accept a POST returning an 'already exists' condition
+        :raises: ResponseError if the http status is not 200, or the webdav status is not one of the accepted_codes.
         """
         code_el = tree.find('meta/statuscode')
-        if code_el is not None and code_el.text != '100':
-            raise ResponseError(int(code_el.text))
+        if code_el is not None and int(code_el.text) not in accepted_codes:
+            r = requests.Response()
+            msg_el = tree.find('meta/message')
+            if msg_el is None: msg_el = tree    # fallback to the entire ocs response, if we find no message.
+            r._content = ET.tostring(msg_el)
+            r.status_code = int(code_el.text)
+            raise ResponseError(r)
 
     def __make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
