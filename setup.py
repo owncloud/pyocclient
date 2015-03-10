@@ -21,7 +21,7 @@ setup(
     name='pyocclient',
     version=version,
     author='Vincent Petry',
-    author_email='pvince81@yahoo.fr',
+    author_email='pvince81@owncloud.com',
     packages=['owncloud', 'owncloud.test'],
     url='https://github.com/owncloud/pyocclient/',
     license='LICENSE.txt',
