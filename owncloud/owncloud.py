@@ -49,6 +49,17 @@ class UserShare():
         return "UserShare(id=%i,path='%s',perms=%s)" % \
                 (self.share_id, self.share, self.perms)
 
+class GroupShare():
+    """Group share information"""
+    def __init__(self, share_id, share, perms):
+        self.share_id = share_id
+        self.share = share
+        self.perms = perms
+
+    def __str__(self):
+        return "GroupShare(id=%i,path='%s',perms=%s)" % \
+                (self.share_id, self.share, self.perms)
+
 class FileInfo():
     """File information"""
 
@@ -136,6 +147,7 @@ class Client():
 
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
+    OCS_SERVICE_CLOUD       = 'cloud'
 
     # constants from lib/public/constants.php
     OCS_PERMISSION_READ = 1
@@ -233,6 +245,10 @@ class Client():
         if res:
             return res[1:]
         return None
+
+    def webdav(self, cmd, path):
+        """Run a raw webdav command with a path parameter"""
+        return self.__make_dav_request(cmd, path)
 
     def get_file_contents(self, path):
         """Returns the contents of a remote file
@@ -651,6 +667,111 @@ class Client():
                 return shares
         raise ResponseError(res)
 
+    def create_user_ajax(self, adminuser, adminpass, user_name, initial_password):
+        """Create a new user with an initial password
+	   This does not use the session context, to prevent "Token expired. Please reload page." errors.
+	   We authenticate here ourselves. In this case no cookie or token is needed.
+	   POST /index.php/settings/ajax/createuser.php --data 'username=user2&password=owncloud&groups=' 
+	"""
+        res = self.__make_single_request(
+                'POST',
+                'index.php/settings/ajax/createuser.php',
+		data = { 'username': user_name, 'password': initial_password, 'groups':'' },
+		auth = { 'username': adminuser, 'password': adminpass }
+	        )
+	# {"data":{"message":"The username is already being used"},"status":"error"}
+	# {"data":{"homeExists":false,"username":"user2","groups":[],"storageLocation":"\/srv\/www\/htdocs\/owncloud\/data\/\/user2"},"status":"success"}
+        if res.status_code == 200:
+	  return res.text
+        raise ResponseError(res)
+
+    def create_user(self, user_name, initial_password):
+        """Create a new user with an initial password via provisioning API.
+	   It is not an error, if the user already existed before.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_CLOUD,
+                'users',
+                data = { 'password': initial_password, 'userid': user_name }
+                )
+
+	# We get 200 when the user was just created.
+        if res.status_code == 200:
+	    # We get an inner 102 although we have an outer 200 when the user already exists.
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+	    # return ET.tostring(tree)
+	    return "user '" + user_name + "' is alive"
+        raise ResponseError(res)
+
+    def delete_user(self, user_name):
+        """Deletes a user via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_CLOUD,
+                'users/'+user_name
+                )
+
+	# We get 200 when the user was deleted.
+        if res.status_code == 200:
+	    return "user '" + user_name + "' was deleted"
+
+        raise ResponseError(res)
+
+    def check_user(self, user_name):
+        """Checks a user via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'users?search='+user_name
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            code_el = tree.find('data/users/element')
+
+            if code_el is not None and code_el.text == user_name:
+                return True
+            else:
+                return False 
+
+        raise ResponseError(res)
+    def add_user_to_group(self, user_name, group_name):
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_CLOUD,
+                'users/' + user_name + '/groups',
+                data = { 'groupid': group_name }
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+	    # return ET.tostring(tree)
+	    return "user '" + user_name + "' is in group " + group_name
+        raise ResponseError(res)
+
+    def remove_user_from_group(self, user_name, group_name):
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_CLOUD,
+                'users/' + user_name + '/groups',
+                data = { 'groupid': group_name }
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+	    # return ET.tostring(tree)
+	    return "user '" + user_name + "' was removed from group " + group_name
+        raise ResponseError(res)
+
     def share_file_with_user(self, path, user, **kwargs):
         """Shares a remote file with specified user
 
@@ -682,11 +803,108 @@ class Client():
             'shares',
             data = post_data
         )
+
+        if self.__debug:
+            print('OCS share_file request for file %s with permissions %i returned: %i' % (path, perms, res.status_code))
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return UserShare(
+                int(data_el.find('id').text),
+                path,
+                perms
+            )
+        raise ResponseError(res)
+
+    def create_group(self, group_name):
+        """Create a new group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_CLOUD,
+                'groups',
+                data = { 'groupid': group_name }
+                )
+
+	# We get 200 when the group was just created.
+        if res.status_code == 200:
+	    # We get an inner 102 although we have an outer 200 when the group already exists.
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+	    # return ET.tostring(tree)
+	    return "group '" + group_name + "' was created"
+        raise ResponseError(res)
+
+    def delete_group(self, group_name):
+        """Delete a group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_CLOUD,
+                'groups/' + group_name
+                )
+
+	# We get 200 when the group was just deleted.
+        if res.status_code == 200:
+	    return "group '" + group_name + "' was deleted"
+
+        raise ResponseError(res)
+
+    def check_group(self, group_name):
+        """Checks a group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'groups?search='+group_name
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            code_el = tree.find('data/groups/element')
+
+            if code_el is not None and code_el.text == group_name:
+                return True
+            else:
+                return False 
+
+        raise ResponseError(res)
+
+    def share_file_with_group(self, path, group, **kwargs):
+        """Shares a remote file with specified user
+
+        :param path: path to the remote file to share
+        :param user: name of the user whom we want to share a file/folder
+        :param perms (optional): permissions of the shared object
+            defaults to read only (1)
+            http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+        :returns: instance of :class:`UserShare` with the share info
+            or False if the operation failed
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
+        if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
+            or ((not isinstance(group, basestring)) or (group == ''))):
+            return False
+
+        path = self.__normalize_path(path)
+        post_data = {'shareType': self.OCS_SHARE_TYPE_GROUP, 'shareWith': group, 'path': path, 'permissions': perms}
+
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_SHARE,
+                'shares',
+                data = post_data
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree)
+            data_el = tree.find('data')
+            return GroupShare(
                 int(data_el.find('id').text),
                 path,
                 perms
@@ -804,6 +1022,105 @@ class Client():
             return True
         raise ResponseError(res)
 
+
+    def get_apps(self):
+    	""" List all enabled apps through the provisioning api.
+	    If this fails, try to run enable_app_ajax('provisioning_api') first.
+	    Returns a dict of apps, with values True/False, representing the enabled state.
+	"""
+	ena_apps = {}
+
+        res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
+        if res.status_code != 200:
+	    raise ResponseError(res)
+        tree = ET.fromstring(res.text)
+        self.__check_ocs_status(tree)
+	#  <data><apps><element>files</element><element>activity</element> ...
+        for el in tree.findall('data/apps/element'):
+	  ena_apps[el.text] = False
+
+        res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps?filter=enabled')
+        if res.status_code != 200:
+	    raise ResponseError(res)
+        tree = ET.fromstring(res.text)
+        self.__check_ocs_status(tree)
+        for el in tree.findall('data/apps/element'):
+	  ena_apps[el.text] = True
+
+        return ena_apps	
+
+
+    def enable_app_ajax(self, adminuser, adminpass, appname):
+        """Enable an app through the ajax calls for the web browser.
+
+	   appname in (provisioning_api admin_dependencies_chk activity files_trashbin enterprise_key
+	     admin_migrate files_locking firewall firstrunwizard templateeditor files_sharing files_texteditor
+	     files_versions files_antivirus files_encryption external files_external user_external 
+	     files_sharing_log files_ldap_home user_ldap admin_audit admin_dependencies_chk sharepoint 
+	     user_shibboleth user_webdavauth windows_network_drive)
+
+	   POST http://192.168.122.19/owncloud/index.php/settings/ajax/enableapp.php
+
+	   Host: 192.168.122.19
+	   User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0
+	   Accept: application/json, text/javascript, */*; q=0.01
+	   Accept-Language: en-us,de;q=0.7,en;q=0.3
+	   Accept-Encoding: gzip, deflate
+	   Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+	   requesttoken: 6c6ee0722d72b8b56270
+	   X-Requested-With: XMLHttpRequest
+	   Referer: http://192.168.122.19/owncloud/index.php/settings/apps?installed
+	   Content-Length: 28
+	   Cookie: ocbd0b2139bb=avgk4032thgaknqdmu22emulh4e87821l9elhff9ha1dp5p3cg20; ocbd0b2139bb=rl8r4bn9spvdlur63vsdlmoq8juel5a4fo0snaoaqkkiglt5m4j0
+	   Connection: keep-alive
+	   Pragma: no-cache
+	   Cache-Control: no-cache
+
+	   appid=admin_dependencies_chk
+	"""
+        res = self.__make_single_request(
+                'POST',
+                'index.php/settings/ajax/enableapp.php',
+		data = { 'appid': appname },
+		auth = { 'username': adminuser, 'password': adminpass }
+	        )
+        if res.status_code == 200:
+	  return res.text
+        raise ResponseError(res)
+
+
+    def disable_app_ajax(self, adminuser, adminpass, appname):
+        """Disable an app through the ajax calls for the web browser.
+	"""
+        res = self.__make_single_request(
+                'POST',
+                'index.php/settings/ajax/disableapp.php',
+		data = { 'appid': appname },
+		auth = { 'username': adminuser, 'password': adminpass }
+	        )
+        if res.status_code == 200:
+	  return res.text
+        raise ResponseError(res)
+
+
+    def enable_api(self, appname):
+        """Enable an app through provisioning_api
+	"""
+        res = self.__make_ocs_request('POST', self.OCS_SERVICE_CLOUD, 'apps/'+appname)
+        if res.status_code == 200:
+	  return res.text
+        raise ResponseError(res)
+
+
+    def disable_api(self, appname):
+        """Disable an app through provisioning_api
+	"""
+        res = self.__make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD, 'apps/'+appname)
+        if res.status_code == 200:
+	  return res.text
+        raise ResponseError(res)
+
+
     @staticmethod
     def __normalize_path(path):
         """Makes sure the path starts with a "/"
@@ -863,6 +1180,31 @@ class Client():
 
         res = self.__session.request(method, self.url + path, **attributes)
         return res
+
+    def __make_single_request(self, method, path, **kwargs):
+        """Makes a ajax call, or anything else, a webbrowser could do.
+	   A fresh temporary session is created. You must provide all context via attributes.
+
+        :param method: HTTP method
+        :param path: url path
+        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
+        :returns :class:`requests.Response` instance
+        """
+        attributes = kwargs.copy()
+
+        if not attributes.has_key('headers'):
+            attributes['headers'] = {}
+
+        s = requests.session()
+        s.verify = self.__verify_certs
+	if attributes.has_key('auth'):
+          s.auth = (attributes['auth']['username'], attributes['auth']['password'])
+	  attributes.pop('auth')
+
+        res = s.request(method, self.url + path, **attributes)
+	s.close()
+        return res
+
 
     def __make_dav_request(self, method, path, **kwargs):
         """Makes a WebDAV request
