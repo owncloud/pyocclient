@@ -23,7 +23,7 @@ setup(
     author='Vincent Petry',
     author_email='pvince81@yahoo.fr',
     packages=['owncloud', 'owncloud.test'],
-    url='https://github.com/PVince81/pyocclient/',
+    url='https://github.com/owncloud/pyocclient/',
     license='LICENSE.txt',
     description='Python client library for ownCloud',
     long_description=long_description,
