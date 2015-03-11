@@ -246,10 +246,6 @@ class Client():
             return res[1:]
         return None
 
-    def webdav(self, cmd, path):
-        """Run a raw webdav command with a path parameter"""
-        return self.__make_dav_request(cmd, path)
-
     def get_file_contents(self, path):
         """Returns the contents of a remote file
 
@@ -282,34 +278,6 @@ class Client():
             if local_file is None:
                 # use downloaded file name from Content-Disposition
                 # local_file = res.headers['content-disposition']
-                local_file = os.path.basename(remote_path)
-
-            file_handle = open(local_file, 'wb', 8192)
-            for chunk in res.iter_content(8192):
-                file_handle.write(chunk)
-            file_handle.close()
-            return True
-        return False
-
-    def get_directory_as_zip(self, remote_path, local_file):
-        """Downloads a remote directory as zip
-
-        :param remote_path: path to the remote directory to download
-        :param local_file: path and name of the target local file
-        :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
-        """
-        remote_path = self.__normalize_path(remote_path)
-        url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
-            + urllib.quote(remote_path)
-        res = self.__session.get(
-                url,
-                stream = True
-                )
-        if res.status_code == 200:
-            if local_file is None:
-                # use downloaded file name from Content-Disposition
-                # targetFile = res.headers['content-disposition']
                 local_file = os.path.basename(remote_path)
 
             file_handle = open(local_file, 'wb', 8192)
@@ -667,28 +635,16 @@ class Client():
                 return shares
         raise ResponseError(res)
 
-    def create_user_ajax(self, adminuser, adminpass, user_name, initial_password):
-        """Create a new user with an initial password
-	   This does not use the session context, to prevent "Token expired. Please reload page." errors.
-	   We authenticate here ourselves. In this case no cookie or token is needed.
-	   POST /index.php/settings/ajax/createuser.php --data 'username=user2&password=owncloud&groups=' 
-	"""
-        res = self.__make_single_request(
-                'POST',
-                'index.php/settings/ajax/createuser.php',
-		data = { 'username': user_name, 'password': initial_password, 'groups':'' },
-		auth = { 'username': adminuser, 'password': adminpass }
-	        )
-	# {"data":{"message":"The username is already being used"},"status":"error"}
-	# {"data":{"homeExists":false,"username":"user2","groups":[],"storageLocation":"\/srv\/www\/htdocs\/owncloud\/data\/\/user2"},"status":"success"}
-        if res.status_code == 200:
-	  return res.text
-        raise ResponseError(res)
-
     def create_user(self, user_name, initial_password):
         """Create a new user with an initial password via provisioning API.
 	   It is not an error, if the user already existed before.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be created
+        :param initial_password:  password for user being created
+        :returns: True on success
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'POST',
@@ -703,12 +659,18 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
 	    # return ET.tostring(tree)
-	    return "user '" + user_name + "' is alive"
+	    return True
+
         raise ResponseError(res)
 
     def delete_user(self, user_name):
         """Deletes a user via provisioning API.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be deleted
+        :returns: True on success
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'DELETE',
@@ -718,13 +680,18 @@ class Client():
 
 	# We get 200 when the user was deleted.
         if res.status_code == 200:
-	    return "user '" + user_name + "' was deleted"
+	    return True
 
         raise ResponseError(res)
 
-    def check_user(self, user_name):
+    def isUserCreated (self, user_name):
         """Checks a user via provisioning API.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be checked 
+        :returns: True if user found 
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'GET',
@@ -742,7 +709,17 @@ class Client():
                 return False 
 
         raise ResponseError(res)
+
     def add_user_to_group(self, user_name, group_name):
+        """Adds a user to a group.
+
+        :param user_name:  name of user to be added 
+        :param group_name:  name of group user is to be added to 
+        :returns: True if user added
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
         res = self.__make_ocs_request(
                 'POST',
                 self.OCS_SERVICE_CLOUD,
@@ -754,10 +731,19 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
 	    # return ET.tostring(tree)
-	    return "user '" + user_name + "' is in group " + group_name
+	    return True
+
         raise ResponseError(res)
 
     def remove_user_from_group(self, user_name, group_name):
+        """Removes a user from a group.
+
+        :param user_name:  name of user to be removed
+        :param group_name:  name of group user is to be removed from
+        :returns: True if user removed
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
         res = self.__make_ocs_request(
                 'DELETE',
                 self.OCS_SERVICE_CLOUD,
@@ -769,7 +755,8 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
 	    # return ET.tostring(tree)
-	    return "user '" + user_name + "' was removed from group " + group_name
+	    return True
+
         raise ResponseError(res)
 
     def share_file_with_user(self, path, user, **kwargs):
@@ -820,6 +807,11 @@ class Client():
     def create_group(self, group_name):
         """Create a new group via provisioning API.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param group_name:  name of group to be created
+        :returns: True if group created
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'POST',
@@ -834,12 +826,18 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
 	    # return ET.tostring(tree)
-	    return "group '" + group_name + "' was created"
+	    return True
+
         raise ResponseError(res)
 
     def delete_group(self, group_name):
         """Delete a group via provisioning API.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param group_name:  name of group to be deleted
+        :returns: True if group deleted
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'DELETE',
@@ -849,13 +847,18 @@ class Client():
 
 	# We get 200 when the group was just deleted.
         if res.status_code == 200:
-	    return "group '" + group_name + "' was deleted"
+	    return  True
 
         raise ResponseError(res)
 
-    def check_group(self, group_name):
+    def isGroupCreated (self, group_name):
         """Checks a group via provisioning API.
 	   If you get back an error 999, then the provisioning API is not enabled.
+
+        :param group_name:  name of group to be checked
+        :returns: True if group exists
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request(
                 'GET',
@@ -875,7 +878,7 @@ class Client():
         raise ResponseError(res)
 
     def share_file_with_group(self, path, group, **kwargs):
-        """Shares a remote file with specified user
+        """Shares a remote file with specified group 
 
         :param path: path to the remote file to share
         :param user: name of the user whom we want to share a file/folder
@@ -1025,7 +1028,6 @@ class Client():
 
     def get_apps(self):
     	""" List all enabled apps through the provisioning api.
-	    If this fails, try to run enable_app_ajax('provisioning_api') first.
 	    Returns a dict of apps, with values True/False, representing the enabled state.
 	"""
 	ena_apps = {}
@@ -1037,7 +1039,7 @@ class Client():
         self.__check_ocs_status(tree)
 	#  <data><apps><element>files</element><element>activity</element> ...
         for el in tree.findall('data/apps/element'):
-	  ena_apps[el.text] = False
+	    ena_apps[el.text] = False
 
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps?filter=enabled')
         if res.status_code != 200:
@@ -1045,81 +1047,37 @@ class Client():
         tree = ET.fromstring(res.text)
         self.__check_ocs_status(tree)
         for el in tree.findall('data/apps/element'):
-	  ena_apps[el.text] = True
+	    ena_apps[el.text] = True
 
         return ena_apps	
 
-
-    def enable_app_ajax(self, adminuser, adminpass, appname):
-        """Enable an app through the ajax calls for the web browser.
-
-	   appname in (provisioning_api admin_dependencies_chk activity files_trashbin enterprise_key
-	     admin_migrate files_locking firewall firstrunwizard templateeditor files_sharing files_texteditor
-	     files_versions files_antivirus files_encryption external files_external user_external 
-	     files_sharing_log files_ldap_home user_ldap admin_audit admin_dependencies_chk sharepoint 
-	     user_shibboleth user_webdavauth windows_network_drive)
-
-	   POST http://192.168.122.19/owncloud/index.php/settings/ajax/enableapp.php
-
-	   Host: 192.168.122.19
-	   User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:31.0) Gecko/20100101 Firefox/31.0
-	   Accept: application/json, text/javascript, */*; q=0.01
-	   Accept-Language: en-us,de;q=0.7,en;q=0.3
-	   Accept-Encoding: gzip, deflate
-	   Content-Type: application/x-www-form-urlencoded; charset=UTF-8
-	   requesttoken: 6c6ee0722d72b8b56270
-	   X-Requested-With: XMLHttpRequest
-	   Referer: http://192.168.122.19/owncloud/index.php/settings/apps?installed
-	   Content-Length: 28
-	   Cookie: ocbd0b2139bb=avgk4032thgaknqdmu22emulh4e87821l9elhff9ha1dp5p3cg20; ocbd0b2139bb=rl8r4bn9spvdlur63vsdlmoq8juel5a4fo0snaoaqkkiglt5m4j0
-	   Connection: keep-alive
-	   Pragma: no-cache
-	   Cache-Control: no-cache
-
-	   appid=admin_dependencies_chk
-	"""
-        res = self.__make_single_request(
-                'POST',
-                'index.php/settings/ajax/enableapp.php',
-		data = { 'appid': appname },
-		auth = { 'username': adminuser, 'password': adminpass }
-	        )
-        if res.status_code == 200:
-	  return res.text
-        raise ResponseError(res)
-
-
-    def disable_app_ajax(self, adminuser, adminpass, appname):
-        """Disable an app through the ajax calls for the web browser.
-	"""
-        res = self.__make_single_request(
-                'POST',
-                'index.php/settings/ajax/disableapp.php',
-		data = { 'appid': appname },
-		auth = { 'username': adminuser, 'password': adminpass }
-	        )
-        if res.status_code == 200:
-	  return res.text
-        raise ResponseError(res)
-
-
-    def enable_api(self, appname):
+    def enable_app(self, appname):
         """Enable an app through provisioning_api
+
+        :param appname:  Name of app to be enabled
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request('POST', self.OCS_SERVICE_CLOUD, 'apps/'+appname)
         if res.status_code == 200:
-	  return res.text
+	    return True
+
         raise ResponseError(res)
 
-
-    def disable_api(self, appname):
+    def disable_app(self, appname):
         """Disable an app through provisioning_api
+
+        :param appname:  Name of app to be disabled
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+
 	"""
         res = self.__make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD, 'apps/'+appname)
         if res.status_code == 200:
-	  return res.text
-        raise ResponseError(res)
+	    return True
 
+        raise ResponseError(res)
 
     @staticmethod
     def __normalize_path(path):
@@ -1188,7 +1146,7 @@ class Client():
         return res
 
     def __make_single_request(self, method, path, **kwargs):
-        """Makes a ajax call, or anything else, a webbrowser could do.
+        """Makes calls a webbrowser could do.
 	   A fresh temporary session is created. You must provide all context via attributes.
 
         :param method: HTTP method
@@ -1210,7 +1168,6 @@ class Client():
         res = s.request(method, self.url + path, **attributes)
 	s.close()
         return res
-
 
     def __make_dav_request(self, method, path, **kwargs):
         """Makes a WebDAV request
