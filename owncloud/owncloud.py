@@ -668,15 +668,15 @@ class Client():
 
     def create_user(self, user_name, initial_password):
         """Create a new user with an initial password via provisioning API.
-       It is not an error, if the user already existed before.
-       If you get back an error 999, then the provisioning API is not enabled.
+        It is not an error, if the user already existed before.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param user_name:  name of user to be created
         :param initial_password:  password for user being created
         :returns: True on success
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
@@ -689,20 +689,19 @@ class Client():
             # We get an inner 102 although we have an outer 200 when the user already exists.
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
-            # return ET.tostring(tree)
             return True
 
         raise ResponseError(res)
 
     def delete_user(self, user_name):
         """Deletes a user via provisioning API.
-       If you get back an error 999, then the provisioning API is not enabled.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param user_name:  name of user to be deleted
         :returns: True on success
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_CLOUD,
@@ -715,15 +714,15 @@ class Client():
 
         raise ResponseError(res)
 
-    def is_user_created(self, user_name):
+    def user_exists(self, user_name):
         """Checks a user via provisioning API.
-       If you get back an error 999, then the provisioning API is not enabled.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param user_name:  name of user to be checked 
         :returns: True if user found 
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
@@ -761,7 +760,6 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
-            # return ET.tostring(tree)
             return True
 
         raise ResponseError(res)
@@ -785,7 +783,6 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
-            # return ET.tostring(tree)
             return True
 
         raise ResponseError(res)
@@ -838,13 +835,13 @@ class Client():
 
     def create_group(self, group_name):
         """Create a new group via provisioning API.
-       If you get back an error 999, then the provisioning API is not enabled.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param group_name:  name of group to be created
         :returns: True if group created
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
@@ -857,20 +854,19 @@ class Client():
             # We get an inner 102 although we have an outer 200 when the group already exists.
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
-            # return ET.tostring(tree)
             return True
 
         raise ResponseError(res)
 
     def delete_group(self, group_name):
         """Delete a group via provisioning API.
-       If you get back an error 999, then the provisioning API is not enabled.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param group_name:  name of group to be deleted
         :returns: True if group deleted
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_CLOUD,
@@ -883,15 +879,15 @@ class Client():
 
         raise ResponseError(res)
 
-    def is_group_created(self, group_name):
+    def group_exists(self, group_name):
         """Checks a group via provisioning API.
-       If you get back an error 999, then the provisioning API is not enabled.
+        If you get back an error 999, then the provisioning API is not enabled.
 
         :param group_name:  name of group to be checked
         :returns: True if group exists
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
@@ -917,7 +913,7 @@ class Client():
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`UserShare` with the share info
+        :returns: instance of :class:`GroupShare` with the share info
             or False if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
@@ -1061,7 +1057,7 @@ class Client():
     def get_apps(self):
         """ List all enabled apps through the provisioning api.
         Returns a dict of apps, with values True/False, representing the enabled state.
-    """
+        """
         ena_apps = {}
 
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
@@ -1090,7 +1086,7 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request('POST', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
         if res.status_code == 200:
             return True
@@ -1104,7 +1100,7 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
 
-    """
+        """
         res = self.__make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
         if res.status_code == 200:
             return True
