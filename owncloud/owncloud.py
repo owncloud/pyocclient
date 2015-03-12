@@ -1056,7 +1056,9 @@ class Client():
 
     def get_apps(self):
         """ List all enabled apps through the provisioning api.
-        Returns a dict of apps, with values True/False, representing the enabled state.
+        
+        :returns: a dict of apps, with values True/False, representing the enabled state.
+        :raises: ResponseError in case an HTTP error status was returned
         """
         ena_apps = {}
 
