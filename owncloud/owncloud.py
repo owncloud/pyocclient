@@ -1180,30 +1180,6 @@ class Client():
         res = self.__session.request(method, self.url + path, **attributes)
         return res
 
-    def __make_single_request(self, method, path, **kwargs):
-        """Makes calls a webbrowser could do.
-       A fresh temporary session is created. You must provide all context via attributes.
-
-        :param method: HTTP method
-        :param path: url path
-        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
-        :returns :class:`requests.Response` instance
-        """
-        attributes = kwargs.copy()
-
-        if not attributes.has_key('headers'):
-            attributes['headers'] = {}
-
-        s = requests.session()
-        s.verify = self.__verify_certs
-        if attributes.has_key('auth'):
-            s.auth = (attributes['auth']['username'], attributes['auth']['password'])
-            attributes.pop('auth')
-
-        res = s.request(method, self.url + path, **attributes)
-        s.close()
-        return res
-
     def __make_dav_request(self, method, path, **kwargs):
         """Makes a WebDAV request
 
