@@ -557,6 +557,9 @@ class Client():
         if remote_path_target[-1] == '/':
             remote_path_target += os.path.basename(remote_path_source)
 
+        if not (remote_path_target[0] == '/'):
+            remote_path_target = '/' + remote_path_target
+
         remote_path_source = self.__normalize_path(remote_path_source)
         headers = {
             'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
