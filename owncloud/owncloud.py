@@ -726,20 +726,39 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
 
         """
+
+#
+# LDAP users can have a space in their names; ownCloud does not support
+# spaces in usernames so the space gets converted to an underscore.
+# When we search for the ldap user with a space in the name, we need
+# to remove the underscore to find the user.  To do this, if the username
+# being searched for has an underscore in it, we will search for users with
+# names that begin with the input username up to the underscore and then search
+# for the actual username in the result.  
+# If the name of the user we're looking for is ldap_user, we will search
+# for all users that have ldap in the name and then look explicitly for 
+# ldap_user in the results.
+#
+
+        index = user_name.find ('_')
+        if index > -1:
+            name_to_search_for = user_name[:index]
+        else:
+            name_to_search_for = user_name
+
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
-            'users?search=' + user_name
+            'users?search=' + name_to_search_for
         )
 
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            code_el = tree.find('data/users/element')
+            for el in tree.findall('data/users/element'):
+                if el.text == user_name:
+                    return True
 
-            if code_el is not None and code_el.text == user_name:
-                return True
-            else:
-                return False
+            return False
 
         raise ResponseError(res)
 
