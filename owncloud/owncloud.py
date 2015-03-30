@@ -717,6 +717,34 @@ class Client():
 
         raise ResponseError(res)
 
+    def get_user_list(self, user_name):
+        """Gets a lit of users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  substring of username to be checked 
+        :returns: a list of users matching the user_name sub string
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users?search=' + user_name
+        )
+
+        user_list = []
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            for el in tree.findall('data/users/element'):
+                if el.text:
+                    user_list.append(el.text)
+
+            return user_list 
+
+        raise ResponseError(res)
+
+
     def user_exists(self, user_name):
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
@@ -727,38 +755,20 @@ class Client():
 
         """
 
-#
-# LDAP users can have a space in their names; ownCloud does not support
-# spaces in usernames so the space gets converted to an underscore.
-# When we search for the ldap user with a space in the name, we need
-# to remove the underscore to find the user.  To do this, if the username
-# being searched for has an underscore in it, we will search for users with
-# names that begin with the input username up to the underscore and then search
-# for the actual username in the result.  
-# If the name of the user we're looking for is ldap_user, we will search
-# for all users that have ldap in the name and then look explicitly for 
-# ldap_user in the results.
-#
-
-        index = user_name.find ('_')
-        if index > -1:
-            name_to_search_for = user_name[:index]
-        else:
-            name_to_search_for = user_name
-
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
-            'users?search=' + name_to_search_for
+            'users?search=' + user_name
         )
 
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            for el in tree.findall('data/users/element'):
-                if el.text == user_name:
-                    return True
+            code_el = tree.find('data/users/element')
 
-            return False
+            if code_el is not None and code_el.text == user_name:
+                return True
+            else:
+                return False
 
         raise ResponseError(res)
 
