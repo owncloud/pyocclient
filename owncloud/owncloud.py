@@ -1223,7 +1223,7 @@ class Client():
             for child in tree:
                 items.append(self.__parse_dav_element(child))
             return items
-        return True
+        return False
 
     def __parse_dav_element(self, dav_response):
         """Parses a single DAV element
