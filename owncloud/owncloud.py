@@ -19,12 +19,13 @@ import os
 
 class ResponseError(Exception):
     def __init__(self, res):
-        # TODO: how to retrieve the error message ?
         if type(res) is int:
             code = res
+            message = "HTTP error: %i" % code
         else:
             code = res.status_code
-        Exception.__init__(self, "HTTP error: %i" % code)
+            message = res.text
+        Exception.__init__(self, message)
         self.status_code = code
 
 
