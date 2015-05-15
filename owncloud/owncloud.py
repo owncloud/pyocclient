@@ -21,13 +21,17 @@ class ResponseError(Exception):
     def __init__(self, res):
         if type(res) is int:
             code = res
-            message = "HTTP error: %i" % code
         else:
             code = res.status_code
-            message = res.text
-        Exception.__init__(self, message)
+            self.res = res
+        Exception.__init__(self, "HTTP error: %i" % code)
         self.status_code = code
 
+    def get_resource_body(self):
+        if None != self.res:
+            return self.res.text
+        else:
+            return None
 
 class PublicShare():
     """Public share information"""
