@@ -174,6 +174,7 @@ class Client():
     OCS_SHARE_TYPE_USER = 0
     OCS_SHARE_TYPE_GROUP = 1
     OCS_SHARE_TYPE_LINK = 3
+    OCS_SHARE_TYPE_REMOTE = 6
 
     def __init__(self, url, **kwargs):
         """Instantiates a client
@@ -824,6 +825,7 @@ class Client():
             or False if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
+        remote_user = kwargs.get('remote_user', False)
         perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
         if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
                 or ((not isinstance(user, basestring)) or (user == ''))):
@@ -831,7 +833,7 @@ class Client():
 
         path = self.__normalize_path(path)
         post_data = {
-            'shareType': self.OCS_SHARE_TYPE_USER,
+            'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else self.OCS_SHARE_TYPE_USER,
             'shareWith': user,
             'path': self.__encode_string(path),
             'permissions': perms
