@@ -748,6 +748,29 @@ class Client():
 
         raise ResponseError(res)
 
+    def search_users(self, user_name):
+        """Searches for users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be searched for 
+        :returns: list of users
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users?search=' + user_name
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            users = tree.find('data/users')
+
+            return users           
+
+        raise ResponseError(res)
+
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
 
