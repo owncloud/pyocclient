@@ -732,8 +732,25 @@ class Client():
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be checked
-        :returns: True if user found
+        :param user_name:  name of user to be checked 
+        :returns: True if user found 
+        
+        """
+        users=self.search_users(user_name)
+        
+        if len(users) > 0:
+            for user in users:
+            	if user.text == user_name:
+                   return True
+            		
+        return False
+
+    def search_users(self, user_name):
+        """Searches for users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be searched for 
+        :returns: list of users
         :raises: ResponseError in case an HTTP error status was returned
 
         """
@@ -745,12 +762,9 @@ class Client():
 
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            code_el = tree.find('data/users/element')
+            users = tree.find('data/users')
 
-            if code_el is not None and code_el.text == user_name:
-                return True
-            else:
-                return False
+            return users           
 
         raise ResponseError(res)
 
