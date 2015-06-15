@@ -731,20 +731,16 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
-            'GET',
-            self.OCS_SERVICE_CLOUD,
-            'users?search=' + user_name
-        )
+        users=search_users(self, user_name)
 
-        if res.status_code == 200:
-            tree = ET.fromstring(res.text)
-            code_el = tree.find('data/users/element')
+        if len(users) > 0:
+            for user in users:
+            	if user == user_name:
+            		return True
 
-            if code_el is not None and code_el.text == user_name:
-                return True
-            else:
-                return False
+            return False
+        else:
+        		return False
 
         raise ResponseError(res)
 
