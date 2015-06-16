@@ -88,7 +88,7 @@ class FileInfo():
 
     def get_name(self):
         """Returns the base name of the file without path
-        
+
         :returns: name of the file
         """
         return self.name
@@ -103,7 +103,7 @@ class FileInfo():
 
     def get_size(self):
         """Returns the size of the file
-        
+
         :returns: size of the file
         """
         if self.attributes.has_key('{DAV:}getcontentlength'):
@@ -112,14 +112,14 @@ class FileInfo():
 
     def get_etag(self):
         """Returns the file etag
-        
+
         :returns: file etag
         """
         return self.attributes['{DAV:}getetag']
 
     def get_content_type(self):
         """Returns the file content type
-        
+
         :returns: file content type
         """
         if self.attributes.has_key('{DAV:}getcontenttype'):
@@ -132,7 +132,7 @@ class FileInfo():
 
     def get_last_modified(self):
         """Returns the last modified time
-        
+
         :returns: last modified time
         :rtype: datetime object
         """
@@ -232,8 +232,8 @@ class Client():
 
     def file_info(self, path):
         """Returns the file info for the given remote file
-        
-        :param path: path to the remote file 
+
+        :param path: path to the remote file
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
@@ -246,8 +246,8 @@ class Client():
 
     def list(self, path):
         """Returns the listing/contents of the given remote directory
-        
-        :param path: path to the remote directory 
+
+        :param path: path to the remote directory
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
         :raises: ResponseError in case an HTTP error status was returned
@@ -272,6 +272,8 @@ class Client():
         res = self.__session.get(self.__webdav_url + path)
         if res.status_code == 200:
             return res.content
+        elif res.status_code >= 400:
+            raise ResponseError(res)
         return False
 
     def get_file(self, remote_path, local_file=None):
@@ -299,6 +301,8 @@ class Client():
                 file_handle.write(chunk)
             file_handle.close()
             return True
+        elif res.status_code >= 400:
+            raise ResponseError(res)
         return False
 
     def get_directory_as_zip(self, remote_path, local_file):
@@ -324,6 +328,8 @@ class Client():
                 file_handle.write(chunk)
             file_handle.close()
             return True
+        elif res.status_code >= 400:
+            raise ResponseError(res)
         return False
 
     def put_file_contents(self, remote_path, data):
@@ -555,7 +561,7 @@ class Client():
         :param remote_path_source: source file or folder to move
         :param remote_path_target: target file to which to move
         the source file. A target directory can also be specified
-        instead by appending a "/" 
+        instead by appending a "/"
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
@@ -726,8 +732,8 @@ class Client():
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be checked 
-        :returns: True if user found 
+        :param user_name:  name of user to be checked
+        :returns: True if user found
         :raises: ResponseError in case an HTTP error status was returned
 
         """
@@ -751,8 +757,8 @@ class Client():
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
 
-        :param user_name:  name of user to be added 
-        :param group_name:  name of group user is to be added to 
+        :param user_name:  name of user to be added
+        :param group_name:  name of group user is to be added to
         :returns: True if user added
         :raises: ResponseError in case an HTTP error status was returned
 
@@ -914,7 +920,7 @@ class Client():
         raise ResponseError(res)
 
     def share_file_with_group(self, path, group, **kwargs):
-        """Shares a remote file with specified group 
+        """Shares a remote file with specified group
 
         :param path: path to the remote file to share
         :param user: name of the user whom we want to share a file/folder
@@ -1064,7 +1070,7 @@ class Client():
 
     def get_apps(self):
         """ List all enabled apps through the provisioning api.
-        
+
         :returns: a dict of apps, with values True/False, representing the enabled state.
         :raises: ResponseError in case an HTTP error status was returned
         """
