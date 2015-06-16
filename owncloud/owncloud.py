@@ -740,9 +740,7 @@ class Client():
 
             return False
         else:
-        		return False
-
-        raise ResponseError(res)
+        	return False
 
     def search_users(self, user_name):
         """Searches for users via provisioning API.
