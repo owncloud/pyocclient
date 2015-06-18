@@ -39,11 +39,24 @@ Sharing (OCS Share API)
 -----------------------
 
 - share a file/directory via public link
-- share a resource with another user
-- unshare a file or directory
+- share a file/directory with another user or group
+- unshare a file/directory
 - check if a file/directory is already shared
 - get information about a shared resource
 - update properties of a known share
+
+Apps (OCS Provisioning API)
+---------------------------
+
+- enable/disable apps
+- retrieve list of enabled apps
+
+Users (OCS Provisioning API)
+----------------------------
+
+- create/delete users
+- create/delete groups
+- add/remove user from groups
 
 App data
 --------
