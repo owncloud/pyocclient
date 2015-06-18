@@ -39,18 +39,18 @@ class TestFileAccess(unittest.TestCase):
             self.test_root = '/' + self.test_root
         self.client.mkdir(self.test_root)
         self.share2user = Config['owncloud_share2user']
-	try:
-	    self.client.create_user(self.share2user, 'share')
+        try:
+            self.client.create_user(self.share2user, 'share')
         except:
-	    pass
+            pass
 
     def tearDown(self):
         self.client.delete(self.test_root)
-	try:
-	    self.client.delete_user(self.share2user)
-	except:
+        try:
+            self.client.delete_user(self.share2user)
+        except:
             pass
-	self.client.logout()
+        self.client.logout()
         shutil.rmtree(self.temp_dir)
 
     @staticmethod
