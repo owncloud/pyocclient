@@ -550,7 +550,7 @@ class Client():
         raise ResponseError(res)
 
     def move(self, remote_path_source, remote_path_target):
-        """Deletes a remote file or directory
+        """Moves a remote file or directory
 
         :param remote_path_source: source file or folder to move
         :param remote_path_target: target file to which to move
