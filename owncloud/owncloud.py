@@ -559,47 +559,19 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        if remote_path_target[-1] == '/':
-            remote_path_target += os.path.basename(remote_path_source)
 
-        if not (remote_path_target[0] == '/'):
-            remote_path_target = '/' + remote_path_target
-
-        remote_path_source = self.__normalize_path(remote_path_source)
-        headers = {
-            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
-        }
-
-        return self.__make_dav_request(
-            'MOVE',
-            remote_path_source,
-            headers=headers
-        )
+        return self.__webdav_move_copy(remote_path_source,remote_path_target,"MOVE")
 
     def copy(self, remote_path_source, remote_path_target):
         """Copies a remote file or directory
 
         :param remote_path_source: source file or folder to copy
         :param remote_path_target: target file to which to copy
+
         :returns: True if the operation succeeded, False otherwise
         :raises: ResponseError in case an HTTP error status was returned
         """
-        if remote_path_target[-1] == '/':
-            remote_path_target += os.path.basename(remote_path_source)
-
-        if not (remote_path_target[0] == '/'):
-            remote_path_target = '/' + remote_path_target
-
-        remote_path_source = self.__normalize_path(remote_path_source)
-        headers = {
-            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
-        }
-
-        return self.__make_dav_request(
-            'COPY',
-            remote_path_source,
-            headers=headers
-        )
+        return self.__webdav_move_copy(remote_path_source,remote_path_target,"COPY")
 
     def share_file_with_link(self, path):
         """Shares a remote file with link
@@ -1285,3 +1257,34 @@ class Client():
         if path.startswith(self.__davpath):
             return path[len(self.__davpath):]
         return path
+        
+    def __webdav_move_copy(self,remote_path_source,remote_path_target,operation):
+        """Copies or moves a remote file or directory
+
+        :param remote_path_source: source file or folder to copy / move
+        :param remote_path_target: target file to which to copy / move
+        :param operation: MOVE or COPY
+
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+
+        if operation != "MOVE" and operation != "COPY":
+            return False
+
+        if remote_path_target[-1] == '/':
+            remote_path_target += os.path.basename(remote_path_source)
+
+        if not (remote_path_target[0] == '/'):
+            remote_path_target = '/' + remote_path_target
+
+        remote_path_source = self.__normalize_path(remote_path_source)
+        headers = {
+            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
+        }
+
+        return self.__make_dav_request(
+            'MOVE',
+            remote_path_source,
+            headers=headers
+        )
