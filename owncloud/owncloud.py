@@ -728,19 +728,17 @@ class Client():
 
         :param user_name:  name of user to be checked 
         :returns: True if user found 
-        :raises: ResponseError in case an HTTP error status was returned
-
+        
         """
-        users=search_users(self, user_name)
+        users=self.search_users(user_name)
 
+        
         if len(users) > 0:
             for user in users:
-            	if user == user_name:
-            		return True
-
-            return False
-        else:
-            return False
+            	if user.text == user_name:
+                   return True
+            		
+        return False
 
     def search_users(self, user_name):
         """Searches for users via provisioning API.
