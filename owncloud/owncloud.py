@@ -731,7 +731,6 @@ class Client():
         
         """
         users=self.search_users(user_name)
-
         
         if len(users) > 0:
             for user in users:
