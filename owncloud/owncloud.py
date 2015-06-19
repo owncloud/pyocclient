@@ -576,6 +576,31 @@ class Client():
             headers=headers
         )
 
+    def copy(self, remote_path_source, remote_path_target):
+        """Copies a remote file or directory
+
+        :param remote_path_source: source file or folder to copy
+        :param remote_path_target: target file to which to copy
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if remote_path_target[-1] == '/':
+            remote_path_target += os.path.basename(remote_path_source)
+
+        if not (remote_path_target[0] == '/'):
+            remote_path_target = '/' + remote_path_target
+
+        remote_path_source = self.__normalize_path(remote_path_source)
+        headers = {
+            'Destination': self.__webdav_url + urllib.quote(self.__encode_string(remote_path_target))
+        }
+
+        return self.__make_dav_request(
+            'COPY',
+            remote_path_source,
+            headers=headers
+        )
+
     def share_file_with_link(self, path):
         """Shares a remote file with link
 
