@@ -1284,7 +1284,7 @@ class Client():
         }
 
         return self.__make_dav_request(
-            'MOVE',
+            operation,
             remote_path_source,
             headers=headers
         )
