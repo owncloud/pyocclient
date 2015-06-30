@@ -429,6 +429,28 @@ class TestFileAccess(unittest.TestCase):
             'x'
         )
 
+    def test_copy_in_place(self):
+        """Test copy in place"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'copy this file!.txt',
+                'to copy'
+            )
+        )
+        self.assertTrue(
+            self.client.copy(
+                self.test_root + 'copy this file!.txt',
+                self.test_root + 'copied in place.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'copied in place.txt'
+            ),
+            'to copy'
+        )
+
     @data_provider(files)
     def test_share_with_link(self, file_name):
         """Test sharing a file with link"""
