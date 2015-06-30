@@ -474,7 +474,7 @@ class TestFileAccess(unittest.TestCase):
             )
         )
         self.assertTrue(
-            self.client.move(
+            self.client.copy(
                 self.test_root + 'copy into subdir.txt',
                 self.test_root + 'subdir/file copied.txt'
             )
