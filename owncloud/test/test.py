@@ -492,7 +492,37 @@ class TestFileAccess(unittest.TestCase):
             'first file'
         )
         
-        
+    def test_copy_unicode(self):
+        """Test copy unicode to dir"""
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + u'दिलै होस छोरा होस.txt',
+                'content'
+            )
+        )
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.copy(
+                self.test_root + u'दिलै होस छोरा होस.txt',
+                self.test_root + u'subdir/दिलै होस छोरा होस.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + u'subdir/दिलै होस छोरा होस.txt'
+            ),
+            'content'
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + u'दिलै होस छोरा होस.txt'
+            ),
+            'content'
+        )              
 
     @data_provider(files)
     def test_share_with_link(self, file_name):
