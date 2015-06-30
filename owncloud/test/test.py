@@ -451,6 +451,33 @@ class TestFileAccess(unittest.TestCase):
             'to copy'
         )
 
+    def test_copy_into_subdir(self):
+        """Test copy into subdir"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'copy into subdir.txt',
+                'first file'
+            )
+        )
+        self.assertTrue(
+            self.client.mkdir(
+                self.test_root + 'subdir'
+            )
+        )
+        self.assertTrue(
+            self.client.move(
+                self.test_root + 'copy into subdir.txt',
+                self.test_root + 'subdir/file copied.txt'
+            )
+        )
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'subdir/file copied.txt'
+            ),
+            'first file'
+        )
+
     @data_provider(files)
     def test_share_with_link(self, file_name):
         """Test sharing a file with link"""
