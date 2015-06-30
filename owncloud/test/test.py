@@ -524,6 +524,29 @@ class TestFileAccess(unittest.TestCase):
             'content'
         )              
 
+    def test_copy_to_non_existing_dir(self):
+        """Test error when copy to non existing dir"""
+
+        self.assertTrue(
+            self.client.put_file_contents(
+                self.test_root + 'copy not possible.txt',
+                'x'
+            )
+        )
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.copy(
+                self.test_root + 'copy not possible.txt',
+                self.test_root + 'non-existing-dir/subdir/x.txt'
+            )
+        self.assertEquals(e.exception.status_code, 409)
+
+        self.assertEquals(
+            self.client.get_file_contents(
+                self.test_root + 'copy not possible.txt'
+            ),
+            'x'
+        )
+
     @data_provider(files)
     def test_share_with_link(self, file_name):
         """Test sharing a file with link"""
