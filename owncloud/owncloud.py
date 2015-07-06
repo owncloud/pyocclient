@@ -174,6 +174,7 @@ class Client():
     OCS_SHARE_TYPE_USER = 0
     OCS_SHARE_TYPE_GROUP = 1
     OCS_SHARE_TYPE_LINK = 3
+    OCS_SHARE_TYPE_REMOTE = 6
 
     def __init__(self, url, **kwargs):
         """Instantiates a client
@@ -496,6 +497,71 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         return self.__make_dav_request('DELETE', path)
+
+    def list_open_remote_share(self):
+        """List all remote shares
+
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_SHARE,
+            'remote_shares'
+        )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+            shares = []
+            for element in tree.find('data').iter('element'):
+                share_attr = {}
+                for child in element:
+                    key = child.tag
+                    value = child.text
+                    share_attr[key] = value
+                shares.append(share_attr)
+            if len(shares) > 0:
+                return shares
+        raise ResponseError(res)
+
+    def accept_remote_share(self, share_id):
+        """Accepts a remote share
+
+        :param share_id: Share ID (int)
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if not isinstance(share_id, int):
+            return False
+
+        res = self.__make_ocs_request(
+            'POST',
+            self.OCS_SERVICE_SHARE,
+            'remote_shares/' + str(share_id)
+        )
+        if res.status_code == 200:
+            return res
+        raise ResponseError(res)
+
+    def decline_remote_share(self, share_id):
+        """Declines a remote share
+
+        :param share_id: Share ID (int)
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if not isinstance(share_id, int):
+            return False
+
+        res = self.__make_ocs_request(
+            'DELETE',
+            self.OCS_SERVICE_SHARE,
+            'remote_shares/' + str(share_id)
+        )
+        if res.status_code == 200:
+            return res
+        raise ResponseError(res)
 
     def delete_share(self, share_id):
         """Unshares a file or directory
@@ -824,6 +890,7 @@ class Client():
             or False if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
+        remote_user = kwargs.get('remote_user', False)
         perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
         if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
                 or ((not isinstance(user, basestring)) or (user == ''))):
@@ -831,7 +898,7 @@ class Client():
 
         path = self.__normalize_path(path)
         post_data = {
-            'shareType': self.OCS_SHARE_TYPE_USER,
+            'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else self.OCS_SHARE_TYPE_USER,
             'shareWith': user,
             'path': self.__encode_string(path),
             'permissions': perms
