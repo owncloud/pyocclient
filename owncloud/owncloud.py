@@ -831,6 +831,30 @@ class Client():
 
         raise ResponseError(res)
 
+    def add_user_to_subadmins(self, user_name, group_name):
+        """Adds a user to a group.
+
+        :param user_name:  name of user to be added
+        :param group_name:  name of group user is to be subadmins
+        :returns: True if user added
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'POST',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/subadmins',
+            data={'groupid': group_name}
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+            return True
+
+        raise ResponseError(res)
+
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
 
