@@ -942,7 +942,7 @@ class Client():
 
         raise ResponseError(res)
 
-    def add_user_to_subadminGroup(self, user_name, group_name):
+    def add_user_to_subadmin_group(self, user_name, group_name):
         """Adds a user to a subadmin group.
 
         :param user_name:  name of user to be added to subadmin group
@@ -966,7 +966,7 @@ class Client():
 
         raise ResponseError(res)
 
-    def get_user_subadminGroups (self, user_name):
+    def get_user_subadmin_groups (self, user_name):
         """Get a list of subadmin groups associated to a user.
 
         :param user_name:  name of user
@@ -991,7 +991,7 @@ class Client():
 
         raise ResponseError(res)
 
-    def user_is_in_subadminGroup (self, user_name, group_name):
+    def user_is_in_subadmin_group (self, user_name, group_name):
         """Check if a user is in a subadmin group
 
         :param user_name:  name of user
@@ -1000,7 +1000,7 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
 
         """
-        if group_name in self.get_user_subadminGroups(user_name):
+        if group_name in self.get_user_subadmin_groups(user_name):
             return True
         else:
             return False
