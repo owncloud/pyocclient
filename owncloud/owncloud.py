@@ -831,6 +831,29 @@ class Client():
 
         raise ResponseError(res)
 
+    def set_user_attribute(self, user_name, key, value):
+        """Sets a user attribute
+
+        :param user_name: name of user to modify
+        :param key: key of the attribute to set
+        :param value: value to set
+        :returns: True if the operation succeeded, False otherwise
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+
+        res = self.__make_ocs_request(
+            'PUT',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name,
+            data={'key': key, 'value': value}
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+            return True
+        raise ResponseError(res)
+
 
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
@@ -874,10 +897,7 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100])
-
-            groups = tree.find('data/groups')
-
-            return groups
+            return [group.text for group in tree.find('data/groups')]
 
         raise ResponseError(res)
 
@@ -1361,8 +1381,6 @@ class Client():
         if service:
             slash = '/'
         path = 'ocs/v1.php/' + service + slash + action
-        if self.__debug:
-            print('OCS request: %s %s' % (method, self.url + path))
 
         attributes = kwargs.copy()
 
@@ -1370,6 +1388,9 @@ class Client():
             attributes['headers'] = {}
 
         attributes['headers']['OCS-APIREQUEST'] = 'true'
+
+        if self.__debug:
+            print('OCS request: %s %s %s' % (method, self.url + path, attributes))
 
         res = self.__session.request(method, self.url + path, **attributes)
         return res
