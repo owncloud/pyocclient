@@ -897,10 +897,7 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100])
-
-            groups = tree.find('data/groups')
-
-            return groups
+            return [group.text for group in tree.find('data/groups')]
 
         raise ResponseError(res)
 
