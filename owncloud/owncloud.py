@@ -831,29 +831,6 @@ class Client():
 
         raise ResponseError(res)
 
-    def add_user_to_subadmins(self, user_name, group_name):
-        """Adds a user to a group.
-
-        :param user_name:  name of user to be added
-        :param group_name:  name of group user is to be subadmins
-        :returns: True if user added
-        :raises: ResponseError in case an HTTP error status was returned
-
-        """
-
-        res = self.__make_ocs_request(
-            'POST',
-            self.OCS_SERVICE_CLOUD,
-            'users/' + user_name + '/subadmins',
-            data={'groupid': group_name}
-        )
-
-        if res.status_code == 200:
-            tree = ET.fromstring(res.text)
-            self.__check_ocs_status(tree, [100, 102])
-            return True
-
-        raise ResponseError(res)
 
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
@@ -879,6 +856,46 @@ class Client():
 
         raise ResponseError(res)
 
+    def get_user_groups (self, user_name):
+        """Get a list of groups associated to a user.
+
+        :param user_name:  name of user to list groups
+        :returns: list of groups
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/groups',
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100])
+
+            groups = tree.find('data/groups')
+
+            return groups
+
+        raise ResponseError(res)
+
+    def user_is_in_group (self, user_name, group_name):
+        """Check if a user is in a group
+
+        :param user_name:  name of user
+        :param group_name:  name of group
+        :returns: True if user is in group
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+        if group_name in self.get_user_groups(user_name):
+            return True
+        else:
+            return False
+
+
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.
 
@@ -901,6 +918,69 @@ class Client():
             return True
 
         raise ResponseError(res)
+
+    def add_user_to_subadminGroup(self, user_name, group_name):
+        """Adds a user to a subadmin group.
+
+        :param user_name:  name of user to be added to subadmin group
+        :param group_name:  name of subadmin group
+        :returns: True if user added
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'POST',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/subadmins',
+            data={'groupid': group_name}
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 103])
+            return True
+
+        raise ResponseError(res)
+
+    def get_user_subadminGroups (self, user_name):
+        """Get a list of subadmin groups associated to a user.
+
+        :param user_name:  name of user
+        :returns: list of subadmin groups
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/subadmins',
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100])
+
+            groups = tree.find('data')
+
+            return groups
+
+        raise ResponseError(res)
+
+    def user_is_in_subadminGroup (self, user_name, group_name):
+        """Check if a user is in a subadmin group
+
+        :param user_name:  name of user
+        :param group_name:  name of subadmin group
+        :returns: True if user is in subadmin group
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+        if group_name in self.get_user_subadminGroups(user_name):
+            return True
+        else:
+            return False
 
     def share_file_with_user(self, path, user, **kwargs):
         """Shares a remote file with specified user
