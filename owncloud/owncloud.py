@@ -197,6 +197,12 @@ class Client():
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
 
+    def __get_session(self):
+        if not self.__single_session:
+            self.__session.cookies.clear()
+
+        return self.__session
+
     def login(self, user_id, password):
         """Authenticate to ownCloud.
         This will create a session on the server.
@@ -213,7 +219,6 @@ class Client():
         res = self.__session.get(self.url + 'index.php')
         if res.status_code == 200:
             if self.__single_session:
-                # Keep the same session, no need to re-auth every call
                 self.__session.auth = None
             return
         self.__session.close()
@@ -227,7 +232,11 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         # TODO actual logout ?
+        if self.__session is None:
+            return True
+
         self.__session.close()
+        self.__session = None
         return True
 
     def file_info(self, path):
@@ -269,7 +278,7 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        res = self.__session.get(self.__webdav_url + path)
+        res = self.__get_session().get(self.__webdav_url + path)
         if res.status_code == 200:
             return res.content
         elif res.status_code >= 400:
@@ -286,7 +295,9 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
-        res = self.__session.get(
+        if self.__debug:
+            print('DAV request: GET %s' % (remote_path))
+        res = self.__get_session().get(
             self.__webdav_url + remote_path,
             stream=True
         )
@@ -316,7 +327,7 @@ class Client():
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
                 + urllib.quote(remote_path)
-        res = self.__session.get(url, stream=True)
+        res = self.__get_session().get(url, stream=True)
         if res.status_code == 200:
             if local_file is None:
                 # use downloaded file name from Content-Disposition
@@ -1200,7 +1211,7 @@ class Client():
 
         attributes['headers']['OCS-APIREQUEST'] = 'true'
 
-        res = self.__session.request(method, self.url + path, **attributes)
+        res = self.__get_session().request(method, self.url + path, **attributes)
         return res
 
     def __make_dav_request(self, method, path, **kwargs):
@@ -1219,7 +1230,7 @@ class Client():
                 print('Headers: ', kwargs.get('headers'))
 
         path = self.__normalize_path(path)
-        res = self.__session.request(
+        res = self.__get_session().request(
             method,
             self.__webdav_url + urllib.quote(self.__encode_string(path)),
             **kwargs
