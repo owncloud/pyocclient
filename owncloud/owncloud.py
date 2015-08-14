@@ -855,6 +855,30 @@ class Client():
 
         raise ResponseError(res)
 
+    def get_user_groups(self, user_name):
+        """Get all groups of a specified user via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  user to be checked
+        :returns: list of groups
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/groups'
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100])
+            groups = tree.find('data/groups')
+
+            return groups
+
+        raise ResponseError(res)
+
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.
 
