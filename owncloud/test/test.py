@@ -788,6 +788,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.groups_to_create = Config['groups_to_create']
+        self.not_existing_group = Config['not_existing_group']
 
     def tearDown(self):
         for group in self.groups_to_create:
@@ -799,6 +800,9 @@ class TestUserAndGroupActions(unittest.TestCase):
         for group in self.groups_to_create:
             self.assertTrue(self.client.create_group(group))
             self.assertTrue(self.client.group_exists(group))
+
+    def test_not_existing_group(self):
+        self.assertFalse(self.client.group_exists(self.not_existing_group))
 
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
