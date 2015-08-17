@@ -788,7 +788,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.groups_to_create = Config['groups_to_create']
-        
+        print self.client.get_config()
         self.not_existing_group = Config['not_existing_group']
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
