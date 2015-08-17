@@ -15,6 +15,8 @@ Config = {
     'owncloud_password': 'admin',
     # test user whom we want to share a file
     'owncloud_share2user': 'share',
+    # test group, uses to add owncloud_share2user to it etc
+    'test_group': 'my_test_group',
     # remote root path to use for testing
     'test_root': 'pyoctestroot%s' % test_id,
     # app name to use when testing privatedata API

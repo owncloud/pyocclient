@@ -789,10 +789,14 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.groups_to_create = Config['groups_to_create']
         self.not_existing_group = Config['not_existing_group']
+        self.test_group = Config['test_group']
+        self.share2user = Config['owncloud_share2user']
 
     def tearDown(self):
         for group in self.groups_to_create:
             self.assertTrue(self.client.delete_group(group))
+
+        self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
 
         self.client.logout()
 
@@ -802,8 +806,13 @@ class TestUserAndGroupActions(unittest.TestCase):
             self.assertTrue(self.client.group_exists(group))
 
     def test_not_existing_group(self):
-        self.assertFalse(self.client.group_exists(self.not_existing_group))
+        self.assertFalse(self.client.group_exists(self.not_existing_group))        
 
+    def test_add_user_to_group(self):
+        self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
+        self.assertTrue(self.client.add_user_to_group(self.share2user,self.test_group))
+        self.assertTrue(self.client.user_is_in_group(self.share2user,self.test_group))
+        
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
