@@ -1112,12 +1112,12 @@ class Client():
 
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            code_el = tree.find('data/groups/element')
 
-            if code_el is not None and code_el.text == group_name:
-                return True
-            else:
-                return False
+            for code_el in tree.findall('data/groups/element'):
+                if code_el is not None and code_el.text == group_name:
+                    return True
+
+            return False
 
         raise ResponseError(res)
 
