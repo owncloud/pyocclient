@@ -782,6 +782,24 @@ class TestPrivateDataAccess(unittest.TestCase):
         self.assertIsNone(self.client.get_attribute(self.app_name, attr1))
         self.assertEquals(self.client.get_attribute(self.app_name), [])
 
+class TestUserAndGroupActions(unittest.TestCase):
+
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+        self.groups_to_create = Config['groups_to_create']
+
+    def tearDown(self):
+        for group in self.groups_to_create:
+            self.assertTrue(self.client.delete_group(group))
+
+        self.client.logout()
+
+    def test_create_groups(self):
+        for group in self.groups_to_create:
+            self.assertTrue(self.client.create_group(group))
+            self.assertTrue(self.client.group_exists(group))
+
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])

@@ -19,7 +19,8 @@ Config = {
     'test_root': 'pyoctestroot%s' % test_id,
     # app name to use when testing privatedata API
     'app_name': 'pyocclient_test%s' % test_id,
+    #groups to be created
+    'groups_to_create': ["grp1","grp2","grp3"],
     # single session mode (only set to False for ownCloud 5)
     'single_session': True
 }
-
