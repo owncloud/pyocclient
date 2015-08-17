@@ -788,7 +788,6 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.groups_to_create = Config['groups_to_create']
-        print self.client.get_config()
         self.not_existing_group = Config['not_existing_group']
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
@@ -812,7 +811,6 @@ class TestUserAndGroupActions(unittest.TestCase):
     def test_add_user_to_group(self):
         self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
         self.assertTrue(self.client.add_user_to_group(self.share2user,self.test_group))
-        time.sleep(20)
         self.assertTrue(self.client.user_is_in_group(self.share2user,self.test_group))
         
 class TestGetConfig(unittest.TestCase):
