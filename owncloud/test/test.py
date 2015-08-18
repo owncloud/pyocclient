@@ -791,9 +791,12 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.not_existing_group = Config['not_existing_group']
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
-        self.apps=self.client.get_apps()
-        if self.apps['provisioning_api'] is False:
-            raise unittest.SkipTest("no API")
+        try:
+            self.apps=self.client.get_apps()
+            if self.apps['provisioning_api'] is False:
+                raise unittest.SkipTest("no API")
+        except ResponseError:
+           raise unittest.SkipTest("no API") 
 
         try:
             self.client.create_user(self.share2user, 'share')
