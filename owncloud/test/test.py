@@ -782,6 +782,61 @@ class TestPrivateDataAccess(unittest.TestCase):
         self.assertIsNone(self.client.get_attribute(self.app_name, attr1))
         self.assertEquals(self.client.get_attribute(self.app_name), [])
 
+class TestUserAndGroupActions(unittest.TestCase):
+
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+        self.groups_to_create = Config['groups_to_create']
+        self.not_existing_group = Config['not_existing_group']
+        self.test_group = Config['test_group']
+        self.share2user = Config['owncloud_share2user']
+        try:
+            self.apps=self.client.get_apps()
+            if self.apps['provisioning_api'] is False:
+                raise unittest.SkipTest("no API")
+        except owncloud.ResponseError:
+            raise unittest.SkipTest("no API") 
+
+        try:
+            self.client.create_user(self.share2user, 'share')
+        except:
+            pass
+        try:
+            self.client.create_group(self.test_group)
+        except:
+            pass        
+
+    def tearDown(self):
+        for group in self.groups_to_create:
+            self.assertTrue(self.client.delete_group(group))
+
+        self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
+        try:
+            self.client.delete_user(self.share2user)
+        except:
+            pass
+
+        try:
+            self.client.delete_group(self.test_group)
+        except:
+            pass        
+
+        self.client.logout()
+
+    def test_create_groups(self):
+        for group in self.groups_to_create:
+            self.assertTrue(self.client.create_group(group))
+            self.assertTrue(self.client.group_exists(group))
+
+    def test_not_existing_group(self):
+        self.assertFalse(self.client.group_exists(self.not_existing_group))        
+
+    def test_add_user_to_group(self):
+        self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
+        self.assertTrue(self.client.add_user_to_group(self.share2user,self.test_group))
+        self.assertTrue(self.client.user_is_in_group(self.share2user,self.test_group))
+        
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
