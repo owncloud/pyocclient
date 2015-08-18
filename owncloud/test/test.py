@@ -791,12 +791,29 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.not_existing_group = Config['not_existing_group']
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
+        try:
+            self.client.create_user(self.share2user, 'share')
+        except:
+            pass
+        try:
+            self.client.create_group(self.test_group)
+        except:
+            pass        
 
     def tearDown(self):
         for group in self.groups_to_create:
             self.assertTrue(self.client.delete_group(group))
 
         self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
+        try:
+            self.client.delete_user(self.share2user)
+        except:
+            pass
+
+        try:
+            self.client.delete_group(self.test_group)
+        except:
+            pass        
 
         self.client.logout()
 
