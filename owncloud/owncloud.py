@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- Coding.: utf-8 -*-
 #
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
@@ -25,6 +25,22 @@ class ResponseError(Exception):
             code = res.status_code
             self.res = res
         Exception.__init__(self, "HTTP error: %i" % code)
+        self.status_code = code
+
+    def get_resource_body(self):
+        if None != self.res:
+            return self.res.text
+        else:
+            return None
+        
+class OCSResponseError(Exception):
+    def __init__(self, res):
+        if type(res) is int:
+            code = res
+        else:
+            code = res.status_code
+            self.res = res
+        Exception.__init__(self, "OCS error: %i" % code)
         self.status_code = code
 
     def get_resource_body(self):
@@ -1366,7 +1382,7 @@ class Client():
                 msg_el = tree  # fallback to the entire ocs response, if we find no message.
             r._content = ET.tostring(msg_el)
             r.status_code = int(code_el.text)
-            raise ResponseError(r)
+            raise OCSResponseError(r)
 
     def __make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
