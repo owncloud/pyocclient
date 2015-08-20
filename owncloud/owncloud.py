@@ -211,7 +211,7 @@ class Client():
 
         :param user_id: user id
         :param password: password
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         self.__session = requests.session()
@@ -226,13 +226,13 @@ class Client():
             return
         self.__session.close()
         self.__session = None
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def logout(self):
         """Log out the authenticated user and close the session.
 
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         # TODO actual logout ?
         self.__session.close()
@@ -245,7 +245,7 @@ class Client():
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         res = self.__make_dav_request('PROPFIND', path)
         if res:
@@ -258,7 +258,7 @@ class Client():
         :param path: path to the remote directory
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path += '/'
@@ -274,14 +274,14 @@ class Client():
         :param path: path to the remote file
         :returns: file contents
         :rtype: binary data
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
         res = self.__session.get(self.__webdav_url + path)
         if res.status_code == 200:
             return res.content
         elif res.status_code >= 400:
-            raise ResponseError(res)
+            raise HTTPResponseError(res)
         return False
 
     def get_file(self, remote_path, local_file=None):
@@ -291,7 +291,7 @@ class Client():
         :param local_file: optional path to the local file. If none specified,
             the file will be downloaded into the current directory
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
         res = self.__session.get(
@@ -310,7 +310,7 @@ class Client():
             file_handle.close()
             return True
         elif res.status_code >= 400:
-            raise ResponseError(res)
+            raise HTTPResponseError(res)
         return False
 
     def get_directory_as_zip(self, remote_path, local_file):
@@ -319,7 +319,7 @@ class Client():
         :param remote_path: path to the remote directory to download
         :param local_file: path and name of the target local file
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
@@ -337,7 +337,7 @@ class Client():
             file_handle.close()
             return True
         elif res.status_code >= 400:
-            raise ResponseError(res)
+            raise HTTPResponseError(res)
         return False
 
     def put_file_contents(self, remote_path, data):
@@ -346,7 +346,7 @@ class Client():
         :param remote_path: path of the remote file
         :param data: data to write into the remote file
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         return self.__make_dav_request('PUT', remote_path, data=data)
 
@@ -361,7 +361,7 @@ class Client():
         :param keep_mtime: (optional) also update the remote file to the same
             mtime as the local one, defaults to True
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if kwargs.get('chunked', True):
             return self.__put_file_chunked(
@@ -395,7 +395,7 @@ class Client():
         :param local_directory: path to the local directory to upload
         :param \*\*kwargs: optional arguments that ``put_file`` accepts
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         target_path = self.__normalize_path(target_path)
         if not target_path[-1] == '/':
@@ -428,7 +428,7 @@ class Client():
         :param local_source_file: path to the local file to upload
         :param \*\*kwargs: optional arguments that ``put_file`` accepts
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         chunk_size = kwargs.get('chunk_size', 10 * 1024 * 1024)
         result = True
@@ -490,7 +490,7 @@ class Client():
 
         :param path: path to the remote directory to create
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path += '/'
@@ -501,7 +501,7 @@ class Client():
 
         :param path: path to the file or directory to delete
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         return self.__make_dav_request('DELETE', path)
 
@@ -509,7 +509,7 @@ class Client():
         """List all remote shares
 
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         res = self.__make_ocs_request(
@@ -530,14 +530,14 @@ class Client():
                 shares.append(share_attr)
             if len(shares) > 0:
                 return shares
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def accept_remote_share(self, share_id):
         """Accepts a remote share
 
         :param share_id: Share ID (int)
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not isinstance(share_id, int):
             return False
@@ -549,14 +549,14 @@ class Client():
         )
         if res.status_code == 200:
             return res
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def decline_remote_share(self, share_id):
         """Declines a remote share
 
         :param share_id: Share ID (int)
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not isinstance(share_id, int):
             return False
@@ -568,14 +568,14 @@ class Client():
         )
         if res.status_code == 200:
             return res
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def delete_share(self, share_id):
         """Unshares a file or directory
 
         :param share_id: Share ID (int)
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not isinstance(share_id, int):
             return False
@@ -587,7 +587,7 @@ class Client():
         )
         if res.status_code == 200:
             return res
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def update_share(self, share_id, **kwargs):
         """Updates a given share
@@ -597,7 +597,7 @@ class Client():
         :param password: (string) updated password for public link Share
         :param public_upload: (boolean) enable/disable public upload for public shares
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         perms = kwargs.get('perms', None)
@@ -626,7 +626,7 @@ class Client():
         )
         if res.status_code == 200:
             return True
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def move(self, remote_path_source, remote_path_target):
         """Moves a remote file or directory
@@ -636,7 +636,7 @@ class Client():
         the source file. A target directory can also be specified
         instead by appending a "/"
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         return self.__webdav_move_copy(remote_path_source,remote_path_target,"MOVE")
@@ -648,7 +648,7 @@ class Client():
         :param remote_path_target: target file to which to copy
 
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         return self.__webdav_move_copy(remote_path_source,remote_path_target,"COPY")
 
@@ -658,7 +658,7 @@ class Client():
         :param path: path to the remote file to share
         :returns: instance of :class:`PublicShare` with the share info
             or False if the operation failed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
         post_data = {
@@ -682,22 +682,22 @@ class Client():
                 data_el.find('url').text,
                 data_el.find('token').text
             )
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def is_shared(self, path):
         """Checks whether a path is already shared
 
         :param path: path to the share to be checked
         :returns: True if the path is already shared, else False
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        # make sure that the path exist - if not, raise ResponseError
+        # make sure that the path exist - if not, raise HTTPResponseError
         self.file_info(path)
         try:
             result = self.get_shares(path)
             if result:
                 return len(result) > 0
-        except ResponseError as e:
+        except HTTPResponseError as e:
             if e.status_code != 404:
                 raise e
             return False
@@ -712,7 +712,7 @@ class Client():
         :param subfiles: (optional, boolean) returns all shares within
             a folder, given that path defines a folder (default: False)
         :returns: array of shares or empty array if the operation failed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not (isinstance(path, basestring)):
             return None
@@ -748,7 +748,7 @@ class Client():
                 shares.append(share_attr)
             if len(shares) > 0:
                 return shares
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def create_user(self, user_name, initial_password):
         """Create a new user with an initial password via provisioning API.
@@ -758,7 +758,7 @@ class Client():
         :param user_name:  name of user to be created
         :param initial_password:  password for user being created
         :returns: True on success
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -775,7 +775,7 @@ class Client():
             self.__check_ocs_status(tree, [100, 102])
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def delete_user(self, user_name):
         """Deletes a user via provisioning API.
@@ -783,7 +783,7 @@ class Client():
 
         :param user_name:  name of user to be deleted
         :returns: True on success
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -796,7 +796,7 @@ class Client():
         if res.status_code == 200:
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def user_exists(self, user_name):
         """Checks a user via provisioning API.
@@ -821,7 +821,7 @@ class Client():
 
         :param user_name:  name of user to be searched for 
         :returns: list of users
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -836,7 +836,7 @@ class Client():
 
             return users           
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def set_user_attribute(self, user_name, key, value):
         """Sets a user attribute
@@ -845,7 +845,7 @@ class Client():
         :param key: key of the attribute to set
         :param value: value to set
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         res = self.__make_ocs_request(
@@ -859,7 +859,7 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree, [100, 102])
             return True
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
 
     def add_user_to_group(self, user_name, group_name):
@@ -868,7 +868,7 @@ class Client():
         :param user_name:  name of user to be added
         :param group_name:  name of group user is to be added to
         :returns: True if user added
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
 
@@ -884,14 +884,14 @@ class Client():
             self.__check_ocs_status(tree, [100, 102])
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_user_groups (self, user_name):
         """Get a list of groups associated to a user.
 
         :param user_name:  name of user to list groups
         :returns: list of groups
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
 
@@ -906,7 +906,7 @@ class Client():
             self.__check_ocs_status(tree, [100])
             return [group.text for group in tree.find('data/groups')]
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def user_is_in_group (self, user_name, group_name):
         """Check if a user is in a group
@@ -914,7 +914,7 @@ class Client():
         :param user_name:  name of user
         :param group_name:  name of group
         :returns: True if user is in group
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         if group_name in self.get_user_groups(user_name):
@@ -929,7 +929,7 @@ class Client():
         :param user_name:  name of user to be removed
         :param group_name:  name of group user is to be removed from
         :returns: True if user removed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -944,7 +944,7 @@ class Client():
             self.__check_ocs_status(tree, [100, 102])
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def add_user_to_subadmin_group(self, user_name, group_name):
         """Adds a user to a subadmin group.
@@ -952,7 +952,7 @@ class Client():
         :param user_name:  name of user to be added to subadmin group
         :param group_name:  name of subadmin group
         :returns: True if user added
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
 
@@ -968,14 +968,14 @@ class Client():
             self.__check_ocs_status(tree, [100, 103])
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_user_subadmin_groups (self, user_name):
         """Get a list of subadmin groups associated to a user.
 
         :param user_name:  name of user
         :returns: list of subadmin groups
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
 
@@ -993,7 +993,7 @@ class Client():
 
             return groups
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def user_is_in_subadmin_group (self, user_name, group_name):
         """Check if a user is in a subadmin group
@@ -1001,7 +1001,7 @@ class Client():
         :param user_name:  name of user
         :param group_name:  name of subadmin group
         :returns: True if user is in subadmin group
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         if group_name in self.get_user_subadmin_groups(user_name):
@@ -1019,7 +1019,7 @@ class Client():
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
         :returns: instance of :class:`UserShare` with the share info
             or False if the operation failed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         remote_user = kwargs.get('remote_user', False)
         perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
@@ -1054,7 +1054,7 @@ class Client():
                 path,
                 perms
             )
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def create_group(self, group_name):
         """Create a new group via provisioning API.
@@ -1062,7 +1062,7 @@ class Client():
 
         :param group_name:  name of group to be created
         :returns: True if group created
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -1079,7 +1079,7 @@ class Client():
             self.__check_ocs_status(tree, [100, 102])
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def delete_group(self, group_name):
         """Delete a group via provisioning API.
@@ -1087,7 +1087,7 @@ class Client():
 
         :param group_name:  name of group to be deleted
         :returns: True if group deleted
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -1100,7 +1100,7 @@ class Client():
         if res.status_code == 200:
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def group_exists(self, group_name):
         """Checks a group via provisioning API.
@@ -1108,7 +1108,7 @@ class Client():
 
         :param group_name:  name of group to be checked
         :returns: True if group exists
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request(
@@ -1126,7 +1126,7 @@ class Client():
 
             return False
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def share_file_with_group(self, path, group, **kwargs):
         """Shares a remote file with specified group
@@ -1138,7 +1138,7 @@ class Client():
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
         :returns: instance of :class:`GroupShare` with the share info
             or False if the operation failed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
         if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
@@ -1163,14 +1163,14 @@ class Client():
                 path,
                 perms
             )
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_config(self):
         """Returns ownCloud config information
         :returns: array of tuples (key, value) for each information
             e.g. [('version', '1.7'), ('website', 'ownCloud'), ('host', 'cloud.example.com'),
             ('contact', ''), ('ssl', 'false')]
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'config'
         res = self.__make_ocs_request(
@@ -1192,7 +1192,7 @@ class Client():
                 return zip(keys, values)
             else:
                 return None
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_attribute(self, app=None, key=None):
         """Returns an application attribute
@@ -1202,7 +1202,7 @@ class Client():
             given application
         :returns: attribute value if key was specified, or an array of tuples
             (key, value) for each attribute
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'getattribute'
         if app is not None:
@@ -1233,7 +1233,7 @@ class Client():
             if len(values) == 0 and key is not None:
                 return None
             return values
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def set_attribute(self, app, key, value):
         """Sets an application attribute
@@ -1242,7 +1242,7 @@ class Client():
         :param key: key of the attribute to set
         :param value: value to set
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'setattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
@@ -1255,7 +1255,7 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             return True
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def delete_attribute(self, app, key):
         """Deletes an application attribute
@@ -1263,7 +1263,7 @@ class Client():
         :param app: application id
         :param key: key of the attribute to delete
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'deleteattribute/' + urllib.quote(app, '') + '/' + urllib.quote(self.__encode_string(key), '')
         res = self.__make_ocs_request(
@@ -1275,19 +1275,19 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             return True
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_apps(self):
         """ List all enabled apps through the provisioning api.
 
         :returns: a dict of apps, with values True/False, representing the enabled state.
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         ena_apps = {}
 
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
         if res.status_code != 200:
-            raise ResponseError(res)
+            raise HTTPResponseError(res)
         tree = ET.fromstring(res.text)
         self.__check_ocs_status(tree)
         # <data><apps><element>files</element><element>activity</element> ...
@@ -1296,7 +1296,7 @@ class Client():
 
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps?filter=enabled')
         if res.status_code != 200:
-            raise ResponseError(res)
+            raise HTTPResponseError(res)
         tree = ET.fromstring(res.text)
         self.__check_ocs_status(tree)
         for el in tree.findall('data/apps/element'):
@@ -1309,28 +1309,28 @@ class Client():
 
         :param appname:  Name of app to be enabled
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request('POST', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
         if res.status_code == 200:
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def disable_app(self, appname):
         """Disable an app through provisioning_api
 
         :param appname:  Name of app to be disabled
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
         res = self.__make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
         if res.status_code == 200:
             return True
 
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     @staticmethod
     def __normalize_path(path):
@@ -1363,7 +1363,7 @@ class Client():
         :param tree: response parsed with elementtree
         :param accepted_codes: list of statuscodes we consider good. E.g. [100,102] can be used to accept a POST
                returning an 'already exists' condition
-        :raises: ResponseError if the http status is not 200, or the webdav status is not one of the accepted_codes.
+        :raises: HTTPResponseError if the http status is not 200, or OCSResponseError if the OCS status is not one of the accepted_codes.
         """
         code_el = tree.find('meta/statuscode')
         if code_el is not None and int(code_el.text) not in accepted_codes:
@@ -1429,7 +1429,7 @@ class Client():
             return self.__parse_dav_response(res)
         if res.status_code == 204 or res.status_code == 201:
             return True
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def __parse_dav_response(self, res):
         """Parses the DAV responses from a multi-status response
@@ -1485,7 +1485,7 @@ class Client():
         :param operation: MOVE or COPY
 
         :returns: True if the operation succeeded, False otherwise
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
         if operation != "MOVE" and operation != "COPY":
