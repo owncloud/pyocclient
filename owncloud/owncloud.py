@@ -16,15 +16,14 @@ import requests
 import xml.etree.ElementTree as ET
 import os
 
-
 class ResponseError(Exception):
-    def __init__(self, res):
+    def __init__(self, res, errorType):
         if type(res) is int:
             code = res
         else:
             code = res.status_code
             self.res = res
-        Exception.__init__(self, "HTTP error: %i" % code)
+        Exception.__init__(self, errorType + " error: %i" % code)
         self.status_code = code
 
     def get_resource_body(self):
@@ -32,22 +31,14 @@ class ResponseError(Exception):
             return self.res.text
         else:
             return None
-        
-class OCSResponseError(Exception):
-    def __init__(self, res):
-        if type(res) is int:
-            code = res
-        else:
-            code = res.status_code
-            self.res = res
-        Exception.__init__(self, "OCS error: %i" % code)
-        self.status_code = code
 
-    def get_resource_body(self):
-        if None != self.res:
-            return self.res.text
-        else:
-            return None
+class OCSResponseError(ResponseError):
+    def __init__(self, res):
+        ResponseError.__init__(self,res, "OCS")
+
+class HTTPResponseError(ResponseError):
+    def __init__(self, res):
+        ResponseError.__init__(self,res, "HTTP")
 
 class PublicShare():
     """Public share information"""
