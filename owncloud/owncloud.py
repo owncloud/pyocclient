@@ -697,7 +697,7 @@ class Client():
             result = self.get_shares(path)
             if result:
                 return len(result) > 0
-        except HTTPResponseError as e:
+        except OCSResponseError as e:
             if e.status_code != 404:
                 raise e
             return False
@@ -735,6 +735,7 @@ class Client():
             self.OCS_SERVICE_SHARE,
             data
         )
+
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
