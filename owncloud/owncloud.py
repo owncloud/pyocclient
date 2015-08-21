@@ -857,7 +857,7 @@ class Client():
 
         if res.status_code == 200:
             tree = ET.fromstring(res.text)
-            self.__check_ocs_status(tree, [100, 102])
+            self.__check_ocs_status(tree, [100])
             return True
         raise HTTPResponseError(res)
 
