@@ -26,6 +26,8 @@ class TestFileAccess(unittest.TestCase):
         [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
     )
 
+    files_shared_by_link = {}
+
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
         os.mkdir(self.temp_dir)
@@ -570,6 +572,25 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
+        self.share_by_link = share_info
+
+    @data_provider(files)
+    def test_update_share_with_link(self, file_name):
+        """Update shares in order to check everything's correct"""
+        
+        path = self.test_root + file_name
+
+        share_id = self.files_shared_by_link[file_name].share_id
+        self.assertTrue(self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL, public_upload=False))
+        perms = self.client.get_shares(path)[0]['permissions']
+        public_upload = self.client.get_shares(path)[0]['publicUpload']
+        # permissions should still be OCS_PERMISSION_READ not OCS_PERMISSION_ALL,
+        # because it's a public share
+        self.assertEqual(int(perms), self.client.OCS_PERMISSION_READ)
+        self.assertEqual(public_upload, 'false')
+        self.assertTrue(self.client.delete_share(share_id))
+
+
 
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
@@ -586,12 +607,14 @@ class TestFileAccess(unittest.TestCase):
 
         share_info = self.client.share_file_with_user(path, self.share2user)
 
-        self.assertTrue(self.client.is_shared(path))
+        selfth.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.UserShare))
         self.assertEquals(share_info.share, path)
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(share_info.perms, 31)
         self.assertTrue(self.client.delete(path))
+    
+
 
     @data_provider(files)
     def test_delete_share(self, file_name):

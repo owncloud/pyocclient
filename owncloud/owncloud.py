@@ -663,7 +663,7 @@ class Client():
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
         :returns: instance of :class:`PublicShare` with the share info
             or False if the operation failed
-        :raises: ResponseError in case an HTTP error status was returned
+        :raises: HTTPResponseError in case an HTTP error status was returned
         """
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
