@@ -588,7 +588,7 @@ class TestFileAccess(unittest.TestCase):
 
         share_info = self.client.share_file_with_user(path, self.share2user)
 
-        selfth.assertTrue(self.client.is_shared(path))
+        self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.UserShare))
         self.assertEquals(share_info.share, path)
         self.assertTrue(type(share_info.share_id) is int)
