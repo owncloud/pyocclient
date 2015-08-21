@@ -652,7 +652,7 @@ class Client():
         """
         return self.__webdav_move_copy(remote_path_source,remote_path_target,"COPY")
 
-        def share_file_with_link(self, path, **kwargs):
+    def share_file_with_link(self, path, **kwargs):
         """Shares a remote file with link
 
         :param path: path to the remote file to share
