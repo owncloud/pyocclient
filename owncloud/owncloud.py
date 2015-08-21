@@ -771,9 +771,8 @@ class Client():
 
         # We get 200 when the user was just created.
         if res.status_code == 200:
-            # We get an inner 102 although we have an outer 200 when the user already exists.
             tree = ET.fromstring(res.text)
-            self.__check_ocs_status(tree, [100, 102])
+            self.__check_ocs_status(tree, [100])
             return True
 
         raise HTTPResponseError(res)
