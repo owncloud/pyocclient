@@ -824,18 +824,79 @@ class TestUserAndGroupActions(unittest.TestCase):
 
         self.client.logout()
 
+    def test_set_user_attribute(self):
+        self.assertTrue(self.client.set_user_attribute(self.share2user,'quota',123456))
+        self.assertTrue(self.client.set_user_attribute(self.share2user,'email','test@inf.org'))
+        self.assertTrue(self.client.set_user_attribute(self.share2user,'password','secret'))
+
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
+        self.assertEquals(e.exception.status_code, 102)
+        #try to catch with general ResponseError
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
+        self.assertEquals(e.exception.status_code, 102)            
+
+    def test_create_existing_user(self):
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.create_user(self.share2user, 'share')
+        self.assertEquals(e.exception.status_code, 102)
+        #try to catch with general ResponseError
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.create_user(self.share2user, 'share')
+        self.assertEquals(e.exception.status_code, 102)
+
     def test_create_groups(self):
         for group in self.groups_to_create:
             self.assertTrue(self.client.create_group(group))
             self.assertTrue(self.client.group_exists(group))
+            #try to create them again, that should raise and OCSResponseError with code 102
+            with self.assertRaises(owncloud.OCSResponseError) as e:
+                self.client.create_group(group)
+            self.assertEquals(e.exception.status_code, 102)
+            #try to catch with general ResponseError
+            with self.assertRaises(owncloud.ResponseError) as e:
+                self.client.create_group(group)
+            self.assertEquals(e.exception.status_code, 102)            
 
     def test_not_existing_group(self):
         self.assertFalse(self.client.group_exists(self.not_existing_group))        
 
-    def test_add_user_to_group(self):
+    def test_add_user_to_group_remove_user_from_group(self):
         self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
         self.assertTrue(self.client.add_user_to_group(self.share2user,self.test_group))
         self.assertTrue(self.client.user_is_in_group(self.share2user,self.test_group))
+
+        #try to add the user to a not existing group, that should raise and OCSResponseError with code 102
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.add_user_to_group(self.share2user,self.not_existing_group)
+        self.assertEquals(e.exception.status_code, 102)
+        #try to catch with general ResponseError
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.add_user_to_group(self.share2user,self.not_existing_group)
+        self.assertEquals(e.exception.status_code, 102)
+
+        self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
+        self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
+
+        #try to remove the user from a not existing group, that should raise and OCSResponseError with code 102
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.remove_user_from_group(self.share2user,self.not_existing_group)
+        self.assertEquals(e.exception.status_code, 102)
+        #try to catch with general ResponseError
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.remove_user_from_group(self.share2user,self.not_existing_group)
+        self.assertEquals(e.exception.status_code, 102)
+
+        #try to remove user without giving group name
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.remove_user_from_group(self.share2user,'')
+        self.assertEquals(e.exception.status_code, 101)
+
+        #try to remove not existing user from a group
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.remove_user_from_group("iGuessThisUserNameDoesNotExistInTheSystem",self.test_group)
+        self.assertEquals(e.exception.status_code, 103)
         
 class TestGetConfig(unittest.TestCase):
     def setUp(self):
