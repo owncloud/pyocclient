@@ -652,25 +652,41 @@ class Client():
         """
         return self.__webdav_move_copy(remote_path_source,remote_path_target,"COPY")
 
-    def share_file_with_link(self, path):
+        def share_file_with_link(self, path, **kwargs):
         """Shares a remote file with link
 
         :param path: path to the remote file to share
+        :param perms (optional): permission of the shared object
+        defaults to read only (1)
+        :param public_upload (optional): allows users to upload files or folders
+        :param password (optional): sets a password
+        http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
         :returns: instance of :class:`PublicShare` with the share info
             or False if the operation failed
-        :raises: HTTPResponseError in case an HTTP error status was returned
+        :raises: ResponseError in case an HTTP error status was returned
         """
+        perms = kwargs.get('perms', None)
+        public_upload = kwargs.get('public_upload', 'false')
+        password = kwargs.get('password', None)        
+
+
         path = self.__normalize_path(path)
         post_data = {
             'shareType': self.OCS_SHARE_TYPE_LINK,
-            'path': self.__encode_string(path)
+            'path': self.__encode_string(path),
         }
+        if (public_upload is not None) and (isinstance(public_upload, bool)):
+            post_data['publicUpload'] = str(public_upload).lower()
+        if isinstance(password, basestring):
+            post_data['password'] = password
+        if perms:
+            post_data['permissions'] = perms
 
         res = self.__make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
             'shares',
-            data=post_data
+            data = post_data
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
@@ -682,7 +698,7 @@ class Client():
                 data_el.find('url').text,
                 data_el.find('token').text
             )
-        raise HTTPResponseError(res)
+        raise ResponseError(res)
 
     def is_shared(self, path):
         """Checks whether a path is already shared
