@@ -562,7 +562,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path)
+        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))

@@ -698,7 +698,7 @@ class Client():
                 data_el.find('url').text,
                 data_el.find('token').text
             )
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def is_shared(self, path):
         """Checks whether a path is already shared
