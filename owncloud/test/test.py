@@ -562,7 +562,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path)
+        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))
@@ -570,6 +570,8 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
+
+
 
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
@@ -592,6 +594,8 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(share_info.perms, 31)
         self.assertTrue(self.client.delete(path))
+    
+
 
     @data_provider(files)
     def test_delete_share(self, file_name):
