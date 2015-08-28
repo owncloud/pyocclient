@@ -55,15 +55,17 @@ class HTTPResponseError(ResponseError):
 class PublicShare():
     """Public share information"""
 
-    def __init__(self, share_id, target_file, link, token):
+    def __init__(self, share_id, target_file, link, token, **kwargs):
         self.share_id = share_id
         self.target_file = target_file
         self.link = link
         self.token = token
+        self.permissions = kwargs.get('permissions', None)
+        self.expiration = kwargs.get('expiration', None)
 
     def __str__(self):
-        return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
-               (self.share_id, self.target_file, self.link, self.token)
+        return 'PublicShare(id=%i,path=%s,link=%s,token=%s,permissions=%s,expiration=%s)' % \
+               (self.share_id, self.target_file, self.link, self.token, self.permissions, self.expiration)
 
 
 class UserShare():
@@ -613,6 +615,7 @@ class Client():
         :param perms: (int) update permissions (see share_file_with_user() below)
         :param password: (string) updated password for public link Share
         :param public_upload: (boolean) enable/disable public upload for public shares
+        :param expiration: (optional) expiration date object, or string in format 'YYYY-MM-DD'
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -620,9 +623,10 @@ class Client():
         perms = kwargs.get('perms', None)
         password = kwargs.get('password', None)
         public_upload = kwargs.get('public_upload', None)
+        expiration = kwargs.get('expiration', None)
         if (isinstance(perms, int)) and (perms > self.OCS_PERMISSION_ALL):
             perms = None
-        if not (perms or password or (public_upload is not None)):
+        if not (perms or password or (public_upload is not None) or (expiration is not None)):
             return False
         if not isinstance(share_id, int):
             return False
@@ -634,6 +638,8 @@ class Client():
             data['password'] = password
         if (public_upload is not None) and (isinstance(public_upload, bool)):
             data['publicUpload'] = str(public_upload).lower()
+        if expiration is not None:
+            data['expireDate'] = self.__parse_expiration_date(expiration)
 
         res = self.__make_ocs_request(
             'PUT',
@@ -677,6 +683,7 @@ class Client():
         defaults to read only (1)
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
+        :param expiration: (optional) expiration date object, or string in format 'YYYY-MM-DD'
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
         :returns: instance of :class:`PublicShare` with the share info
             or False if the operation failed
@@ -684,8 +691,8 @@ class Client():
         """
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
-        password = kwargs.get('password', None)        
-
+        password = kwargs.get('password', None)
+        expiration = kwargs.get('expiration', None)
 
         path = self.__normalize_path(path)
         post_data = {
@@ -698,6 +705,8 @@ class Client():
             post_data['password'] = password
         if perms:
             post_data['permissions'] = perms
+        if expiration is not None:
+            post_data['expireDate'] = self.__parse_expiration_date(expiration)
 
         res = self.__make_ocs_request(
             'POST',
@@ -709,11 +718,24 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
+
+            expiration = None
+            exp_el = data_el.find('expiration')
+            if exp_el is not None and exp_el.text is not None and len(exp_el.text) > 0:
+                expiration = exp_el.text
+
+            permissions = None
+            perms_el = data_el.find('permissions')
+            if perms_el is not None and perms_el.text is not None and len(perms_el.text) > 0:
+                permissions = int(perms_el.text)
+
             return PublicShare(
                 int(data_el.find('id').text),
                 path,
                 data_el.find('url').text,
-                data_el.find('token').text
+                data_el.find('token').text,
+                permissions=permissions,
+                expiration=expiration
             )
         raise HTTPResponseError(res)
 
@@ -834,9 +856,9 @@ class Client():
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be checked 
-        :returns: True if user found 
-        
+        :param user_name:  name of user to be checked
+        :returns: True if user found
+
         """
         users=self.search_users(user_name)
         
@@ -861,7 +883,7 @@ class Client():
             tree = ET.fromstring(res.text)
             users = [x.text for x in tree.findall('data/users/element')]
 
-            return users           
+            return users
 
         raise HTTPResponseError(res)
 
@@ -1408,6 +1430,22 @@ class Client():
         return s
 
     @staticmethod
+    def __parse_expiration_date(date):
+        """Converts the given datetime object into the format required
+        by the share API
+
+        :param date: datetime object
+        :returns: string encoded to use as expireDate parameter in the share API
+        """
+        if date is None:
+            return None
+
+        if isinstance(date, datetime.datetime):
+            return date.strftime('YYYY-MM-DD')
+
+        return date
+
+    @staticmethod
     def __check_ocs_status(tree, accepted_codes=[100]):
         """Checks the status code of an OCS request
 
@@ -1547,7 +1585,7 @@ class Client():
         if path.startswith(self.__davpath):
             return path[len(self.__davpath):]
         return path
-        
+
     def __webdav_move_copy(self,remote_path_source,remote_path_target,operation):
         """Copies or moves a remote file or directory
 
