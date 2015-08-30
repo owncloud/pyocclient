@@ -220,7 +220,14 @@ class Client():
         # TODO: use another path to prevent that the server renders the file list page
         res = self.__session.get(self.url + 'status.php')
         if res.status_code == 200:
-            return
+            res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'capabilities'
+                )
+            if res.status_code == 200:
+                return
+            raise HTTPResponseError(res)
         self.__session.close()
         self.__session = None
         raise HTTPResponseError(res)
