@@ -218,7 +218,7 @@ class Client():
         self.__session.verify = self.__verify_certs
         self.__session.auth = (user_id, password)
         # TODO: use another path to prevent that the server renders the file list page
-        res = self.__session.get(self.url + 'index.php')
+        res = self.__session.get(self.url + 'ocs/v1.php/cloud/capabilities')
         if res.status_code == 200:
             if self.__single_session:
                 # Keep the same session, no need to re-auth every call
