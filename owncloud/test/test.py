@@ -912,6 +912,19 @@ class TestGetConfig(unittest.TestCase):
         self.assertIsNotNone(self.client.get_config())
 
     def tearDown(self):
+        self.client.logout()        
+
+class TestLogin(unittest.TestCase):
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'])
+
+    def test_login(self):
+        with self.assertRaises(owncloud.HTTPResponseError) as e:
+            self.client.login("iGuessThisUserNameDoesNotExistInTheSystem","iGuessThisUserNameDoesNotExistInTheSystem")
+        self.assertEquals(e.exception.status_code, 401)
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+
+    def tearDown(self):
         self.client.logout()
 
 if __name__ == '__main__':
