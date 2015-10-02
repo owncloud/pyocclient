@@ -519,7 +519,7 @@ class Client():
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_SHARE,
-            'remote_shares'
+            'remote_shares/pending'
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
@@ -549,7 +549,7 @@ class Client():
         res = self.__make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
-            'remote_shares/' + str(share_id)
+            'remote_shares/pending/' + str(share_id)
         )
         if res.status_code == 200:
             return res
@@ -568,7 +568,7 @@ class Client():
         res = self.__make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_SHARE,
-            'remote_shares/' + str(share_id)
+            'remote_shares/pending/' + str(share_id)
         )
         if res.status_code == 200:
             return res
