@@ -281,7 +281,9 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        res = self.__session.get(self.__webdav_url + path)
+        res = self.__session.get(
+            self.__webdav_url + urllib.quote(self.__encode_string(path))
+        )
         if res.status_code == 200:
             return res.content
         elif res.status_code >= 400:
@@ -299,7 +301,7 @@ class Client():
         """
         remote_path = self.__normalize_path(remote_path)
         res = self.__session.get(
-            self.__webdav_url + remote_path,
+            self.__webdav_url + urllib.quote(self.__encode_string(remote_path)),
             stream=True
         )
         if res.status_code == 200:
