@@ -16,13 +16,13 @@ class TestFileAccess(unittest.TestCase):
 
     files = lambda: (
         ['test.txt'],
-        ['test space and +.txt'],
+        ['test space and + and #.txt'],
         [u'文件.txt']
     )
 
     files_content = lambda: (
         ['test.txt', 'Hello world!', 'subdir'],
-        ['test space and +.txt', 'Hello space with+plus!', 'subdir with space + plus'],
+        ['test space and + and #.txt', 'Hello space with+plus#hash!', 'subdir with space + plus and #hash'],
         [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
     )
 
