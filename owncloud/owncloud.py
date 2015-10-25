@@ -673,7 +673,7 @@ class Client():
         """
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
-        password = kwargs.get('password', None)        
+        password = kwargs.get('password', None)
 
 
         path = self.__normalize_path(path)
@@ -824,24 +824,49 @@ class Client():
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be checked 
-        :returns: True if user found 
-        
+        :param user_name:  name of user to be checked
+        :returns: True if user found
+
         """
         users=self.search_users(user_name)
-        
+
         if len(users) > 0:
             for user in users:
             	if user.text == user_name:
                    return True
-            		
+
         return False
+
+    def user_infos(self, user_name):
+        """Searches for users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  name of user to be searched for
+        :returns: list of users
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            dict_data = dict()
+            for data in tree.find('data'):
+                dict_data[data.tag] = data.text
+
+            return dict_data
+
+        raise HTTPResponseError(res)
 
     def search_users(self, user_name):
         """Searches for users via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be searched for 
+        :param user_name:  name of user to be searched for
         :returns: list of users
         :raises: HTTPResponseError in case an HTTP error status was returned
 
@@ -856,7 +881,7 @@ class Client():
             tree = ET.fromstring(res.text)
             users = tree.find('data/users')
 
-            return users           
+            return users
 
         raise HTTPResponseError(res)
 
@@ -980,6 +1005,30 @@ class Client():
 
         res = self.__make_ocs_request(
             'POST',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/subadmins',
+            data={'groupid': group_name}
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 103])
+            return True
+
+        raise HTTPResponseError(res)
+
+    def remove_user_from_subadmin_group(self, user_name, group_name):
+        """Adds a user to a subadmin group.
+
+        :param user_name:  name of user to be removed from subadmin group
+        :param group_name:  name of subadmin group
+        :returns: True if user removed
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'DELETE',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/subadmins',
             data={'groupid': group_name}
@@ -1497,7 +1546,7 @@ class Client():
         if path.startswith(self.__davpath):
             return path[len(self.__davpath):]
         return path
-        
+
     def __webdav_move_copy(self,remote_path_source,remote_path_target,operation):
         """Copies or moves a remote file or directory
 
