@@ -27,7 +27,7 @@ class ResponseError(Exception):
         self.status_code = code
 
     def get_resource_body(self):
-        if None != self.res:
+        if self.res is not None:
             return self.res.text
         else:
             return None
@@ -35,6 +35,18 @@ class ResponseError(Exception):
 class OCSResponseError(ResponseError):
     def __init__(self, res):
         ResponseError.__init__(self,res, "OCS")
+
+    def get_resource_body(self):
+        if self.res is not None:
+            import xml.etree.ElementTree as ElementTree
+            try:
+                root_element = ElementTree.fromstringlist(self.res.text)
+                if root_element.tag == 'message':
+                    return root_element.text
+            except ET.ParseError:
+                return self.res.text
+        else:
+            return None
 
 class HTTPResponseError(ResponseError):
     def __init__(self, res):
@@ -1406,7 +1418,7 @@ class Client():
         :returns :class:`requests.Response` instance
         """
 
-        accepted_codes = kwargs.get('accepted_codes', [100])
+        accepted_codes = kwargs.pop('accepted_codes', [100])
 
         res = self.__make_ocs_request(method, service, action, **kwargs)
         if res.status_code == 200:
