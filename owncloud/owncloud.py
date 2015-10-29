@@ -1396,6 +1396,26 @@ class Client():
             r.status_code = int(code_el.text)
             raise OCSResponseError(r)
 
+    def make_ocs_request(self, method, service, action, **kwargs):
+        """Makes a OCS API request and analyses the response
+
+        :param method: HTTP method
+        :param service: service name
+        :param action: action path
+        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
+        :returns :class:`requests.Response` instance
+        """
+
+        accepted_codes = kwargs.get('accepted_codes', [100])
+
+        res = self.__make_ocs_request(method, service, action, **kwargs)
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree, accepted_codes=accepted_codes)
+            return res
+
+        raise OCSResponseError(res)
+
     def __make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
 
