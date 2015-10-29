@@ -838,11 +838,11 @@ class Client():
         return False
 
     def user_infos(self, user_name):
-        """Searches for user infos via provisioning API.
+        """Searches for users via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
         :param user_name:  name of user to be searched for
-        :returns: dict of user infos
+        :returns: list of users
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
@@ -856,6 +856,8 @@ class Client():
             tree = ET.fromstring(res.text)
             dict_data = dict()
             for data in tree.find('data'):
+                dict_data[data.tag] = data.text
+            for data in tree.find('data/quota'):
                 dict_data[data.tag] = data.text
 
             return dict_data
