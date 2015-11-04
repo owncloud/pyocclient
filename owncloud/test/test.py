@@ -210,7 +210,7 @@ class TestFileAccess(unittest.TestCase):
         temp_file = self.temp_dir + 'pyoctest.dat'
         self.assertTrue(self.client.mkdir(self.test_root + subdir))
         self.assertTrue(self.client.put_file_contents(self.test_root + subdir + '/' + file_name, content))
-       
+
         self.assertTrue(self.client.get_file(self.test_root + subdir + '/' + file_name, temp_file))
 
         f = open(temp_file, 'r')
@@ -234,7 +234,7 @@ class TestFileAccess(unittest.TestCase):
 
         zip_info = zipfile.ZipFile(temp_file)
         listing = zip_info.namelist()
-        
+
         self.assertEquals(len(listing), 3)
         os.unlink(temp_file)
 
@@ -499,7 +499,7 @@ class TestFileAccess(unittest.TestCase):
             ),
             'first file'
         )
-        
+
     def test_copy_unicode(self):
         """Test copy unicode to dir"""
         self.assertTrue(
@@ -530,7 +530,7 @@ class TestFileAccess(unittest.TestCase):
                 self.test_root + u'दिलै होस छोरा होस.txt'
             ),
             'content'
-        )              
+        )
 
     def test_copy_to_non_existing_dir(self):
         """Test error when copy to non existing dir"""
@@ -594,7 +594,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.share_id) is int)
         self.assertTrue(share_info.perms, 31)
         self.assertTrue(self.client.delete(path))
-    
+
 
 
     @data_provider(files)
@@ -800,7 +800,7 @@ class TestUserAndGroupActions(unittest.TestCase):
             if self.apps['provisioning_api'] is False:
                 raise unittest.SkipTest("no API")
         except owncloud.ResponseError:
-            raise unittest.SkipTest("no API") 
+            raise unittest.SkipTest("no API")
 
         try:
             self.client.create_user(self.share2user, 'share')
@@ -809,7 +809,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         try:
             self.client.create_group(self.test_group)
         except:
-            pass        
+            pass
 
     def tearDown(self):
         for group in self.groups_to_create:
@@ -824,7 +824,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         try:
             self.client.delete_group(self.test_group)
         except:
-            pass        
+            pass
 
         self.client.logout()
 
@@ -839,7 +839,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         #try to catch with general ResponseError
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
-        self.assertEquals(e.exception.status_code, 102)            
+        self.assertEquals(e.exception.status_code, 102)
 
     def test_create_existing_user(self):
         with self.assertRaises(owncloud.OCSResponseError) as e:
@@ -861,10 +861,10 @@ class TestUserAndGroupActions(unittest.TestCase):
             #try to catch with general ResponseError
             with self.assertRaises(owncloud.ResponseError) as e:
                 self.client.create_group(group)
-            self.assertEquals(e.exception.status_code, 102)            
+            self.assertEquals(e.exception.status_code, 102)
 
     def test_not_existing_group(self):
-        self.assertFalse(self.client.group_exists(self.not_existing_group))        
+        self.assertFalse(self.client.group_exists(self.not_existing_group))
 
     def test_add_user_to_group_remove_user_from_group(self):
         self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
@@ -923,6 +923,38 @@ class TestLogin(unittest.TestCase):
             self.client.login("iGuessThisUserNameDoesNotExistInTheSystem","iGuessThisUserNameDoesNotExistInTheSystem")
         self.assertEquals(e.exception.status_code, 401)
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+
+    def tearDown(self):
+        self.client.logout()
+
+class TestOCSRequest(unittest.TestCase):
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+
+    def test_make_request(self):
+        kwargs = {
+            'accepted_codes': [100]
+        }
+        self.client.make_ocs_request(
+            'GET',
+            '',
+            'config',
+            **kwargs
+        )
+
+    def test_make_request_fail_unaccepted_code(self):
+        kwargs = {
+            'accepted_codes': [102]
+        }
+        with self.assertRaises(owncloud.OCSResponseError) as e:
+            self.client.make_ocs_request(
+                'GET',
+                '',
+                'config',
+                **kwargs
+            )
+        self.assertEquals(e.exception.status_code, 100)
 
     def tearDown(self):
         self.client.logout()
