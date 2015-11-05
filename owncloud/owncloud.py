@@ -27,7 +27,7 @@ class ResponseError(Exception):
         self.status_code = code
 
     def get_resource_body(self):
-        if None != self.res:
+        if self.res is not None:
             return self.res.text
         else:
             return None
@@ -35,6 +35,18 @@ class ResponseError(Exception):
 class OCSResponseError(ResponseError):
     def __init__(self, res):
         ResponseError.__init__(self,res, "OCS")
+
+    def get_resource_body(self):
+        if self.res is not None:
+            import xml.etree.ElementTree as ElementTree
+            try:
+                root_element = ElementTree.fromstringlist(self.res.text)
+                if root_element.tag == 'message':
+                    return root_element.text
+            except ET.ParseError:
+                return self.res.text
+        else:
+            return None
 
 class HTTPResponseError(ResponseError):
     def __init__(self, res):
@@ -1395,6 +1407,26 @@ class Client():
             r._content = ET.tostring(msg_el)
             r.status_code = int(code_el.text)
             raise OCSResponseError(r)
+
+    def make_ocs_request(self, method, service, action, **kwargs):
+        """Makes a OCS API request and analyses the response
+
+        :param method: HTTP method
+        :param service: service name
+        :param action: action path
+        :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
+        :returns :class:`requests.Response` instance
+        """
+
+        accepted_codes = kwargs.pop('accepted_codes', [100])
+
+        res = self.__make_ocs_request(method, service, action, **kwargs)
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree, accepted_codes=accepted_codes)
+            return res
+
+        raise OCSResponseError(res)
 
     def __make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
