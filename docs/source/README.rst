@@ -120,11 +120,11 @@ You might also need to install the unittest-data-provider package:
 
     $ pip install unittest-data-provider
 
-Then run the script "runtests.py":
+Then run the script "runtests.sh":
 
 .. code-block:: bash
 
-    $ ./runtests.py
+    $ ./runtests.sh
 
 Building the documentation
 ==========================
