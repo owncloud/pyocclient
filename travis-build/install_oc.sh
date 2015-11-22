@@ -32,7 +32,7 @@ DBCONFIGS="sqlite"
 #PHPUNIT=$(which phpunit)
 
 # use tmpfs for datadir - should speedup unit test execution
-DATADIR=$BASEDIR/data-autotest
+DATADIR=$BASEDIR/data
 
 # users to create (with unusable password)
 USERS="share"
@@ -51,48 +51,27 @@ cat > ./tests/autoconfig-sqlite.php <<DELIM
 );
 DELIM
 
-function execute_tests {
-    echo "Setup environment for $1 testing ..."
-    # back to root folder
-    cd $BASEDIR
+echo "Setup environment for testing ..."
+# back to root folder
+cd $BASEDIR
 
-    # revert changes to tests/data
-    git checkout tests/data/*
+# reset data directory
+mkdir $DATADIR
 
-    # reset data directory
-    rm -rf $DATADIR
-    mkdir $DATADIR
+cp $BASEDIR/tests/preseed-config.php $BASEDIR/config/config.php
 
-    cp $BASEDIR/tests/preseed-config.php $BASEDIR/config/config.php
+# copy autoconfig
+cp $BASEDIR/tests/autoconfig-sqlite.php $BASEDIR/config/autoconfig.php
 
-    # copy autoconfig
-    cp $BASEDIR/tests/autoconfig-sqlite.php $BASEDIR/config/autoconfig.php
+# trigger installation
+echo "INDEX"
+php -f index.php
+echo "END INDEX"
 
-    # trigger installation
-    echo "INDEX"
-    php -f index.php
-    echo "END INDEX"
-
-	echo "Insert test users"
-	for USER in $USERS; do
-		sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_users (uid,displayname,password) VALUES ('$USER','$USER','x');"
-	done
-}
-
-#
-# start test execution
-#
-if [ -z "$1" ]
-  then
-    # run all known database configs
-    for DBCONFIG in $DBCONFIGS; do
-        execute_tests $DBCONFIG
-    done
-else
-    execute_tests $1 $2 $3
-fi
-
-# show environment
+echo "Insert test users"
+for USER in $USERS; do
+	sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_users (uid,displayname,password) VALUES ('$USER','$USER','x');"
+done
 
 
 echo "owncloud configuration:"

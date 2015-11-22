@@ -1,29 +1,43 @@
-language: php
-php:
-  - "5.4"
+language: python
+
+python:
+  - "2.7"
+  # - "3.4"
 
 env:
-  - CORE_BRANCH=stable6
+  # - CORE_BRANCH=stable6
   - CORE_BRANCH=stable7
   - CORE_BRANCH=stable8
   - CORE_BRANCH=stable8.1
   - CORE_BRANCH=stable8.2
 
 before_install:
+- sudo add-apt-repository -y ppa:ondrej/php5
+- sudo add-apt-repository -y ppa:ondrej/apache2
 - sudo apt-get update
-- sudo pip install requests unittest-data-provider
-- sudo apt-get install apache2 libapache2-mod-fastcgi
-- bash travis-build/install_oc.sh $CORE_BRANCH
+- sudo apt-get install apache2 php5 php5-cli php5-sqlite php5-fpm php5-gd php5-json php5-mcrypt sqlite3 libapache2-mod-fastcgi
 # enable php-fpm
-- sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
 - sudo a2enmod rewrite actions fastcgi alias
-- echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-- ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
+- echo "cgi.fix_pathinfo = 1" | sudo tee --append /etc/php5/fpm/php.ini
+- sudo service php5-fpm restart
 # configure apache virtual hosts
 - sudo cp -f travis-build/travis-ci-apache /etc/apache2/sites-available/default
 - sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
 - sudo service apache2 restart
+# install OC
+- bash travis-build/install_oc.sh $CORE_BRANCH
+- sudo chown -R www-data:www-data core/{config,data}
+- sudo chmod -R g+w core/{config,data}
+- grep -rie limit /etc/apache2
+- curl -D - -X PROPFIND http://127.0.0.1/remote.php/webdav
+
+install:
+  - pip install requests unittest-data-provider
 
 script:
   # execute unit tests
   - ./runtests.sh
+
+after_failure:
+  - sudo cat core/data/owncloud.log
+
