@@ -3,7 +3,6 @@ php:
   - "5.4"
 
 env:
-  - CORE_BRANCH=stable6
   - CORE_BRANCH=stable7
   - CORE_BRANCH=stable8
   - CORE_BRANCH=stable8.1
