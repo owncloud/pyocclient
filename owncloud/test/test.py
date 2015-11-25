@@ -666,6 +666,21 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsInstance(shares, list)
         self.assertGreater(len(shares), 1)
 
+    def test_get_shares_empty(self):
+        """Test get shares with empty result"""
+        file_name = 'test.txt'
+        self.assertTrue(self.client.put_file_contents(self.test_root + file_name, 'hello world!'))
+
+        # Get all shares
+        shares = self.client.get_shares()
+        self.assertEquals(shares, [])
+
+        shares = None
+        with self.assertRaises(owncloud.ResponseError) as e:
+            shares = self.client.get_shares(self.test_root + file_name)
+        self.assertIsNone(shares)
+        self.assertEquals(e.exception.status_code, 404)
+
     def test_update_share_wo_params(self):
         self.assertFalse(self.client.update_share(0))
 

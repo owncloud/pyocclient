@@ -769,8 +769,7 @@ class Client():
                     value = child.text
                     share_attr[key] = value
                 shares.append(share_attr)
-            if len(shares) > 0:
-                return shares
+            return shares
         raise HTTPResponseError(res)
 
     def create_user(self, user_name, initial_password):
