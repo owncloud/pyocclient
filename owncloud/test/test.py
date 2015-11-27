@@ -843,6 +843,20 @@ class TestUserAndGroupActions(unittest.TestCase):
 
         self.client.logout()
 
+    def test_user_exists(self):
+        self.assertTrue(self.client.user_exists(Config['owncloud_login']))
+        try:
+            self.client.create_user('ghost_user', 'ghost_pass')
+            self.client.delete_user('ghost_user')
+            self.assertFalse(self.client.user_exists('ghost_user'))
+        except:
+            pass
+
+    def test_search_users(self):
+        user_name = Config['owncloud_login']
+        users = self.client.search_users(user_name[:-1])
+        self.assertIn(user_name, users)
+
     def test_set_user_attribute(self):
         self.assertTrue(self.client.set_user_attribute(self.share2user,'quota',123456))
         self.assertTrue(self.client.set_user_attribute(self.share2user,'email','test@inf.org'))
