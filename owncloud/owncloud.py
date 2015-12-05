@@ -1158,7 +1158,7 @@ class Client():
         """Shares a remote file with specified group
 
         :param path: path to the remote file to share
-        :param user: name of the user whom we want to share a file/folder
+        :param group: name of the group with which we want to share a file/folder
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
