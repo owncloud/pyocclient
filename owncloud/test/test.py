@@ -852,6 +852,30 @@ class TestUserAndGroupActions(unittest.TestCase):
         except:
             pass
 
+    def test_get_user(self):
+        output = self.client.get_user(Config['owncloud_login'])
+        expected_output =   {'displayname': 'admin',
+                             'enabled': 'true', 
+                             'email': None, 
+                             'quota': {'total': '309355267452', 
+                                       'relative': '0', 
+                                       'used': '3261820', 
+                                       'free': '309352005632'}
+                            }
+        self.assertEquals(output['displayname'], expected_output['displayname'])
+        self.assertEquals(output['enabled'], expected_output['enabled'])
+        self.assertEquals(output['email'], expected_output['email'])
+        self.assertTrue('total' in output['quota'])
+        self.assertTrue('relative' in output['quota'])
+        self.assertTrue('used' in output['quota'])
+        self.assertTrue('free' in output['quota'])
+
+    def test_edit_user(self):
+        self.client.create_user('ghost_user', 'ghost_pass')
+        self.client.edit_user('ghost_user', 'email', 'ghost@ghost.com')
+        self.assertEquals(self.client.get_user('ghost_user')['email'], 'ghost@ghost.com')
+        self.client.delete_user('ghost_user')
+
     def test_search_users(self):
         user_name = Config['owncloud_login']
         users = self.client.search_users(user_name[:-1])
