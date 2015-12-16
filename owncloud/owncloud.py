@@ -961,7 +961,7 @@ class Client():
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
-            'users/' + user_name,
+            'users/' + urllib.quote(user_name),
             data={}
         )
 
@@ -990,7 +990,7 @@ class Client():
         res = self.__make_ocs_request(
             'PUT',
             self.OCS_SERVICE_CLOUD,
-            'users/' + user_name,
+            'users/' + urllib.quote(user_name),
             data={'key': key, 'value': value}
         )
 
