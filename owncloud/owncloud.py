@@ -973,7 +973,6 @@ class Client():
         #</ocs>
 
         data_element = tree.find('data')
-        print data_element
         return self.__xml_to_dict(data_element)       
 
     def remove_user_from_group(self, user_name, group_name):
