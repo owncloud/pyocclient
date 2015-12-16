@@ -878,8 +878,8 @@ class Client():
         res = self.__make_ocs_request(
             'PUT',
             self.OCS_SERVICE_CLOUD,
-            'users/' + user_name,
-            data={'key': key, 'value': value}
+            'users/' + urllib.quote(user_name),
+            data={'key': self.__encode_string(key), 'value': self.__encode_string(value)}
         )
 
         if res.status_code == 200:
@@ -887,7 +887,6 @@ class Client():
             self.__check_ocs_status(tree, [100])
             return True
         raise HTTPResponseError(res)
-
 
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
@@ -974,32 +973,8 @@ class Client():
         #</ocs>
 
         data_element = tree.find('data')
-        return self.__xml_to_dict(data_element)
-
-
-    def edit_user(self, user_name, key, value):
-        """Edit information about a user
-
-        :param user_name:  name of user to modify
-        :param key:  key to be modified
-        :param value:  value to set
-        
-        :returns: True on success
-        :raises: ResponseError in case an HTTP error status was returned
-        """
-        res = self.__make_ocs_request(
-            'PUT',
-            self.OCS_SERVICE_CLOUD,
-            'users/' + urllib.quote(user_name),
-            data={'key': key, 'value': value}
-        )
-
-        if res.status_code == 200:
-            tree = ET.fromstring(res.text)
-            self.__check_ocs_status(tree, [100])
-            return True
-
-        raise ResponseError(res)        
+        print data_element
+        return self.__xml_to_dict(data_element)       
 
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.

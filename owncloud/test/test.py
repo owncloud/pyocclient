@@ -870,21 +870,21 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.assertTrue('used' in output['quota'])
         self.assertTrue('free' in output['quota'])
 
-    def test_edit_user(self):
-        self.client.create_user('ghost_user', 'ghost_pass')
-        self.client.edit_user('ghost_user', 'email', 'ghost@ghost.com')
-        self.assertEquals(self.client.get_user('ghost_user')['email'], 'ghost@ghost.com')
-        self.client.delete_user('ghost_user')
-
     def test_search_users(self):
         user_name = Config['owncloud_login']
         users = self.client.search_users(user_name[:-1])
         self.assertIn(user_name, users)
 
     def test_set_user_attribute(self):
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'quota',123456))
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'email','test@inf.org'))
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'password','secret'))
+        try:
+            self.client.create_user('ghost_user', 'ghost_pass')
+        except:
+            self.client.delete_user('ghost_user')
+            self.client.create_user('ghost_user', 'ghost_pass')
+        self.assertTrue(self.client.set_user_attribute('ghost_user','email','test@inf.org'))
+        self.assertTrue(self.client.set_user_attribute('ghost_user','password','secret'))
+        self.assertEquals(self.client.get_user('ghost_user')['email'], 'test@inf.org')
+        self.client.delete_user('ghost_user')
 
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
