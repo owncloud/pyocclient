@@ -878,8 +878,8 @@ class Client():
         res = self.__make_ocs_request(
             'PUT',
             self.OCS_SERVICE_CLOUD,
-            'users/' + user_name,
-            data={'key': key, 'value': value}
+            'users/' + urllib.quote(user_name),
+            data={'key': self.__encode_string(key), 'value': self.__encode_string(value)}
         )
 
         if res.status_code == 200:
@@ -887,7 +887,6 @@ class Client():
             self.__check_ocs_status(tree, [100])
             return True
         raise HTTPResponseError(res)
-
 
     def add_user_to_group(self, user_name, group_name):
         """Adds a user to a group.
@@ -949,6 +948,32 @@ class Client():
         else:
             return False
 
+
+    def get_user(self, user_name):
+        """Retrieves information about a user
+
+        :param user_name:  name of user to query
+        
+        :returns: Dictionary of information about user
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + urllib.quote(user_name),
+            data={}
+        )
+
+        tree = ET.fromstring(res.text)
+        self.__check_ocs_status(tree)
+        #<ocs><meta><statuscode>100</statuscode><status>ok</status></meta>
+        #<data>
+        #<email>frank@example.org</email><quota>0</quota><enabled>true</enabled>
+        #</data>
+        #</ocs>
+
+        data_element = tree.find('data')
+        return self.__xml_to_dict(data_element)       
 
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.
@@ -1553,3 +1578,21 @@ class Client():
             remote_path_source,
             headers=headers
         )
+
+    def __xml_to_dict(self, element):
+        """
+        Take an XML element, iterate over it and build a dict
+
+        :param element: An xml.etree.ElementTree.Element , or a list of the same
+        :returns: A dictionary
+        """
+        return_dict = {}
+        for el in element:
+            return_dict[el.tag] = None
+            children = el.getchildren()
+            if children:
+                return_dict[el.tag] = self.__xml_to_dict(children)
+            else:
+                return_dict[el.tag] = el.text
+        return return_dict
+

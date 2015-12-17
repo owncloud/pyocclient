@@ -852,15 +852,39 @@ class TestUserAndGroupActions(unittest.TestCase):
         except:
             pass
 
+    def test_get_user(self):
+        output = self.client.get_user(Config['owncloud_login'])
+        expected_output =   {'displayname': 'admin',
+                             'enabled': 'true', 
+                             'email': None, 
+                             'quota': {'total': '309355267452', 
+                                       'relative': '0', 
+                                       'used': '3261820', 
+                                       'free': '309352005632'}
+                            }
+        self.assertEquals(output['displayname'], expected_output['displayname'])
+        self.assertEquals(output['enabled'], expected_output['enabled'])
+        self.assertEquals(output['email'], expected_output['email'])
+        self.assertTrue('total' in output['quota'])
+        self.assertTrue('relative' in output['quota'])
+        self.assertTrue('used' in output['quota'])
+        self.assertTrue('free' in output['quota'])
+
     def test_search_users(self):
         user_name = Config['owncloud_login']
         users = self.client.search_users(user_name[:-1])
         self.assertIn(user_name, users)
 
     def test_set_user_attribute(self):
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'quota',123456))
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'email','test@inf.org'))
-        self.assertTrue(self.client.set_user_attribute(self.share2user,'password','secret'))
+        try:
+            self.client.create_user('ghost_user', 'ghost_pass')
+        except:
+            self.client.delete_user('ghost_user')
+            self.client.create_user('ghost_user', 'ghost_pass')
+        self.assertTrue(self.client.set_user_attribute('ghost_user','email','test@inf.org'))
+        self.assertTrue(self.client.set_user_attribute('ghost_user','password','secret'))
+        self.assertEquals(self.client.get_user('ghost_user')['email'], 'test@inf.org')
+        self.client.delete_user('ghost_user')
 
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
