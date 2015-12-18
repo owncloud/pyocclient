@@ -136,6 +136,11 @@ class ShareInfo():
             return self.share_info['token']
         return None
 
+    def get_link(self):
+        if 'link' in self.share_info:
+            return self.share_info['link']
+        return None
+
     def get_uid_owner(self):
         """Returns the user id of the owner.
 
