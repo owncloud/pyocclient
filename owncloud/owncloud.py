@@ -880,7 +880,6 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         if (share_id is None) or not (isinstance(share_id, int)):
-            print "Devolvemos NONE en get_share"
             return None
 
         res = self.__make_ocs_request(
@@ -891,7 +890,7 @@ class Client():
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
-            return self.__get_shareinfo(tree.find('data'))
+            return self.__get_shareinfo(tree.find('data').find('element'))
         raise ResponseError(res)
 
     def get_shares(self, path='', **kwargs):
@@ -1765,5 +1764,4 @@ class Client():
         """
         if (data_el is None) or not (isinstance(data_el, ET.Element)):
             return None
-        print self.__xml_to_dict(data_el)
         return ShareInfo(self.__xml_to_dict(data_el))

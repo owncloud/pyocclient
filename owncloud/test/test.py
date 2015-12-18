@@ -177,7 +177,7 @@ class TestFileAccess(unittest.TestCase):
 
         self.assertIsNotNone(file_info)
         self.assertEquals(file_info.get_size(), 18 * 1024 * 1024)
-    '''
+
     @data_provider(files)
     def test_upload_big_file(self, file_name):
         """Test chunked upload"""
@@ -215,7 +215,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/file3.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/leveltwo/file4.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + u'subdir/pyoctest.dir/levelone/文件.dat'))
-    '''
+    
     @data_provider(files_content)
     def test_download_file(self, file_name, content, subdir):
         """Test file download"""
@@ -670,7 +670,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsInstance(sinfo, owncloud.ShareInfo)
         share_id = sinfo.get_id()
         self.assertGreater(share_id, 0)
-        self.assertEquals(sinfo_run.share_id, share_id)
+        self.assertEquals(sinfo_run.get_id(), share_id)
         self.assertIsInstance(sinfo.get_id(), int)
         self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_USER)
         self.assertEquals(sinfo.get_share_with(), self.share2user)
@@ -691,15 +691,13 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        sinfo_run = self.client.share_file_with_link(path)
-        print "sinfo_run: share_id is " + str(sinfo_run.get_id())
+        sinfo_run = self.client.share_file_with_link(path)    
         sinfo = self.client.get_share(sinfo_run.get_id())
         self.assertIsInstance(sinfo, owncloud.ShareInfo)
         self.assertIsNotNone(sinfo)
         share_id = sinfo.get_id()
-        print "sinfo: share_id is " + str(share_id) + " link:" + str(sinfo.get_link())
         self.assertGreater(share_id, 0)
-        self.assertEquals(sinfo_run.share_id, share_id)
+        self.assertEquals(sinfo_run.get_id(), share_id)
         self.assertIsInstance(sinfo.get_id(), int)
         self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_LINK)
         self.assertIsNone(sinfo.get_share_with())
