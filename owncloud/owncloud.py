@@ -90,6 +90,15 @@ class ShareInfo():
             return self.share_info['share_with']
         return None
 
+    def get_share_with_displayname(self):
+        """Returns the share recipient displayname.
+        If share_with_displayname cannot be returned, None is returned instead
+        :returns: name of the share recipient
+        """
+        if 'share_with_displayname' in self.share_info:
+            return self.share_info['share_with_displayname']
+        return None
+
     def get_path(self):
         """Returns the path of the shared file/folder relative to the
         caller's filesystem.
@@ -803,7 +812,7 @@ class Client():
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`PublicShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -834,11 +843,13 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return PublicShare(
-                int(data_el.find('id').text),
-                path,
-                data_el.find('url').text,
-                data_el.find('token').text
+            return ShareInfo(
+                                {
+                                    'id': data_el.find('id').text,
+                                    'path':path,
+                                    'link': data_el.find('url').text,
+                                    'token': data_el.find('token').text
+                                }
             )
         raise HTTPResponseError(res)
 
@@ -869,6 +880,7 @@ class Client():
         :raises: ResponseError in case an HTTP error status was returned
         """
         if (share_id is None) or not (isinstance(share_id, int)):
+            print "Devolvemos NONE en get_share"
             return None
 
         res = self.__make_ocs_request(
@@ -890,7 +902,7 @@ class Client():
             the current user but all shares from the given file (default: False)
         :param subfiles: (optional, boolean) returns all shares within
             a folder, given that path defines a folder (default: False)
-        :returns: array of shares or empty array if the operation failed
+        :returns: array of shares ShareInfo instances or empty array if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not (isinstance(path, basestring)):
@@ -920,12 +932,13 @@ class Client():
             self.__check_ocs_status(tree)
             shares = []
             for element in tree.find('data').iter('element'):
-                share_attr = {}
+                '''share_attr = {}
                 for child in element:
                     key = child.tag
                     value = child.text
                     share_attr[key] = value
-                shares.append(share_attr)
+                shares.append(share_attr)'''
+                shares.append(self.__get_shareinfo(element))
             return shares
         raise HTTPResponseError(res)
 
@@ -1215,7 +1228,7 @@ class Client():
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`UserShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -1247,10 +1260,12 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return UserShare(
-                int(data_el.find('id').text),
-                path,
-                perms
+            return ShareInfo(   
+                                {
+                                    'id':data_el.find('id').text, 
+                                    'path':path, 
+                                    'permissions':perms
+                                }
             )
         raise HTTPResponseError(res)
 
@@ -1750,7 +1765,5 @@ class Client():
         """
         if (data_el is None) or not (isinstance(data_el, ET.Element)):
             return None
-        share_info = {}
-        for info in data_el[0]:
-            share_info[info.tag] = info.text
-        return ShareInfo(share_info)
+        print self.__xml_to_dict(data_el)
+        return ShareInfo(self.__xml_to_dict(data_el))
