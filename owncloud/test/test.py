@@ -12,19 +12,22 @@ import tempfile
 
 from config import Config
 
+
 class TestFileAccess(unittest.TestCase):
 
-    files = lambda: (
-        ['test.txt'],
-        ['test space and + and #.txt'],
-        [u'文件.txt']
-    )
+    def files():
+        return (
+            ['test.txt'],
+            ['test space and + and #.txt'],
+            [u'文件.txt']
+        )
 
-    files_content = lambda: (
-        ['test.txt', 'Hello world!', 'subdir'],
-        ['test space and + and #.txt', 'Hello space with+plus#hash!', 'subdir with space + plus and #hash'],
-        [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
-    )
+    def files_content():
+        return (
+            ['test.txt', 'Hello world!', 'subdir'],
+            ['test space and + and #.txt', 'Hello space with+plus#hash!', 'subdir with space + plus and #hash'],
+            [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
+        )
 
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
@@ -39,8 +42,13 @@ class TestFileAccess(unittest.TestCase):
             self.test_root = '/' + self.test_root
         self.client.mkdir(self.test_root)
         self.share2user = Config['owncloud_share2user']
+        self.test_group = Config['test_group']
         try:
             self.client.create_user(self.share2user, 'share')
+        except:
+            pass
+        try:
+            self.client.create_group(self.test_group)
         except:
             pass
 
@@ -48,6 +56,10 @@ class TestFileAccess(unittest.TestCase):
         self.client.delete(self.test_root)
         try:
             self.client.delete_user(self.share2user)
+        except:
+            pass
+        try:
+            self.client.delete_group(self.test_group)
         except:
             pass
         self.client.logout()
@@ -147,7 +159,7 @@ class TestFileAccess(unittest.TestCase):
         """Test simple upload"""
         temp_file = self.temp_dir + 'pyoctest.dat'
         self.__create_file(temp_file, 2 * 1024)
-        self.assertTrue(self.client.put_file(self.test_root + file_name, temp_file))
+        self.assertTrue(self.client.put_file(self.test_root + file_name, temp_file, chunked=False))
         os.unlink(temp_file)
 
         file_info = self.client.file_info(self.test_root + file_name)
@@ -466,7 +478,6 @@ class TestFileAccess(unittest.TestCase):
             'to copy'
         )
 
-
     def test_copy_into_subdir(self):
         """Test copy into subdir"""
 
@@ -571,8 +582,6 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
 
-
-
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
         with self.assertRaises(owncloud.ResponseError) as e:
@@ -595,7 +604,21 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(share_info.perms, 31)
         self.assertTrue(self.client.delete(path))
 
+    @data_provider(files)
+    def test_share_with_group(self, file_name):
+        """Test sharing a file to a group"""
 
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_group(path, self.test_group)
+
+        self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(isinstance(share_info, owncloud.GroupShare))
+        self.assertEquals(share_info.share, path)
+        self.assertTrue(type(share_info.share_id) is int)
+        self.assertTrue(share_info.perms, 31)
+        self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
     def test_delete_share(self, file_name):
@@ -748,11 +771,13 @@ class TestFileAccess(unittest.TestCase):
 
 
 class TestPrivateDataAccess(unittest.TestCase):
-    attrs = lambda: (
+
+    def attrs():
+        return (
             ('attr1', 'value1'),
             ('attr+plus space', 'value+plus space and/slash'),
             (u'属性1', u'值对1')
-    )
+        )
 
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
@@ -801,6 +826,7 @@ class TestPrivateDataAccess(unittest.TestCase):
         self.assertIsNone(self.client.get_attribute(self.app_name, attr1))
         self.assertEquals(self.client.get_attribute(self.app_name), [])
 
+
 class TestUserAndGroupActions(unittest.TestCase):
 
     def setUp(self):
@@ -811,8 +837,8 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
         try:
-            self.apps=self.client.get_apps()
-            if self.apps['provisioning_api'] is False:
+            self.apps = self.client.get_apps()
+            if not self.apps['provisioning_api']:
                 raise unittest.SkipTest("no API")
         except owncloud.ResponseError:
             raise unittest.SkipTest("no API")
@@ -835,7 +861,6 @@ class TestUserAndGroupActions(unittest.TestCase):
             self.client.delete_user(self.share2user)
         except:
             pass
-
         try:
             self.client.delete_group(self.test_group)
         except:
@@ -898,7 +923,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.create_user(self.share2user, 'share')
         self.assertEquals(e.exception.status_code, 102)
-        #try to catch with general ResponseError
+        # try to catch with general ResponseError
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.create_user(self.share2user, 'share')
         self.assertEquals(e.exception.status_code, 102)
@@ -907,7 +932,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         for group in self.groups_to_create:
             self.assertTrue(self.client.create_group(group))
             self.assertTrue(self.client.group_exists(group))
-            #try to create them again, that should raise and OCSResponseError with code 102
+            # try to create them again, that should raise and OCSResponseError with code 102
             with self.assertRaises(owncloud.OCSResponseError) as e:
                 self.client.create_group(group)
             self.assertEquals(e.exception.status_code, 102)
@@ -924,11 +949,11 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.assertTrue(self.client.add_user_to_group(self.share2user,self.test_group))
         self.assertTrue(self.client.user_is_in_group(self.share2user,self.test_group))
 
-        #try to add the user to a not existing group, that should raise and OCSResponseError with code 102
+        # try to add the user to a not existing group, that should raise and OCSResponseError with code 102
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.add_user_to_group(self.share2user,self.not_existing_group)
         self.assertEquals(e.exception.status_code, 102)
-        #try to catch with general ResponseError
+        # try to catch with general ResponseError
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.add_user_to_group(self.share2user,self.not_existing_group)
         self.assertEquals(e.exception.status_code, 102)
@@ -936,26 +961,42 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
         self.assertFalse(self.client.user_is_in_group(self.share2user,self.test_group))
 
-        #try to remove the user from a not existing group, that should raise and OCSResponseError with code 102
+        # try to remove the user from a not existing group, that should raise and OCSResponseError with code 102
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.remove_user_from_group(self.share2user,self.not_existing_group)
         self.assertEquals(e.exception.status_code, 102)
-        #try to catch with general ResponseError
+        # try to catch with general ResponseError
         with self.assertRaises(owncloud.ResponseError) as e:
             self.client.remove_user_from_group(self.share2user,self.not_existing_group)
         self.assertEquals(e.exception.status_code, 102)
 
-        #try to remove user without giving group name
+        # try to remove user without giving group name
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.remove_user_from_group(self.share2user,'')
         self.assertEquals(e.exception.status_code, 101)
 
-        #try to remove not existing user from a group
+        # try to remove not existing user from a group
         with self.assertRaises(owncloud.OCSResponseError) as e:
             self.client.remove_user_from_group("iGuessThisUserNameDoesNotExistInTheSystem",self.test_group)
         self.assertEquals(e.exception.status_code, 103)
-        
+
+
+class TestApps(unittest.TestCase):
+
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])        
+
+    def test_enable_app_disable_app(self):
+        self.assertTrue(self.client.enable_app('activity'))
+        self.assertTrue(self.client.disable_app('activity'))
+
+    def tearDown(self):
+        self.client.logout()
+
+
 class TestGetConfig(unittest.TestCase):
+
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
@@ -965,9 +1006,11 @@ class TestGetConfig(unittest.TestCase):
         self.assertIsNotNone(self.client.get_config())
 
     def tearDown(self):
-        self.client.logout()        
+        self.client.logout()
+
 
 class TestLogin(unittest.TestCase):
+
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
 
@@ -980,7 +1023,9 @@ class TestLogin(unittest.TestCase):
     def tearDown(self):
         self.client.logout()
 
+
 class TestOCSRequest(unittest.TestCase):
+
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
@@ -1014,4 +1059,3 @@ class TestOCSRequest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
