@@ -200,20 +200,6 @@ class PublicShare(ShareInfo):
         return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
                (self.share_id, self.target_file, self.link, self.token)
 
-
-class GroupShare():
-    """Group share information"""
-
-    def __init__(self, share_id, share, perms):
-        self.share_id = share_id
-        self.share = share
-        self.perms = perms
-
-    def __str__(self):
-        return "GroupShare(id=%i,path='%s',perms=%s)" % \
-               (self.share_id, self.share, self.perms)
-
-
 class FileInfo():
     """File information"""
 
@@ -1335,7 +1321,7 @@ class Client():
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`GroupShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -1357,10 +1343,12 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return GroupShare(
-                int(data_el.find('id').text),
-                path,
-                perms
+            return ShareInfo(
+                                {
+                                    'id': data_el.find('id').text,
+                                    'path':path,
+                                    'permissions': perms
+                                }
             )
         raise HTTPResponseError(res)
 

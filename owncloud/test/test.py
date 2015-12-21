@@ -614,10 +614,10 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.share_file_with_group(path, self.test_group, perms=31)
 
         self.assertTrue(self.client.is_shared(path))
-        self.assertTrue(isinstance(share_info, owncloud.GroupShare))
-        self.assertEquals(share_info.share, path)
-        self.assertTrue(type(share_info.share_id) is int)
-        self.assertTrue(share_info.perms, 31)
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertTrue(share_info.get_permissions(), 31)
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
