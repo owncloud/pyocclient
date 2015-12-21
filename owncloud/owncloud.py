@@ -62,6 +62,7 @@ class ShareInfo():
         for k, v in share_info.iteritems():
             if k not in del_attrs:
                 self.share_info[k] = v
+        self.share_id = self.__get_int('id')
 
     def get_id(self):
         """Returns the id of the share
@@ -186,7 +187,7 @@ class ShareInfo():
         except:
             return None
 
-class PublicShare():
+class PublicShare(ShareInfo):
     """Public share information"""
 
     def __init__(self, share_id, target_file, link, token):
@@ -198,19 +199,6 @@ class PublicShare():
     def __str__(self):
         return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
                (self.share_id, self.target_file, self.link, self.token)
-
-
-class UserShare():
-    """User share information"""
-
-    def __init__(self, share_id, share, perms):
-        self.share_id = share_id
-        self.share = share
-        self.perms = perms
-
-    def __str__(self):
-        return "UserShare(id=%i,path='%s',perms=%s)" % \
-               (self.share_id, self.share, self.perms)
 
 
 class GroupShare():
