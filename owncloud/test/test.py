@@ -611,7 +611,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_group(path, self.test_group)
+        share_info = self.client.share_file_with_group(path, self.test_group, perms=31)
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.GroupShare))
