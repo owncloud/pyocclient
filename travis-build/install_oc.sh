@@ -73,10 +73,18 @@ function execute_tests {
     php -f index.php
     echo "END INDEX"
 
-	echo "Insert test users"
-	for USER in $USERS; do
-		sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_users (uid,displayname,password) VALUES ('$USER','$USER','x');"
-	done
+    echo "Insert test users"
+    for USER in $USERS; do
+	sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_users (uid,displayname,password) VALUES ('$USER','$USER','x');"
+    done
+
+    sqlite3 $DATADIR/owncloud.db "INSERT INTO oc_groups (gid) VALUES ('my_test_group');"
+
+    #Useful check if something goes wrong.
+    echo "Selecting all groups:"
+    sqlite3 $DATADIR/owncloud.db "SELECT * FROM oc_groups;"
+    echo "Selecting all users:"
+    sqlite3 $DATADIR/owncloud.db "SELECT * FROM oc_users;"
 }
 
 #
