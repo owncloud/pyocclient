@@ -63,6 +63,8 @@ class ShareInfo():
             if k not in del_attrs:
                 self.share_info[k] = v
         self.share_id = self.__get_int('id')
+        if 'token' in self.share_info:
+            self.token = self.share_info['token']
 
     def get_id(self):
         """Returns the id of the share
