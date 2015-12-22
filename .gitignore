@@ -6,3 +6,4 @@ dist/
 *.egg-info/
 MANIFEST
 .idea/
+owncloud/test/config.py
