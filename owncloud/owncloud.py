@@ -52,7 +52,144 @@ class HTTPResponseError(ResponseError):
     def __init__(self, res):
         ResponseError.__init__(self,res, "HTTP")
 
-class PublicShare():
+class ShareInfo():
+    """Share information"""
+
+    def __init__(self, share_info):
+        self.share_info = {}
+        # remove unneeded attributes
+        del_attrs = ['item_type', 'item_source', 'file_source', 'parent', 'storage', 'mail_send']
+        for k, v in share_info.iteritems():
+            if k not in del_attrs:
+                self.share_info[k] = v
+        self.share_id = self.__get_int('id')
+        if 'token' in self.share_info:
+            self.token = self.share_info['token']
+
+    def get_id(self):
+        """Returns the id of the share
+
+        :returns: id of the share
+        """
+        return self.__get_int('id')
+
+    def get_share_type(self):
+        """Returns the type of the share.
+        See OCS_SHARE_TYPE_* constants.
+
+        :returns: share type
+        """
+        return self.__get_int('share_type')
+
+    def get_share_with(self):
+        """Returns the share recipient.
+        If share type is OCS_SHARE_TYPE_USER, then the recipient is the name of the user.
+        For OCS_SHARE_TYPE_GROUP it is the name of the group.
+        Otherwise this value is None.
+
+        :returns: name of the share recipient
+        """
+        if 'share_with' in self.share_info:
+            return self.share_info['share_with']
+        return None
+
+    def get_share_with_displayname(self):
+        """Returns the share recipient displayname.
+        If share_with_displayname cannot be returned, None is returned instead
+        :returns: name of the share recipient
+        """
+        if 'share_with_displayname' in self.share_info:
+            return self.share_info['share_with_displayname']
+        return None
+
+    def get_path(self):
+        """Returns the path of the shared file/folder relative to the
+        caller's filesystem.
+
+        :returns: path to the shared file/folder
+        """
+        if 'path' in self.share_info:
+            return self.share_info['path']
+        return None
+
+    def get_permissions(self):
+        """Returns the share permissions.
+        See OCS_PERMISSION_* constants.
+
+        :returns: share permissions
+        """
+        return self.__get_int('permissions')
+
+    def get_share_time(self):
+        """Returns the share time.
+
+        :returns: share timestamp
+        :rtype: datetime object
+        """
+        return datetime.datetime.fromtimestamp(
+            self.__get_int('stime')
+        )
+
+    def get_expiration(self):
+        """Returns the expiration date.
+
+        :returns: expiration date
+        :rtype: datetime object
+        """
+        exp = self.__get_int('expiration')
+        if exp is not None:
+            return datetime.datetime.fromtimestamp(
+                exp
+            )
+        return None
+
+    def get_token(self):
+        if 'token' in self.share_info:
+            return self.share_info['token']
+        return None
+
+    def get_link(self):
+        if 'link' in self.share_info:
+            return self.share_info['link']
+        return None
+
+    def get_uid_owner(self):
+        """Returns the user id of the owner.
+
+        :returns: owner user id
+        """
+        if 'uid_owner' in self.share_info:
+            return self.share_info['uid_owner']
+        return None
+
+    def get_displayname_owner(self):
+        """Returns the display name of the owner.
+
+        :returns: display name of owner
+        """
+        if 'displayname_owner' in self.share_info:
+            return self.share_info['displayname_owner']
+        return None
+
+    def __str__(self):
+        info = ''
+        for k, v in self.share_info.iteritems():
+            info += '%s=%s,' % (k, v)
+        return 'ShareInfo(%s)' % info[:-1]
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __get_int(self, key):
+        """Simple wrapper which converts value to Integer
+           in silently manner (w/o raising exception)"""
+        try:
+            value = int(self.share_info[key])
+            return value
+        except:
+            return None
+
+class PublicShare(ShareInfo):
     """Public share information"""
 
     def __init__(self, share_id, target_file, link, token):
@@ -64,33 +201,6 @@ class PublicShare():
     def __str__(self):
         return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
                (self.share_id, self.target_file, self.link, self.token)
-
-
-class UserShare():
-    """User share information"""
-
-    def __init__(self, share_id, share, perms):
-        self.share_id = share_id
-        self.share = share
-        self.perms = perms
-
-    def __str__(self):
-        return "UserShare(id=%i,path='%s',perms=%s)" % \
-               (self.share_id, self.share, self.perms)
-
-
-class GroupShare():
-    """Group share information"""
-
-    def __init__(self, share_id, share, perms):
-        self.share_id = share_id
-        self.share = share
-        self.perms = perms
-
-    def __str__(self):
-        return "GroupShare(id=%i,path='%s',perms=%s)" % \
-               (self.share_id, self.share, self.perms)
-
 
 class FileInfo():
     """File information"""
@@ -678,7 +788,7 @@ class Client():
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`PublicShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -709,11 +819,13 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return PublicShare(
-                int(data_el.find('id').text),
-                path,
-                data_el.find('url').text,
-                data_el.find('token').text
+            return ShareInfo(
+                                {
+                                    'id': data_el.find('id').text,
+                                    'path':path,
+                                    'link': data_el.find('url').text,
+                                    'token': data_el.find('token').text
+                                }
             )
         raise HTTPResponseError(res)
 
@@ -736,6 +848,27 @@ class Client():
             return False
         return False
 
+    def get_share(self, share_id):
+        """Returns share information about known share
+
+        :param share_id: id of the share to be checked
+        :returns: instance of ShareInfo class
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        if (share_id is None) or not (isinstance(share_id, int)):
+            return None
+
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                'shares/' + str(share_id)
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+            return self.__get_shareinfo(tree.find('data').find('element'))
+        raise ResponseError(res)
+
     def get_shares(self, path='', **kwargs):
         """Returns array of shares
 
@@ -744,7 +877,7 @@ class Client():
             the current user but all shares from the given file (default: False)
         :param subfiles: (optional, boolean) returns all shares within
             a folder, given that path defines a folder (default: False)
-        :returns: array of shares or empty array if the operation failed
+        :returns: array of shares ShareInfo instances or empty array if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not (isinstance(path, basestring)):
@@ -774,12 +907,13 @@ class Client():
             self.__check_ocs_status(tree)
             shares = []
             for element in tree.find('data').iter('element'):
-                share_attr = {}
+                '''share_attr = {}
                 for child in element:
                     key = child.tag
                     value = child.text
                     share_attr[key] = value
-                shares.append(share_attr)
+                shares.append(share_attr)'''
+                shares.append(self.__get_shareinfo(element))
             return shares
         raise HTTPResponseError(res)
 
@@ -1069,7 +1203,7 @@ class Client():
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`UserShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -1101,10 +1235,12 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return UserShare(
-                int(data_el.find('id').text),
-                path,
-                perms
+            return ShareInfo(   
+                                {
+                                    'id':data_el.find('id').text, 
+                                    'path':path, 
+                                    'permissions':perms
+                                }
             )
         raise HTTPResponseError(res)
 
@@ -1187,7 +1323,7 @@ class Client():
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
-        :returns: instance of :class:`GroupShare` with the share info
+        :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -1209,10 +1345,12 @@ class Client():
             tree = ET.fromstring(res.text)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return GroupShare(
-                int(data_el.find('id').text),
-                path,
-                perms
+            return ShareInfo(
+                                {
+                                    'id': data_el.find('id').text,
+                                    'path':path,
+                                    'permissions': perms
+                                }
             )
         raise HTTPResponseError(res)
 
@@ -1595,4 +1733,13 @@ class Client():
             else:
                 return_dict[el.tag] = el.text
         return return_dict
+    
+    def __get_shareinfo(self, data_el):
+        """Simple helper which returns instance of ShareInfo class
 
+        :param data_el: 'data' element extracted from __make_ocs_request
+        :returns: instance of ShareInfo class
+        """
+        if (data_el is None) or not (isinstance(data_el, ET.Element)):
+            return None
+        return ShareInfo(self.__xml_to_dict(data_el))

@@ -215,7 +215,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/file3.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/leveltwo/file4.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + u'subdir/pyoctest.dir/levelone/文件.dat'))
-
+    
     @data_provider(files_content)
     def test_download_file(self, file_name, content, subdir):
         """Test file download"""
@@ -576,11 +576,11 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
 
         self.assertTrue(self.client.is_shared(path))
-        self.assertTrue(isinstance(share_info, owncloud.PublicShare))
-        self.assertTrue(type(share_info.share_id) is int)
-        self.assertEquals(share_info.target_file, path)
-        self.assertTrue(type(share_info.link) is str)
-        self.assertTrue(type(share_info.token) is str)
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_link()) is str)
+        self.assertTrue(type(share_info.get_token()) is str)
 
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
@@ -598,10 +598,10 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.share_file_with_user(path, self.share2user)
 
         self.assertTrue(self.client.is_shared(path))
-        self.assertTrue(isinstance(share_info, owncloud.UserShare))
-        self.assertEquals(share_info.share, path)
-        self.assertTrue(type(share_info.share_id) is int)
-        self.assertTrue(share_info.perms, 31)
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertTrue(share_info.get_permissions(), '31')
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
@@ -614,10 +614,10 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.share_file_with_group(path, self.test_group, perms=31)
 
         self.assertTrue(self.client.is_shared(path))
-        self.assertTrue(isinstance(share_info, owncloud.GroupShare))
-        self.assertEquals(share_info.share, path)
-        self.assertTrue(type(share_info.share_id) is int)
-        self.assertTrue(share_info.perms, 31)
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertTrue(share_info.get_permissions(), 31)
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
@@ -630,7 +630,7 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.share_file_with_user(path, self.share2user)
 
         self.assertTrue(self.client.is_shared(path))
-        self.assertIsNotNone(self.client.delete_share(share_info.share_id))
+        self.assertIsNotNone(self.client.delete_share(share_info.get_id()))
         self.assertFalse(self.client.is_shared(path))
 
     def test_is_shared_non_existing_path(self):
@@ -654,6 +654,66 @@ class TestFileAccess(unittest.TestCase):
         self.client.share_file_with_link(path)
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(self.client.delete(path))
+
+    @data_provider(files)
+    def test_get_share_user(self, file_name):
+        """Test get_share() for user share"""
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        sinfo_run = self.client.share_file_with_user(
+            path,
+            self.share2user,
+            perms=self.client.OCS_PERMISSION_READ | self.client.OCS_PERMISSION_SHARE
+        )
+        sinfo = self.client.get_share(sinfo_run.get_id())
+        self.assertIsInstance(sinfo, owncloud.ShareInfo)
+        share_id = sinfo.get_id()
+        self.assertGreater(share_id, 0)
+        self.assertEquals(sinfo_run.get_id(), share_id)
+        self.assertIsInstance(sinfo.get_id(), int)
+        self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_USER)
+        self.assertEquals(sinfo.get_share_with(), self.share2user)
+        self.assertEquals(sinfo.get_path(), path)
+        self.assertEquals(
+            sinfo.get_permissions(),
+            self.client.OCS_PERMISSION_READ | self.client.OCS_PERMISSION_SHARE
+        )
+        self.assertIsInstance(sinfo.get_share_time(), datetime.datetime)
+        self.assertIsNone(sinfo.get_expiration())
+        self.assertIsNone(sinfo.get_token())
+        self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
+        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+
+    @data_provider(files)
+    def test_get_share_public_link(self, file_name):
+        """Test get_share() for public link share"""
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        sinfo_run = self.client.share_file_with_link(path)    
+        sinfo = self.client.get_share(sinfo_run.get_id())
+        self.assertIsInstance(sinfo, owncloud.ShareInfo)
+        self.assertIsNotNone(sinfo)
+        share_id = sinfo.get_id()
+        self.assertGreater(share_id, 0)
+        self.assertEquals(sinfo_run.get_id(), share_id)
+        self.assertIsInstance(sinfo.get_id(), int)
+        self.assertEquals(sinfo.get_share_type(), self.client.OCS_SHARE_TYPE_LINK)
+        self.assertIsNone(sinfo.get_share_with())
+        self.assertEquals(sinfo.get_path(), path)
+        self.assertEquals(sinfo.get_permissions(), self.client.OCS_PERMISSION_READ)
+        self.assertIsInstance(sinfo.get_share_time(), datetime.datetime)
+        self.assertIsNone(sinfo.get_expiration())
+        self.assertIsInstance(sinfo.get_token(), basestring)
+        self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
+        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+
+    def test_get_share_non_existing(self):
+        """Test get_share - share with specified id does not exist"""
+        with self.assertRaises(owncloud.ResponseError) as e:
+            self.client.get_share(-1)
+        self.assertEquals(e.exception.status_code, 404)
 
     def test_get_shares_non_existing_path(self):
         """Test get_shares - path does not exist"""
@@ -713,9 +773,9 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
         share_info = self.client.share_file_with_user(path, self.share2user)
-        share_id = share_info.share_id
+        share_id = share_info.get_id()
         self.assertTrue(self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL))
-        perms = self.client.get_shares(path)[0]['permissions']
+        perms = self.client.get_shares(path)[0].get_permissions()
         # now the permissions should be OCS_PERMISSION_ALL,
         # because we've shared it with a user
         self.assertEqual(int(perms), self.client.OCS_PERMISSION_ALL)
@@ -727,9 +787,9 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
         share_info = self.client.share_file_with_link(path)
-        share_id = share_info.share_id
+        share_id = share_info.get_id()
         self.assertTrue(self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL))
-        perms = self.client.get_shares(path)[0]['permissions']
+        perms = self.client.get_shares(path)[0].get_permissions()
         # permissions should still be OCS_PERMISSION_READ not OCS_PERMISSION_ALL,
         # because it's a public share
         self.assertEqual(int(perms), self.client.OCS_PERMISSION_READ)
@@ -741,9 +801,9 @@ class TestFileAccess(unittest.TestCase):
         self.client.mkdir(path)
 
         share_info = self.client.share_file_with_link(path)
-        share_id = share_info.share_id
+        share_id = share_info.get_id()
         self.assertTrue(self.client.update_share(share_id, public_upload=True))
-        perms = self.client.get_shares(path)[0]['permissions']
+        perms = self.client.get_shares(path)[0].get_permissions()
         # the permissions should be 7 = 1(read) + 2(update) + 4(create)
         perms_public_upload = self.client.OCS_PERMISSION_READ + \
                               self.client.OCS_PERMISSION_UPDATE + \
@@ -752,7 +812,7 @@ class TestFileAccess(unittest.TestCase):
 
         # test reverting to read only
         self.assertTrue(self.client.update_share(share_id, public_upload=False))
-        perms = self.client.get_shares(path)[0]['permissions']
+        perms = self.client.get_shares(path)[0].get_permissions()
         self.assertEqual(int(perms), self.client.OCS_PERMISSION_READ)
         self.assertTrue(self.client.delete_share(share_id))
 
@@ -762,11 +822,10 @@ class TestFileAccess(unittest.TestCase):
         self.client.mkdir(path)
 
         share_info = self.client.share_file_with_link(path)
-        share_id = share_info.share_id
+        share_id = share_info.get_id()
         self.assertTrue(self.client.update_share(share_id, password="2hard2guess"))
         share_info = self.client.get_shares(path)[0]
-        self.assertTrue('share_with_displayname' in share_info)
-        self.assertIsNotNone(share_info['share_with_displayname'])
+        self.assertTrue(type(share_info.get_share_with_displayname()) is str)
         self.assertTrue(self.client.delete_share(share_id))
 
 
