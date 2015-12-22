@@ -573,7 +573,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
+        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234', expiration='2150-02-04')
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.PublicShare))
@@ -581,6 +581,8 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.target_file, path)
         self.assertTrue(type(share_info.link) is str)
         self.assertTrue(type(share_info.token) is str)
+        self.assertEquals(share_info.permissions, 7)
+        self.assertEquals(share_info.expiration, '2150-02-04 00:00:00')
 
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
@@ -767,6 +769,19 @@ class TestFileAccess(unittest.TestCase):
         share_info = self.client.get_shares(path)[0]
         self.assertTrue('share_with_displayname' in share_info)
         self.assertIsNotNone(share_info['share_with_displayname'])
+        self.assertTrue(self.client.delete_share(share_id))
+
+    def test_update_share_expiration(self):
+        """Test updating a share parameters - expiration date"""
+        path = self.test_root + 'update_share_expiration'
+        self.client.mkdir(path)
+
+        share_info = self.client.share_file_with_link(path)
+        share_id = share_info.share_id
+        self.assertTrue(self.client.update_share(share_id, expiration='2150-02-04'))
+        share_info = self.client.get_shares(path)[0]
+        self.assertTrue('expiration' in share_info)
+        self.assertEquals(share_info['expiration'], '2150-02-04 00:00:00')
         self.assertTrue(self.client.delete_share(share_id))
 
 
