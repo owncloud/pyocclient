@@ -567,7 +567,27 @@ class TestFileAccess(unittest.TestCase):
         )
 
     @data_provider(files)
-    def test_share_with_link(self, file_name):
+    @unittest.skipIf(self.client.get_version() >= (8.2),
+                     "This test should not run against >=8.2 servers")
+    def test_share_with_link_lesser_8_2(self, file_name):
+        """Test sharing a file with link"""
+
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
+
+        self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_link()) is str)
+        self.assertTrue(type(share_info.get_token()) is str)
+
+    @data_provider(files)
+    @unittest.skipIf(self.client.get_version() < (8.2),
+                     "This test should not run against <8.2 servers")
+    def test_share_with_link_greater_8_2(self, file_name):
         """Test sharing a file with link"""
 
         path = self.test_root + file_name
