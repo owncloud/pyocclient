@@ -288,6 +288,7 @@ class FileInfo():
 class Client():
     """ownCloud client"""
 
+    OCS_BASEPATH = 'ocs/v1.php/'
     OCS_SERVICE_SHARE = 'apps/files_sharing/api/v1'
     OCS_SERVICE_PRIVATEDATA = 'privatedata'
     OCS_SERVICE_CLOUD = 'cloud'
@@ -323,6 +324,9 @@ class Client():
         self.__verify_certs = kwargs.get('verify_certs', True)
         self.__single_session = kwargs.get('single_session', True)
 
+        self.__capabilities = None
+        self.__version = None
+
         url_components = urlparse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
@@ -339,20 +343,13 @@ class Client():
         self.__session = requests.session()
         self.__session.verify = self.__verify_certs
         self.__session.auth = (user_id, password)
-        # TODO: use another path to prevent that the server renders the file list page
-        res = self.__session.get(self.url + 'status.php')
-        if res.status_code == 200:
-            res = self.__make_ocs_request(
-                'GET',
-                self.OCS_SERVICE_CLOUD,
-                'capabilities'
-                )
-            if res.status_code == 200:
-                return
-            raise HTTPResponseError(res)
-        self.__session.close()
-        self.__session = None
-        raise HTTPResponseError(res)
+
+        try:
+            self.__update_capabilities()
+        except HTTPResponseError as e:
+            self.__session.close()
+            self.__session = None
+            raise e
 
     def logout(self):
         """Log out the authenticated user and close the session.
@@ -1493,6 +1490,25 @@ class Client():
 
         return ena_apps
 
+    def get_version(self):
+        """Gets the ownCloud version of the connected server
+
+        :returns: ownCloud version as string
+        """
+        if self.__version is None:
+            self.__update_capabilities()
+        return self.__version
+
+    def get_capabilities(self):
+        """Gets the ownCloud app capabilities
+
+        :returns: capabilities dictionary that maps from
+        app name to another dictionary containing the capabilities
+        """
+        if self.__capabilities is None:
+            self.__update_capabilities()
+        return self.__capabilities
+
     def enable_app(self, appname):
         """Enable an app through provisioning_api
 
@@ -1596,7 +1612,7 @@ class Client():
         slash = ''
         if service:
             slash = '/'
-        path = 'ocs/v1.php/' + service + slash + action
+        path = self.OCS_BASEPATH + service + slash + action
 
         attributes = kwargs.copy()
 
@@ -1743,3 +1759,32 @@ class Client():
         if (data_el is None) or not (isinstance(data_el, ET.Element)):
             return None
         return ShareInfo(self.__xml_to_dict(data_el))
+
+    def __update_capabilities(self):
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'capabilities'
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self.__check_ocs_status(tree)
+
+            data_el = tree.find('data')
+            apps = {}
+            for app_el in data_el.find('capabilities'):
+                app_caps = {}
+                for cap_el in app_el:
+                    app_caps[cap_el.tag] = cap_el.text
+                apps[app_el.tag] = app_caps
+
+            self.__capabilities = apps
+
+            version_el = data_el.find('version/string')
+            edition_el = data_el.find('version/edition')
+            self.__version = version_el.text
+            if edition_el.text is not None:
+                self.__version += '-' + edition_el.text
+
+            return self.__capabilities 
+        raise HTTPResponseError(res)
