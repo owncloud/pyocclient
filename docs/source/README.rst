@@ -111,8 +111,10 @@ Example for uploading a file then sharing with link:
 Running the unit tests
 ======================
 
-To run the unit tests, edit the config file in "owncloud/test/config.py" to
-point to a running ownCloud instance to test against.
+To run the unit tests, create a config file called "owncloud/test/config.py".
+There is a config file example called "owncloud/test/config.py.sample". All the
+information required is in that file. 
+It should point to a running ownCloud instance to test against.
 
 You might also need to install the unittest-data-provider package:
 
