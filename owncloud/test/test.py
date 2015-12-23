@@ -1064,6 +1064,21 @@ class TestGetConfig(unittest.TestCase):
         """Test get_config() function"""
         self.assertIsNotNone(self.client.get_config())
 
+    def test_get_version(self):
+        """Test get_version() function"""
+        version = self.client.get_version()
+        self.assertIsNotNone(version)
+        version_parts = version.split('.')
+        self.assertGreaterEqual(int(version_parts[0]), 5)
+
+    def test_get_capabilities(self):
+        """Test get_capabilities() function"""
+        caps = self.client.get_capabilities()
+        # files app is always enabled
+        self.assertIsNotNone(caps['files'])
+        # and always has big file chunking enabled
+        self.assertEquals(caps['files']['bigfilechunking'], '1')
+
     def tearDown(self):
         self.client.logout()
 
