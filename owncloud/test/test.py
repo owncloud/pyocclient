@@ -567,10 +567,11 @@ class TestFileAccess(unittest.TestCase):
         )
 
     @data_provider(files)
-    @unittest.skipIf(self.client.get_version() >= (8.2),
-                     "This test should not run against >=8.2 servers")
     def test_share_with_link_lesser_8_2(self, file_name):
         """Test sharing a file with link"""
+
+        if (self.client.get_version() >= (8.2)):
+            raise unittest.SkipTest("This test should not run against >=8.2 servers");
 
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
@@ -585,10 +586,11 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.get_token()) is str)
 
     @data_provider(files)
-    @unittest.skipIf(self.client.get_version() < (8.2),
-                     "This test should not run against <8.2 servers")
     def test_share_with_link_greater_8_2(self, file_name):
         """Test sharing a file with link"""
+
+        if (self.client.get_version() < (8.2)):
+            raise unittest.SkipTest("This test should not run against <8.2 servers");
 
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
