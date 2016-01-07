@@ -570,7 +570,10 @@ class TestFileAccess(unittest.TestCase):
     def test_share_with_link_lesser_8_2(self, file_name):
         """Test sharing a file with link"""
 
-        if (self.client.get_version() >= (8.2)):
+        current_version = self.client.get_version().split('.')
+        current_version_major = current_version[0]
+        current_version_minor = current_version[1]
+        if ((current_version_major >= '8') and (current_version_minor >= '2')):
             raise unittest.SkipTest("This test should not run against >=8.2 servers");
 
         path = self.test_root + file_name
@@ -589,7 +592,10 @@ class TestFileAccess(unittest.TestCase):
     def test_share_with_link_greater_8_2(self, file_name):
         """Test sharing a file with link"""
 
-        if (self.client.get_version() < (8.2)):
+        current_version = self.client.get_version().split('.')
+        current_version_major = current_version[0]
+        current_version_minor = current_version[1]
+        if ((current_version_major < '8') or ((current_version_major == '8') and (current_version_minor < '2'))):
             raise unittest.SkipTest("This test should not run against <8.2 servers");
 
         path = self.test_root + file_name
