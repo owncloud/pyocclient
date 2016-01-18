@@ -11,10 +11,11 @@ share them or access application attributes.
 import datetime
 import time
 import urllib
-import urlparse
 import requests
 import xml.etree.ElementTree as ET
 import os
+from six.moves.urllib import parse
+
 
 class ResponseError(Exception):
     def __init__(self, res, errorType):
@@ -235,7 +236,7 @@ class FileInfo():
 
         :returns: size of the file
         """
-        if self.attributes.has_key('{DAV:}getcontentlength'):
+        if '{DAV:}getcontentlength' in self.attributes:
             return int(self.attributes['{DAV:}getcontentlength'])
         return None
 
@@ -251,7 +252,7 @@ class FileInfo():
 
         :returns: file content type
         """
-        if self.attributes.has_key('{DAV:}getcontenttype'):
+        if '{DAV:}getcontenttype' in self.attributes:
             return self.attributes['{DAV:}getcontenttype']
 
         if self.is_dir():
@@ -327,7 +328,7 @@ class Client():
         self.__capabilities = None
         self.__version = None
 
-        url_components = urlparse.urlparse(url)
+        url_components = parse.urlparse(url)
         self.__davpath = url_components.path + 'remote.php/webdav'
         self.__webdav_url = url + 'remote.php/webdav'
 
@@ -1616,7 +1617,7 @@ class Client():
 
         attributes = kwargs.copy()
 
-        if not attributes.has_key('headers'):
+        if 'headers' not in attributes:
             attributes['headers'] = {}
 
         attributes['headers']['OCS-APIREQUEST'] = 'true'
