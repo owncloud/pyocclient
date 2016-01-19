@@ -10,7 +10,7 @@ env:
 
 before_install:
 - sudo apt-get update
-- sudo pip install requests unittest-data-provider
+- sudo pip install requests unittest-data-provider six
 - sudo apt-get install apache2 libapache2-mod-fastcgi
 - cp owncloud/test/config.py.sample owncloud/test/config.py
 - bash travis-build/install_oc.sh $CORE_BRANCH
