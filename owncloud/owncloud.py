@@ -792,7 +792,8 @@ class Client():
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)        
-
+        expiration = kwargs.get('expiration',None)
+        stime = kwargs.get('stime', None)
 
         path = self.__normalize_path(path)
         post_data = {
@@ -805,6 +806,11 @@ class Client():
             post_data['password'] = password
         if perms:
             post_data['permissions'] = perms
+        if expiration:
+            post_data['expiration'] = expiration
+        if stime:
+            post_data['stime'] = stime
+
 
         res = self.__make_ocs_request(
             'POST',
