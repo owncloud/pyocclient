@@ -718,6 +718,8 @@ class Client():
 
         :param share_id: (int) Share ID
         :param perms: (int) update permissions (see share_file_with_user() below)
+        :param expiration: timestamp of expiration date
+        :param stime: timestamp of the amount of time to share
         :param password: (string) updated password for public link Share
         :param public_upload: (boolean) enable/disable public upload for public shares
         :returns: True if the operation succeeded, False otherwise
@@ -727,6 +729,9 @@ class Client():
         perms = kwargs.get('perms', None)
         password = kwargs.get('password', None)
         public_upload = kwargs.get('public_upload', None)
+        expiration = kwargs.get('expiration',None)
+        stime = kwargs.get('stime', None)
+
         if (isinstance(perms, int)) and (perms > self.OCS_PERMISSION_ALL):
             perms = None
         if not (perms or password or (public_upload is not None)):
@@ -741,6 +746,10 @@ class Client():
             data['password'] = password
         if (public_upload is not None) and (isinstance(public_upload, bool)):
             data['publicUpload'] = str(public_upload).lower()
+        if expiration:
+            post_data['expiration'] = expiration
+        if stime:
+            post_data['stime'] = stime
 
         res = self.__make_ocs_request(
             'PUT',
@@ -782,6 +791,8 @@ class Client():
         :param path: path to the remote file to share
         :param perms (optional): permission of the shared object
         defaults to read only (1)
+        :param expiration: timestamp of expiration date
+        :param stime: timestamp of the amount of time to share
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
