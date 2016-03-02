@@ -28,7 +28,7 @@ class ResponseError(Exception):
 
     def get_resource_body(self):
         if self.res is not None:
-            return self.res.text
+            return self.res.content
         else:
             return None
 
@@ -40,11 +40,11 @@ class OCSResponseError(ResponseError):
         if self.res is not None:
             import xml.etree.ElementTree as ElementTree
             try:
-                root_element = ElementTree.fromstringlist(self.res.text)
+                root_element = ElementTree.fromstringlist(self.res.content)
                 if root_element.tag == 'message':
                     return root_element.text
             except ET.ParseError:
-                return self.res.text
+                return self.res.content
         else:
             return None
 
@@ -934,7 +934,7 @@ class Client():
 
         # We get 200 when the user was just created.
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return True
 
@@ -989,7 +989,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             users = [x.text for x in tree.findall('data/users/element')]
 
             return users           
@@ -1014,7 +1014,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return True
         raise HTTPResponseError(res)
@@ -1037,7 +1037,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return True
 
@@ -1059,7 +1059,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return [group.text for group in tree.find('data/groups')]
 
@@ -1095,7 +1095,7 @@ class Client():
             data={}
         )
 
-        tree = ET.fromstring(res.text)
+        tree = ET.fromstring(res.content)
         self.__check_ocs_status(tree)
         #<ocs><meta><statuscode>100</statuscode><status>ok</status></meta>
         #<data>
@@ -1123,7 +1123,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return True
 
@@ -1147,7 +1147,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100, 103])
             return True
 
@@ -1169,7 +1169,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
 
             groups = tree.find('data')
@@ -1259,7 +1259,7 @@ class Client():
 
         # We get 200 when the group was just created.
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, [100])
             return True
 
@@ -1302,7 +1302,7 @@ class Client():
         )
 
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
 
             for code_el in tree.findall('data/groups/element'):
                 if code_el is not None and code_el.text == group_name:
@@ -1339,7 +1339,7 @@ class Client():
             data=post_data
         )
         if res.status_code == 200:
-            tree = ET.fromstring(res.text)
+            tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return ShareInfo(
@@ -1474,7 +1474,7 @@ class Client():
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
         if res.status_code != 200:
             raise HTTPResponseError(res)
-        tree = ET.fromstring(res.text)
+        tree = ET.fromstring(res.content)
         self.__check_ocs_status(tree)
         # <data><apps><element>files</element><element>activity</element> ...
         for el in tree.findall('data/apps/element'):
@@ -1483,7 +1483,7 @@ class Client():
         res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps?filter=enabled')
         if res.status_code != 200:
             raise HTTPResponseError(res)
-        tree = ET.fromstring(res.text)
+        tree = ET.fromstring(res.content)
         self.__check_ocs_status(tree)
         for el in tree.findall('data/apps/element'):
             ena_apps[el.text] = True
