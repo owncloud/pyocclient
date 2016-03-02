@@ -890,7 +890,7 @@ class Client():
                 args['reshares'] = reshares
             subfiles = kwargs.get('subfiles', False)
             if isinstance(subfiles, bool) and subfiles:
-                args['subfiles'] = subfiles
+                args['subfiles'] = str(subfiles).lower()
             data += urllib.urlencode(args)
 
         res = self.__make_ocs_request(
