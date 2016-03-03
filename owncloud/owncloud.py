@@ -631,9 +631,9 @@ class Client():
         return self.__make_dav_request('DELETE', path)
 
     def list_open_remote_share(self):
-        """List all remote shares
+        """List all pending remote shares
 
-        :returns: True if the operation succeeded, False otherwise
+        :returns: array of pending remote shares
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
