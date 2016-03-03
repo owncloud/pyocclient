@@ -601,7 +601,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
         self.assertEquals(share_info.get_path(), path)
         self.assertTrue(type(share_info.get_id()) is int)
-        self.assertEquals(share_info.get_permissions(), 31)
+        self.assertEquals(share_info.get_permissions(), 1)
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
