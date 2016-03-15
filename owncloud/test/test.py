@@ -877,7 +877,7 @@ class TestUserAndGroupActions:
         assert self.client.get_user('ghost_user')['email'] == 'test@inf.org'
         self.client.delete_user('ghost_user')
 
-        with py.raises(owncloud.OCSResponseError) as e:
+        with pytest.raises(owncloud.OCSResponseError) as e:
             self.client.set_user_attribute(self.share2user,'email',"äöüää_sfsdf+$%/)%&=")
         assert e.value.status_code == 102
         #try to catch with general ResponseError
@@ -930,7 +930,7 @@ class TestUserAndGroupActions:
         # try to remove the user from a not existing group, that should raise and OCSResponseError with code 102
         with pytest.raises(owncloud.OCSResponseError) as e:
             self.client.remove_user_from_group(self.share2user,self.not_existing_group)
-        self.assertEquals(e.value.status_code, 102)
+        assert e.value.status_code == 102
         # try to catch with general ResponseError
         with pytest.raises(owncloud.ResponseError) as e:
             self.client.remove_user_from_group(self.share2user,self.not_existing_group)
@@ -1037,3 +1037,4 @@ class TestOCSRequest:
 
     def teardown_method(self, method):
         self.client.logout()
+
