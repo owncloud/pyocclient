@@ -213,6 +213,22 @@ class TestFileAccess:
         assert self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/leveltwo/file4.dat') is not None
         assert self.client.file_info(self.test_root + u'subdir/pyoctest.dir/levelone/文件.dat') is not None
 
+    @data_provider(files_content)
+    def test_download_file(self, file_name, content, subdir):
+        """Test file download"""
+        temp_file = self.temp_dir + 'pyoctest.dat'
+        assert self.client.mkdir(self.test_root + subdir)
+        assert self.client.put_file_contents(self.test_root + subdir + '/' + file_name, content)
+
+        assert self.client.get_file(self.test_root + subdir + '/' + file_name, temp_file)
+
+        f = open(temp_file, 'r')
+        s = f.read()
+        f.close()
+        os.unlink(temp_file)
+        assert s == content
+
+
     def test_download_dir(self):
         import zipfile
         """Test directory download as zip"""
