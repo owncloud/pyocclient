@@ -820,9 +820,9 @@ class TestUserAndGroupActions:
 
     def teardown_method(self, method):
         for group in self.groups_to_create:
-            self.assertTrue(self.client.delete_group(group))
+            assert self.client.delete_group(group)
 
-        self.assertTrue(self.client.remove_user_from_group(self.share2user,self.test_group))
+        assert self.client.remove_user_from_group(self.share2user,self.test_group)
         try:
             self.client.delete_user(self.share2user)
         except:
