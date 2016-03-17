@@ -495,7 +495,7 @@ class TestFileAccess:
         path = self.test_root + file_name
         assert self.client.put_file_contents(path, 'hello world!')
         print(path)
-        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234')
+        share_info = self.client.share_file_with_link(path, public_upload=False, password='1234')
 
         assert self.client.is_shared(path)
         assert isinstance(share_info, owncloud.ShareInfo)
@@ -695,11 +695,11 @@ class TestFileAccess:
 
         share_info = self.client.share_file_with_user(path, self.share2user)
         share_id = share_info.get_id()
-        assert self.client.update_share(share_id, perms=self.client.OCS_PERMISSION_ALL)
-        perms = self.client.get_shares(path)[0].get_permissions()
+        maxPerms = self.client.OCS_PERMISSION_READ + self.client.OCS_PERMISSION_UPDATE + self.client.OCS_PERMISSION_SHARE        perms = self.client.get_shares(path)[0].get_permissions()
+        assert self.client.update_share(share_id, perms=maxPerms)
         # now the permissions should be OCS_PERMISSION_ALL,
         # because we've shared it with a user
-        assert int(perms) == self.client.OCS_PERMISSION_ALL
+        assert int(perms) == maxPerms
         assert self.client.delete_share(share_id)
 
     def test_update_share_public(self):
