@@ -679,12 +679,6 @@ class TestFileAccess:
         shares = self.client.get_shares()
         assert shares == []
 
-        shares = None
-        with pytest.raises(owncloud.ResponseError) as e:
-            shares = self.client.get_shares(self.test_root + file_name)
-        assert shares is None
-        assert e.value.status_code == 404
-
     def test_update_share_wo_params(self):
         assert self.client.update_share(0) is False
 
