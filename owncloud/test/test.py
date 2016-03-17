@@ -695,8 +695,10 @@ class TestFileAccess:
 
         share_info = self.client.share_file_with_user(path, self.share2user)
         share_id = share_info.get_id()
-        maxPerms = self.client.OCS_PERMISSION_READ + self.client.OCS_PERMISSION_UPDATE + self.client.OCS_PERMISSION_SHARE        perms = self.client.get_shares(path)[0].get_permissions()
+        maxPerms = self.client.OCS_PERMISSION_READ + self.client.OCS_PERMISSION_UPDATE + self.client.OCS_PERMISSION_SHARE
         assert self.client.update_share(share_id, perms=maxPerms)
+        perms = self.client.get_shares(path)[0].get_permissions()
+
         # now the permissions should be OCS_PERMISSION_ALL,
         # because we've shared it with a user
         assert int(perms) == maxPerms
