@@ -133,6 +133,7 @@ Then run the following commands:
 
 .. code-block:: bash
 
+    $ sphinx-apidoc -f -o docs/source owncloud/ owncloud/test
     $ cd docs
     $ make html
 
