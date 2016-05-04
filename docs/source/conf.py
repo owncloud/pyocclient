@@ -29,8 +29,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-	'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
+    'sphinx.ext.intersphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,8 +47,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Python ownCloud Client'
-copyright = u'2014, Vincent Petry'
+project = u'Python ownCloud Client Library'
+copyright = u'2016, Vincent Petry'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,7 +200,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'pyocclient.tex', u'Python ownCloud Client Documentation',
+  ('index', 'pyocclient.tex', u'Python ownCloud Client Library Documentation',
    u'Vincent Petry', 'manual'),
 ]
 
@@ -229,7 +230,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'owncloud', u'Python ownCloud Client Documentation',
+    ('index', 'owncloud', u'Python ownCloud Client Library Documentation',
      [u'Vincent Petry'], 1)
 ]
 
@@ -243,7 +244,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ownCloudClient', u'Python ownCloud Client Documentation',
+  ('index', 'ownCloudClient', u'Python ownCloud Client Library Documentation',
    u'Vincent Petry', 'ownCloudClient', 'Python client library for ownCloud.',
    'Miscellaneous'),
 ]
@@ -259,3 +260,8 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/2.7', None),
+}
+
