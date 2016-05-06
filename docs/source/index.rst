@@ -11,7 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   owncloud
+   Description <README>
+   API Documentation <owncloud>
 
 Indices and tables
 ==================

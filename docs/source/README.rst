@@ -142,8 +142,4 @@ You can then find the documentation inside of "doc/build/html".
 Authors
 =======
 
-- Vincent Petry (@pvince81)
-- Steffen Lindner (@gomezr)
-- Soal (@soalhn)
-- Sergio Bertolín Puebla (@SergioBertolinSG)
-- Joas Schilling (@nickvergessen)
+See :doc:`Contributors <CONTRIBUTORS>`
