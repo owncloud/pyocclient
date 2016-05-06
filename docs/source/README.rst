@@ -133,13 +133,9 @@ Then run the following commands:
 
 .. code-block:: bash
 
-    $ sphinx-apidoc -f -o docs/source owncloud/ owncloud/test
+    $ sphinx-apidoc -e -f -o docs/source owncloud/ owncloud/test
     $ cd docs
     $ make html
 
 You can then find the documentation inside of "doc/build/html".
 
-Authors
-=======
-
-See `Contributors <CONTRIBUTORS.rst>`_

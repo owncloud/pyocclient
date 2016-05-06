@@ -4,14 +4,9 @@ owncloud package
 Submodules
 ----------
 
-owncloud.owncloud module
-------------------------
+.. toctree::
 
-.. automodule:: owncloud.owncloud
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   owncloud.owncloud
 
 Module contents
 ---------------

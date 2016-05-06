@@ -9,10 +9,11 @@ ownCloud client library documentation
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    Description <README>
    API Documentation <owncloud>
+   Contributors <CONTRIBUTORS>
 
 Indices and tables
 ==================
