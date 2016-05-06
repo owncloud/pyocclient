@@ -142,4 +142,4 @@ You can then find the documentation inside of "doc/build/html".
 Authors
 =======
 
-See :doc:`Contributors <CONTRIBUTORS>`
+See `Contributors <CONTRIBUTORS.rst>`_
