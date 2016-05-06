@@ -16,7 +16,7 @@ See the `ownCloud homepage <http://owncloud.org>`_ for more information about ow
 Features
 ========
 
-Supports connecting to ownCloud 7, 8 and newer.
+Supports connecting to ownCloud 8, 9 and newer.
 
 General information
 -------------------
