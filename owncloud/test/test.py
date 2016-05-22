@@ -567,8 +567,14 @@ class TestFileAccess(unittest.TestCase):
         )
 
     @data_provider(files)
-    def test_share_with_link(self, file_name):
+    def test_share_with_link_lesser_8_2(self, file_name):
         """Test sharing a file with link"""
+
+        current_version = self.client.get_version().split('.')
+        current_version_major = int(current_version[0])
+        current_version_minor = int(current_version[1])
+        if ((current_version_major > 8) or ((current_version_major == 8) and (current_version_minor >= 2))):
+            raise unittest.SkipTest("This test should not run against >=8.2 servers");
 
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
@@ -581,6 +587,30 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.get_path(), path)
         self.assertTrue(type(share_info.get_link()) is str)
         self.assertTrue(type(share_info.get_token()) is str)
+
+    @data_provider(files)
+    def test_share_with_link_greater_8_2(self, file_name):
+        """Test sharing a file with link"""
+
+        current_version = self.client.get_version().split('.')
+        current_version_major = int(current_version[0])
+        current_version_minor = int(current_version[1])
+        if ((current_version_major < 8) or ((current_version_major == 8) and (current_version_minor < 2))):
+            raise unittest.SkipTest("This test should not run against <8.2 servers");
+
+        path = self.test_root + file_name
+        self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
+
+        share_info = self.client.share_file_with_link(path, public_upload=True, password='1234', expiration='2150-02-04')
+
+        self.assertTrue(self.client.is_shared(path))
+        self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
+        self.assertTrue(type(share_info.get_id()) is int)
+        self.assertEquals(share_info.get_path(), path)
+        self.assertTrue(type(share_info.get_link()) is str)
+        self.assertTrue(type(share_info.get_token()) is str)
+        self.assertEquals(share_info.get_permissions(), 7)
+        self.assertEquals(share_info.get_expiration(), '2150-02-04 00:00:00')
 
     def test_share_with_link_non_existing_file(self):
         """Test sharing a file with link"""
@@ -774,6 +804,17 @@ class TestFileAccess(unittest.TestCase):
         # now the permissions should be OCS_PERMISSION_ALL,
         # because we've shared it with a user
         self.assertEqual(int(perms), maxPerms)
+        self.assertTrue(self.client.delete_share(share_id))
+
+    def test_update_share_expiration(self):
+        """Test updating a share parameters - expiration date"""
+        path = self.test_root + 'update_share_expiration'
+        self.client.mkdir(path)
+        share_info = self.client.share_file_with_link(path)
+        share_id = share_info.get_id()
+        self.assertTrue(self.client.update_share(share_id, expiration='2150-02-04'))
+        share_info = self.client.get_shares(path)[0]
+        self.assertEquals(share_info.get_expiration(), '2150-02-04 00:00:00')
         self.assertTrue(self.client.delete_share(share_id))
 
     def test_update_share_public(self):
