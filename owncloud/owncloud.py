@@ -820,7 +820,7 @@ class Client():
                                 {
                                     'id': data_el.find('id').text,
                                     'path':path,
-                                    'link': data_el.find('url').text,
+                                    'url': data_el.find('url').text,
                                     'token': data_el.find('token').text
                                 }
             )
