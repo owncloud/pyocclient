@@ -149,8 +149,8 @@ class ShareInfo():
         return None
 
     def get_link(self):
-        if 'link' in self.share_info:
-            return self.share_info['link']
+        if 'url' in self.share_info:
+            return self.share_info['url']
         return None
 
     def get_uid_owner(self):
