@@ -375,17 +375,23 @@ class Client():
             return res[0]
         return None
 
-    def list(self, path):
+    def list(self, path, depth=1):
         """Returns the listing/contents of the given remote directory
 
         :param path: path to the remote directory
+        :param depth: depth of the listing, integer or "infinity"
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if not path[-1] == '/':
             path += '/'
-        res = self.__make_dav_request('PROPFIND', path)
+
+        headers = {}
+        if isinstance(depth, int) or depth == "infinity":
+            headers['Depth'] = depth
+
+        res = self.__make_dav_request('PROPFIND', path, headers=headers)
         # first one is always the root, remove it from listing
         if res:
             return res[1:]
@@ -791,7 +797,7 @@ class Client():
         """
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
-        password = kwargs.get('password', None)        
+        password = kwargs.get('password', None)
 
 
         path = self.__normalize_path(path)
@@ -965,19 +971,19 @@ class Client():
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be checked 
-        :returns: True if user found 
-        
+        :param user_name:  name of user to be checked
+        :returns: True if user found
+
         """
         users=self.search_users(user_name)
-        
+
         return user_name in users
 
     def search_users(self, user_name):
         """Searches for users via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
 
-        :param user_name:  name of user to be searched for 
+        :param user_name:  name of user to be searched for
         :returns: list of usernames that contain user_name as substring
         :raises: HTTPResponseError in case an HTTP error status was returned
 
@@ -992,7 +998,7 @@ class Client():
             tree = ET.fromstring(res.content)
             users = [x.text for x in tree.findall('data/users/element')]
 
-            return users           
+            return users
 
         raise HTTPResponseError(res)
 
@@ -1084,7 +1090,7 @@ class Client():
         """Retrieves information about a user
 
         :param user_name:  name of user to query
-        
+
         :returns: Dictionary of information about user
         :raises: ResponseError in case an HTTP error status was returned
         """
@@ -1104,7 +1110,7 @@ class Client():
         #</ocs>
 
         data_element = tree.find('data')
-        return self.__xml_to_dict(data_element)       
+        return self.__xml_to_dict(data_element)
 
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.
@@ -1232,10 +1238,10 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
-            return ShareInfo(   
+            return ShareInfo(
                                 {
-                                    'id':data_el.find('id').text, 
-                                    'path':path, 
+                                    'id':data_el.find('id').text,
+                                    'path':path,
                                     'permissions':perms
                                 }
             )
@@ -1701,7 +1707,7 @@ class Client():
         if path.startswith(self.__davpath):
             return path[len(self.__davpath):]
         return path
-        
+
     def __webdav_move_copy(self,remote_path_source,remote_path_target,operation):
         """Copies or moves a remote file or directory
 
@@ -1749,7 +1755,7 @@ class Client():
             else:
                 return_dict[el.tag] = el.text
         return return_dict
-    
+
     def __get_shareinfo(self, data_el):
         """Simple helper which returns instance of ShareInfo class
 
@@ -1786,5 +1792,5 @@ class Client():
             if edition_el.text is not None:
                 self.__version += '-' + edition_el.text
 
-            return self.__capabilities 
+            return self.__capabilities
         raise HTTPResponseError(res)
