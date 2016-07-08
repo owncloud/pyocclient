@@ -1,30 +1,24 @@
-language: php
-php:
-  - "5.4"
-
+language: python
+python:
+    - "2.7"
+    # TODO: uncomment when ready
+    # - "3.5"
+sudo: required
+services:
+    - docker
 env:
-  - CORE_BRANCH=stable7
-  - CORE_BRANCH=stable8
-  - CORE_BRANCH=stable8.1
-  - CORE_BRANCH=stable8.2
-  - CORE_BRANCH=stable9
+    - OC_VERSION=8.1
+    - OC_VERSION=8.2
+    - OC_VERSION=9.0
 
 before_install:
-- sudo apt-get update
-- sudo pip install requests unittest-data-provider
-- sudo apt-get install apache2 libapache2-mod-fastcgi
-- cp owncloud/test/config.py.sample owncloud/test/config.py
-- bash travis-build/install_oc.sh $CORE_BRANCH
-# enable php-fpm
-- sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
-- sudo a2enmod rewrite actions fastcgi alias
-- echo "cgi.fix_pathinfo = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-- ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
-# configure apache virtual hosts
-- sudo cp -f travis-build/travis-ci-apache /etc/apache2/sites-available/default
-- sudo sed -e "s?%TRAVIS_BUILD_DIR%?$(pwd)?g" --in-place /etc/apache2/sites-available/default
-- sudo service apache2 restart
+    - travis-build/setup_oc_docker.sh $OC_VERSION
+
+install:
+    - pip install requests unittest-data-provider
 
 script:
-  # execute unit tests
-  - ./runtests.sh
+    - cp owncloud/test/config.py.sample owncloud/test/config.py
+    # execute unit tests
+    - ./runtests.sh
+
