@@ -891,6 +891,12 @@ class Client():
             subfiles = kwargs.get('subfiles', False)
             if isinstance(subfiles, bool) and subfiles:
                 args['subfiles'] = str(subfiles).lower()
+
+            shared_with_me = kwargs.get('shared_with_me', False)
+            if isinstance(shared_with_me, bool) and shared_with_me:
+                args['shared_with_me'] = "true"
+                del args['path']
+
             data += urllib.urlencode(args)
 
         res = self.__make_ocs_request(
