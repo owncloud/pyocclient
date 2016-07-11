@@ -880,6 +880,8 @@ class Client():
             the current user but all shares from the given file (default: False)
         :param subfiles: (optional, boolean) returns all shares within
             a folder, given that path defines a folder (default: False)
+        :param shared_with_me: (optional, boolean) returns all shares which are
+            shared with me (default: False)
         :returns: array of shares ShareInfo instances or empty array if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
@@ -897,6 +899,12 @@ class Client():
             subfiles = kwargs.get('subfiles', False)
             if isinstance(subfiles, bool) and subfiles:
                 args['subfiles'] = str(subfiles).lower()
+
+            shared_with_me = kwargs.get('shared_with_me', False)
+            if isinstance(shared_with_me, bool) and shared_with_me:
+                args['shared_with_me'] = "true"
+                del args['path']
+
             data += urllib.urlencode(args)
 
         res = self.__make_ocs_request(
