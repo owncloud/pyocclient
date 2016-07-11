@@ -874,6 +874,8 @@ class Client():
             the current user but all shares from the given file (default: False)
         :param subfiles: (optional, boolean) returns all shares within
             a folder, given that path defines a folder (default: False)
+        :param shared_with_me: (optional, boolean) returns all shares which are
+            shared with me (default: False)
         :returns: array of shares ShareInfo instances or empty array if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
