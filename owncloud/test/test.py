@@ -602,6 +602,16 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.get_path(), path)
         self.assertTrue(type(share_info.get_id()) is int)
         self.assertEquals(share_info.get_permissions(), 1)
+
+        shareclient = owncloud.Client(Config['owncloud_url'],
+                                      single_session=Config['single_session'])
+        shareclient.login(self.share2user, "share")
+        share2_info = shareclient.get_shares(
+            "/", shared_with_me=True)[0].share_info
+        self.assertEqual(share2_info["uid_owner"], Config['owncloud_login'])
+        self.assertEqual(file_name, share2_info["file_target"][1:])
+        shareclient.logout()
+
         self.assertTrue(self.client.delete(path))
 
     @data_provider(files)
