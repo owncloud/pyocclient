@@ -103,7 +103,7 @@ Example for uploading a file then sharing with link:
 
     link_info = oc.share_file_with_link('testdir/remotefile.txt')
 
-    print "Here is your link: http://domain.tld/owncloud/" + link_info.link
+    print "Here is your link: " + link_info.get_link()
 
 Running the unit tests
 ======================
