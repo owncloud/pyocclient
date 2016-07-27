@@ -15,7 +15,7 @@ before_install:
     - travis-build/setup_oc_docker.sh $OC_VERSION
 
 install:
-    - pip install requests unittest-data-provider
+    - pip install requests unittest-data-provider six
 
 script:
     - cp owncloud/test/config.py.sample owncloud/test/config.py
