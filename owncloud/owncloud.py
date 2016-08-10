@@ -589,7 +589,7 @@ class Client():
             chunk_count += 1
 
         if chunk_count > 1:
-            headers['OC-CHUNKED'] = 1
+            headers['OC-CHUNKED'] = '1'
 
         for chunk_index in range(0, int(chunk_count)):
             data = file_handle.read(chunk_size)
