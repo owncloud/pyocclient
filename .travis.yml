@@ -1,8 +1,7 @@
 language: python
 python:
     - "2.7"
-    # TODO: uncomment when ready
-    # - "3.5"
+    - "3.5"
 sudo: required
 services:
     - docker
@@ -15,7 +14,7 @@ before_install:
     - travis-build/setup_oc_docker.sh $OC_VERSION
 
 install:
-    - pip install requests unittest-data-provider
+    - pip install requests unittest-data-provider six
 
 script:
     - cp owncloud/test/config.py.sample owncloud/test/config.py

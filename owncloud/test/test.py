@@ -9,6 +9,7 @@ import owncloud
 import datetime
 import time
 import tempfile
+import six
 
 from config import Config
 
@@ -24,8 +25,8 @@ class TestFileAccess(unittest.TestCase):
 
     def files_content():
         return (
-            ['test.txt', 'Hello world!', 'subdir'],
-            ['test space and + and #.txt', 'Hello space with+plus#hash!', 'subdir with space + plus and #hash'],
+            ['test.txt', b'Hello world!', 'subdir'],
+            ['test space and + and #.txt', b'Hello space with+plus#hash!', 'subdir with space + plus and #hash'],
             [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
         )
 
@@ -72,7 +73,7 @@ class TestFileAccess(unittest.TestCase):
         for i in range(0, 1024):
             dummy_data += 'X'
 
-        for i in range(0, size / 1024):
+        for i in range(0, int(size / 1024)):
             # write in 1kb blocks
             file_handle.write(dummy_data)
         file_handle.close()
@@ -225,7 +226,7 @@ class TestFileAccess(unittest.TestCase):
 
         self.assertTrue(self.client.get_file(self.test_root + subdir + '/' + file_name, temp_file))
 
-        f = open(temp_file, 'r')
+        f = open(temp_file, 'rb')
         s = f.read()
         f.close()
         os.unlink(temp_file)
@@ -292,7 +293,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'renamed in place.txt'
             ),
-            'to rename'
+            b'to rename'
         )
 
     def test_move_and_rename(self):
@@ -319,7 +320,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'subdir/file renamed.txt'
             ),
-            'first file'
+            b'first file'
         )
 
     def test_move_to_dir(self):
@@ -347,7 +348,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'subdir/movetodir.txt'
             ),
-            'z file'
+            b'z file'
         )
 
     def test_move_subdir(self):
@@ -397,7 +398,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + u'更多中文.txt'
             ),
-            '1'
+            b'1'
         )
 
     def test_move_unicode(self):
@@ -423,7 +424,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + u'subdir/中文.txt'
             ),
-            '2'
+            b'2'
         )
 
     def test_move_to_non_existing_dir(self):
@@ -446,7 +447,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'move not possible.txt'
             ),
-            'x'
+            b'x'
         )
 
     def test_copy_in_place(self):
@@ -468,14 +469,14 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'copied in place.txt'
             ),
-            'to copy'
+            b'to copy'
         )
 
         self.assertEquals(
             self.client.get_file_contents(
                 self.test_root + 'copy this file!.txt'
             ),
-            'to copy'
+            b'to copy'
         )
 
     def test_copy_into_subdir(self):
@@ -502,13 +503,13 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'subdir/file copied.txt'
             ),
-            'first file'
+            b'first file'
         )
         self.assertEquals(
             self.client.get_file_contents(
                 self.test_root + 'copy into subdir.txt'
             ),
-            'first file'
+            b'first file'
         )
 
     def test_copy_unicode(self):
@@ -534,13 +535,13 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + u'subdir/दिलै होस छोरा होस.txt'
             ),
-            'content'
+            b'content'
         )
         self.assertEquals(
             self.client.get_file_contents(
                 self.test_root + u'दिलै होस छोरा होस.txt'
             ),
-            'content'
+            b'content'
         )
 
     def test_copy_to_non_existing_dir(self):
@@ -563,7 +564,7 @@ class TestFileAccess(unittest.TestCase):
             self.client.get_file_contents(
                 self.test_root + 'copy not possible.txt'
             ),
-            'x'
+            b'x'
         )
 
     @data_provider(files)
@@ -693,7 +694,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNone(sinfo.get_expiration())
         self.assertIsNone(sinfo.get_token())
         self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
-        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+        self.assertIsInstance(sinfo.get_displayname_owner(), six.string_types)
 
     @data_provider(files)
     def test_get_share_public_link(self, file_name):
@@ -715,9 +716,9 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(sinfo.get_permissions(), self.client.OCS_PERMISSION_READ)
         self.assertIsInstance(sinfo.get_share_time(), datetime.datetime)
         self.assertIsNone(sinfo.get_expiration())
-        self.assertIsInstance(sinfo.get_token(), basestring)
+        self.assertIsInstance(sinfo.get_token(), six.string_types)
         self.assertEquals(sinfo.get_uid_owner(), Config['owncloud_login'])
-        self.assertIsInstance(sinfo.get_displayname_owner(), basestring)
+        self.assertIsInstance(sinfo.get_displayname_owner(), six.string_types)
 
     def test_get_share_non_existing(self):
         """Test get_share - share with specified id does not exist"""

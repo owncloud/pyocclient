@@ -29,14 +29,17 @@ setup(
     long_description=long_description,
     install_requires=[
         "requests >= 2.0.1",
+        "six"
     ],
-	classifiers=[
-		'Programming Language :: Python',
-		'Development Status :: 3 - Alpha',
-		'Environment :: Web Environment',
+    classifiers=[
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
         'Intended Audience :: Developers',
-		'Topic :: Internet :: WWW/HTTP',
-		'Topic :: Software Development :: Libraries :: Python Modules',
-		'License :: OSI Approved :: MIT License'
-	]
+        'Topic :: Internet :: WWW/HTTP',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'License :: OSI Approved :: MIT License'
+    ]
 )
