@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3
+---
+
+- Python3 support [ethifus] [Blizzz]
+
 0.2
 ---
 
