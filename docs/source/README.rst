@@ -63,7 +63,7 @@ App data
 Requirements
 ============
 
-- Python >= 2.7 (no support for Python 3 yet)
+- Python >= 2.7 or Python >= 3.5
 - requests module (for making HTTP requests)
 
 Installation
