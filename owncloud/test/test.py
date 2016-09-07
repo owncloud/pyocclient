@@ -810,11 +810,10 @@ class TestFileAccess(unittest.TestCase):
         share_id = share_info.get_id()
         self.assertTrue(self.client.update_share(share_id, public_upload=True))
         perms = self.client.get_shares(path)[0].get_permissions()
-        # the permissions should be 7 = 1(read) + 2(update) + 4(create)
-        perms_public_upload = self.client.OCS_PERMISSION_READ + \
-                              self.client.OCS_PERMISSION_UPDATE + \
-                              self.client.OCS_PERMISSION_CREATE
-        self.assertEqual(int(perms), perms_public_upload)
+
+        # make sure the server did receive the upload permission
+        self.assertTrue(perms & self.client.OCS_PERMISSION_CREATE > 0)
+        self.assertTrue(perms & self.client.OCS_PERMISSION_UPDATE > 0)
 
         # test reverting to read only
         self.assertTrue(self.client.update_share(share_id, public_upload=False))
