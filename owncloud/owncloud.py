@@ -13,6 +13,7 @@ import time
 import requests
 import xml.etree.ElementTree as ET
 import os
+import math
 import six
 from six.moves.urllib import parse
 
@@ -589,10 +590,7 @@ class Client():
                 headers=headers
             )
 
-        chunk_count = size / chunk_size
-
-        if size % chunk_size > 0:
-            chunk_count += 1
+        chunk_count = int(math.ceil(float(size) / float(chunk_size)))
 
         if chunk_count > 1:
             headers['OC-CHUNKED'] = '1'
