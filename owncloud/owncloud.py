@@ -390,7 +390,7 @@ class Client():
 
         headers = {}
         if isinstance(depth, int) or depth == "infinity":
-            headers['Depth'] = depth
+            headers['Depth'] = str(depth)
 
         res = self.__make_dav_request('PROPFIND', path, headers=headers)
         # first one is always the root, remove it from listing
