@@ -149,6 +149,16 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(listing[2].is_dir())
         self.assertFalse(listing[3].is_dir())
 
+        listing = self.client.list(self.test_root, depth="infinity")
+        self.assertEquals(len(listing), 6)
+        self.assertEquals(listing[2].get_name(), 'subdir')
+        self.assertEquals(listing[3].get_name(), 'in dir.txt')
+
+        listing = self.client.list(self.test_root, depth=2)
+        self.assertEquals(len(listing), 6)
+        self.assertEquals(listing[2].get_name(), 'subdir')
+        self.assertEquals(listing[3].get_name(), 'in dir.txt')
+
     def test_get_file_listing_non_existing(self):
         """Test getting file listing for non existing directory"""
         with self.assertRaises(owncloud.ResponseError) as e:
