@@ -76,6 +76,14 @@ class TestFileAccess(unittest.TestCase):
         for i in range(0, int(size / 1024)):
             # write in 1kb blocks
             file_handle.write(dummy_data)
+
+        dummy_data = ''
+        for i in range(0, size % 1024):
+            dummy_data += 'X'
+
+        if (len(dummy_data) > 0):
+            file_handle.write(dummy_data);
+
         file_handle.close()
 
     @data_provider(files_content)
@@ -180,14 +188,26 @@ class TestFileAccess(unittest.TestCase):
     def test_upload_two_chunks(self):
         """Test chunked upload with two chunks"""
         temp_file = self.temp_dir + 'pyoctest.dat'
-        self.__create_file(temp_file, 18 * 1024 * 1024)
+        self.__create_file(temp_file, 18 * 1024 * 1024 + 1)
         self.assertTrue(self.client.put_file(self.test_root + 'chunk_test.dat', temp_file))
         os.unlink(temp_file)
 
         file_info = self.client.file_info(self.test_root + 'chunk_test.dat')
 
         self.assertIsNotNone(file_info)
-        self.assertEquals(file_info.get_size(), 18 * 1024 * 1024)
+        self.assertEquals(file_info.get_size(), 18 * 1024 * 1024 + 1)
+
+    def test_upload_chunks_minus_one_byte(self):
+        """Test chunked upload minus one byte"""
+        temp_file = self.temp_dir + 'pyoctest.dat'
+        self.__create_file(temp_file, 2 * 1024 - 1)
+        self.assertTrue(self.client.put_file(self.test_root + 'chunk_test.dat', temp_file, chunk_size = 1024))
+        os.unlink(temp_file)
+
+        file_info = self.client.file_info(self.test_root + 'chunk_test.dat')
+
+        self.assertIsNotNone(file_info)
+        self.assertEquals(file_info.get_size(), 2 * 1024 - 1)
 
     @data_provider(files)
     def test_upload_big_file(self, file_name):
