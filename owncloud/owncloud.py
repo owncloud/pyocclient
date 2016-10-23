@@ -974,6 +974,34 @@ class Client():
 
         raise HTTPResponseError(res)
 
+    def get_user_list(self, user_name):
+        """Gets a lit of users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param user_name:  substring of username to be checked 
+        :returns: a list of users matching the user_name sub string
+        :raises: ResponseError in case an HTTP error status was returned
+
+        """
+
+        res = self.__make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users?search=' + user_name
+        )
+
+        user_list = []
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            for el in tree.findall('data/users/element'):
+                if el.text:
+                    user_list.append(el.text)
+
+            return user_list 
+
+        raise ResponseError(res)
+
+
     def user_exists(self, user_name):
         """Checks a user via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
@@ -995,6 +1023,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
+
         res = self.__make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
