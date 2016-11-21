@@ -34,9 +34,10 @@ class ResponseError(Exception):
         else:
             return None
 
+
 class OCSResponseError(ResponseError):
     def __init__(self, res):
-        ResponseError.__init__(self,res, "OCS")
+        ResponseError.__init__(self, res, "OCS")
 
     def get_resource_body(self):
         if self.res is not None:
@@ -50,17 +51,20 @@ class OCSResponseError(ResponseError):
         else:
             return None
 
+
 class HTTPResponseError(ResponseError):
     def __init__(self, res):
-        ResponseError.__init__(self,res, "HTTP")
+        ResponseError.__init__(self, res, "HTTP")
 
-class ShareInfo():
+
+class ShareInfo(object):
     """Share information"""
 
     def __init__(self, share_info):
         self.share_info = {}
         # remove unneeded attributes
-        del_attrs = ['item_type', 'item_source', 'file_source', 'parent', 'storage', 'mail_send']
+        del_attrs = ['item_type', 'item_source', 'file_source', 'parent',
+                     'storage', 'mail_send']
         for k, v in share_info.items():
             if k not in del_attrs:
                 self.share_info[k] = v
@@ -85,7 +89,8 @@ class ShareInfo():
 
     def get_share_with(self):
         """Returns the share recipient.
-        If share type is OCS_SHARE_TYPE_USER, then the recipient is the name of the user.
+        If share type is OCS_SHARE_TYPE_USER, then the recipient is the name of
+        the user.
         For OCS_SHARE_TYPE_GROUP it is the name of the group.
         Otherwise this value is None.
 
@@ -191,6 +196,7 @@ class ShareInfo():
         except:
             return None
 
+
 class PublicShare(ShareInfo):
     """Public share information"""
 
@@ -204,14 +210,15 @@ class PublicShare(ShareInfo):
         return 'PublicShare(id=%i,path=%s,link=%s,token=%s)' % \
                (self.share_id, self.target_file, self.link, self.token)
 
-class FileInfo():
+
+class FileInfo(object):
     """File information"""
 
     __DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
 
     def __init__(self, path, file_type='file', attributes=None):
         self.path = path
-        if path[-1] == '/':
+        if path.endswith('/'):
             path = path[0:-1]
         self.name = os.path.basename(path)
         self.file_type = file_type
@@ -287,7 +294,7 @@ class FileInfo():
         return self.__str__()
 
 
-class Client():
+class Client(object):
     """ownCloud client"""
 
     OCS_BASEPATH = 'ocs/v1.php/'
@@ -317,12 +324,12 @@ class Client():
             (default, recommended), False to reauthenticate every call (use with ownCloud 5)
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
-        if not url[-1] == '/':
+        if not url.endswith('/'):
             url += '/'
 
         self.url = url
-        self.__session = None
-        self.__debug = kwargs.get('debug', False)
+        self._session = None
+        self._debug = kwargs.get('debug', False)
         self.__verify_certs = kwargs.get('verify_certs', True)
         self.__single_session = kwargs.get('single_session', True)
 
@@ -342,15 +349,15 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
-        self.__session = requests.session()
-        self.__session.verify = self.__verify_certs
-        self.__session.auth = (user_id, password)
+        self._session = requests.session()
+        self._session.verify = self.__verify_certs
+        self._session.auth = (user_id, password)
 
         try:
             self.__update_capabilities()
         except HTTPResponseError as e:
-            self.__session.close()
-            self.__session = None
+            self._session.close()
+            self._session = None
             raise e
 
     def logout(self):
@@ -360,7 +367,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         # TODO actual logout ?
-        self.__session.close()
+        self._session.close()
         return True
 
     def file_info(self, path):
@@ -386,7 +393,7 @@ class Client():
         :rtype: array of :class:`FileInfo` objects
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        if not path[-1] == '/':
+        if not path.endswith('/'):
             path += '/'
 
         headers = {}
@@ -408,7 +415,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = self.__normalize_path(path)
-        res = self.__session.get(
+        res = self._session.get(
             self.__webdav_url + parse.quote(self.__encode_string(path))
         )
         if res.status_code == 200:
@@ -427,7 +434,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         remote_path = self.__normalize_path(remote_path)
-        res = self.__session.get(
+        res = self._session.get(
             self.__webdav_url + parse.quote(self.__encode_string(remote_path)),
             stream=True
         )
@@ -456,8 +463,8 @@ class Client():
         """
         remote_path = self.__normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
-                + parse.quote(remote_path)
-        res = self.__session.get(url, stream=True)
+              + parse.quote(remote_path)
+        res = self._session.get(url, stream=True)
         if res.status_code == 200:
             if local_file is None:
                 # use downloaded file name from Content-Disposition
@@ -531,11 +538,11 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         target_path = self.__normalize_path(target_path)
-        if not target_path[-1] == '/':
+        if not target_path.endswith('/'):
             target_path += '/'
         gathered_files = []
 
-        if not local_directory[-1] == '/':
+        if not local_directory.endswith('/'):
             local_directory += '/'
 
         basedir = os.path.basename(local_directory[0: -1]) + '/'
@@ -548,7 +555,8 @@ class Client():
         for path, remote_path, files in gathered_files:
             self.mkdir(target_path + remote_path + '/')
             for name in files:
-                if not self.put_file(target_path + remote_path + '/', path + '/' + name, **kwargs):
+                if not self.put_file(target_path + remote_path + '/',
+                                     path + '/' + name, **kwargs):
                     return False
         return True
 
@@ -568,7 +576,7 @@ class Client():
         transfer_id = int(time.time())
 
         remote_path = self.__normalize_path(remote_path)
-        if remote_path[-1] == '/':
+        if remote_path.endswith('/'):
             remote_path += os.path.basename(local_source_file)
 
         stat_result = os.stat(local_source_file)
@@ -599,7 +607,8 @@ class Client():
             data = file_handle.read(chunk_size)
             if chunk_count > 1:
                 chunk_name = '%s-chunking-%s-%i-%i' % \
-                             (remote_path, transfer_id, chunk_count, chunk_index)
+                             (remote_path, transfer_id, chunk_count,
+                              chunk_index)
             else:
                 chunk_name = remote_path
 
@@ -622,7 +631,7 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        if not path[-1] == '/':
+        if not path.endswith('/'):
             path += '/'
         return self.__make_dav_request('MKCOL', path)
 
@@ -642,7 +651,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_SHARE,
             'remote_shares/pending'
@@ -671,7 +680,7 @@ class Client():
         if not isinstance(share_id, int):
             return False
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
             'remote_shares/pending/' + str(share_id)
@@ -690,7 +699,7 @@ class Client():
         if not isinstance(share_id, int):
             return False
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_SHARE,
             'remote_shares/pending/' + str(share_id)
@@ -709,7 +718,7 @@ class Client():
         if not isinstance(share_id, int):
             return False
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_SHARE,
             'shares/' + str(share_id)
@@ -747,7 +756,7 @@ class Client():
         if (public_upload is not None) and (isinstance(public_upload, bool)):
             data['publicUpload'] = str(public_upload).lower()
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'PUT',
             self.OCS_SERVICE_SHARE,
             'shares/' + str(share_id),
@@ -768,7 +777,8 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
-        return self.__webdav_move_copy(remote_path_source,remote_path_target,"MOVE")
+        return self.__webdav_move_copy(remote_path_source, remote_path_target,
+                                       "MOVE")
 
     def copy(self, remote_path_source, remote_path_target):
         """Copies a remote file or directory
@@ -779,7 +789,8 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        return self.__webdav_move_copy(remote_path_source,remote_path_target,"COPY")
+        return self.__webdav_move_copy(remote_path_source, remote_path_target,
+                                       "COPY")
 
     def share_file_with_link(self, path, **kwargs):
         """Shares a remote file with link
@@ -798,7 +809,6 @@ class Client():
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
 
-
         path = self.__normalize_path(path)
         post_data = {
             'shareType': self.OCS_SHARE_TYPE_LINK,
@@ -811,11 +821,11 @@ class Client():
         if perms:
             post_data['permissions'] = perms
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
             'shares',
-            data = post_data
+            data=post_data
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
@@ -824,7 +834,7 @@ class Client():
             return ShareInfo(
                                 {
                                     'id': data_el.find('id').text,
-                                    'path':path,
+                                    'path': path,
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text
                                 }
@@ -860,7 +870,7 @@ class Client():
         if (share_id is None) or not (isinstance(share_id, int)):
             return None
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_SHARE,
                 'shares/' + str(share_id)
@@ -869,7 +879,7 @@ class Client():
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             return self.__get_shareinfo(tree.find('data').find('element'))
-        raise ResponseError(res)
+        raise HTTPResponseError(res)
 
     def get_shares(self, path='', **kwargs):
         """Returns array of shares
@@ -906,7 +916,7 @@ class Client():
 
             data += parse.urlencode(args)
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_SHARE,
             data
@@ -938,7 +948,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
             'users',
@@ -962,7 +972,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name
@@ -982,7 +992,7 @@ class Client():
         :returns: True if user found
 
         """
-        users=self.search_users(user_name)
+        users = self.search_users(user_name)
 
         return user_name in users
 
@@ -995,7 +1005,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
             'users?search=' + user_name
@@ -1019,11 +1029,12 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'PUT',
             self.OCS_SERVICE_CLOUD,
             'users/' + parse.quote(user_name),
-            data={'key': self.__encode_string(key), 'value': self.__encode_string(value)}
+            data={'key': self.__encode_string(key),
+                  'value': self.__encode_string(value)}
         )
 
         if res.status_code == 200:
@@ -1042,7 +1053,7 @@ class Client():
 
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/groups',
@@ -1056,7 +1067,7 @@ class Client():
 
         raise HTTPResponseError(res)
 
-    def get_user_groups (self, user_name):
+    def get_user_groups(self, user_name):
         """Get a list of groups associated to a user.
 
         :param user_name:  name of user to list groups
@@ -1065,7 +1076,7 @@ class Client():
 
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/groups',
@@ -1078,7 +1089,7 @@ class Client():
 
         raise HTTPResponseError(res)
 
-    def user_is_in_group (self, user_name, group_name):
+    def user_is_in_group(self, user_name, group_name):
         """Check if a user is in a group
 
         :param user_name:  name of user
@@ -1092,7 +1103,6 @@ class Client():
         else:
             return False
 
-
     def get_user(self, user_name):
         """Retrieves information about a user
 
@@ -1101,7 +1111,7 @@ class Client():
         :returns: Dictionary of information about user
         :raises: ResponseError in case an HTTP error status was returned
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
             'users/' + parse.quote(user_name),
@@ -1110,11 +1120,11 @@ class Client():
 
         tree = ET.fromstring(res.content)
         self.__check_ocs_status(tree)
-        #<ocs><meta><statuscode>100</statuscode><status>ok</status></meta>
-        #<data>
-        #<email>frank@example.org</email><quota>0</quota><enabled>true</enabled>
-        #</data>
-        #</ocs>
+        # <ocs><meta><statuscode>100</statuscode><status>ok</status></meta>
+        # <data>
+        # <email>frank@example.org</email><quota>0</quota><enabled>true</enabled>
+        # </data>
+        # </ocs>
 
         data_element = tree.find('data')
         return self.__xml_to_dict(data_element)
@@ -1128,7 +1138,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/groups',
@@ -1152,7 +1162,7 @@ class Client():
 
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/subadmins',
@@ -1166,7 +1176,7 @@ class Client():
 
         raise HTTPResponseError(res)
 
-    def get_user_subadmin_groups (self, user_name):
+    def get_user_subadmin_groups(self, user_name):
         """Get a list of subadmin groups associated to a user.
 
         :param user_name:  name of user
@@ -1175,7 +1185,7 @@ class Client():
 
         """
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
             'users/' + user_name + '/subadmins',
@@ -1191,7 +1201,7 @@ class Client():
 
         raise HTTPResponseError(res)
 
-    def user_is_in_subadmin_group (self, user_name, group_name):
+    def user_is_in_subadmin_group(self, user_name, group_name):
         """Check if a user is in a subadmin group
 
         :param user_name:  name of user
@@ -1225,31 +1235,32 @@ class Client():
 
         path = self.__normalize_path(path)
         post_data = {
-            'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else self.OCS_SHARE_TYPE_USER,
+            'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else
+            self.OCS_SHARE_TYPE_USER,
             'shareWith': user,
             'path': self.__encode_string(path),
             'permissions': perms
         }
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
             'shares',
             data=post_data
         )
 
-        if self.__debug:
-            print(
-                'OCS share_file request for file %s with permissions %i returned: %i' % (path, perms, res.status_code))
+        if self._debug:
+            print('OCS share_file request for file %s with permissions %i '
+                  'returned: %i' % (path, perms, res.status_code))
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree)
             data_el = tree.find('data')
             return ShareInfo(
                                 {
-                                    'id':data_el.find('id').text,
-                                    'path':path,
-                                    'permissions':perms
+                                    'id': data_el.find('id').text,
+                                    'path': path,
+                                    'permissions': perms
                                 }
             )
         raise HTTPResponseError(res)
@@ -1263,7 +1274,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_CLOUD,
             'groups',
@@ -1287,7 +1298,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_CLOUD,
             'groups/' + group_name
@@ -1308,7 +1319,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
             'groups?search=' + group_name
@@ -1343,9 +1354,12 @@ class Client():
             return False
 
         path = self.__normalize_path(path)
-        post_data = {'shareType': self.OCS_SHARE_TYPE_GROUP, 'shareWith': group, 'path': path, 'permissions': perms}
+        post_data = {'shareType': self.OCS_SHARE_TYPE_GROUP,
+                     'shareWith': group,
+                     'path': path,
+                     'permissions': perms}
 
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_SHARE,
             'shares',
@@ -1358,7 +1372,7 @@ class Client():
             return ShareInfo(
                                 {
                                     'id': data_el.find('id').text,
-                                    'path':path,
+                                    'path': path,
                                     'permissions': perms
                                 }
             )
@@ -1372,7 +1386,7 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'config'
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             '',
             path
@@ -1408,7 +1422,7 @@ class Client():
             path += '/' + parse.quote(app, '')
             if key is not None:
                 path += '/' + parse.quote(self.__encode_string(key), '')
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_PRIVATEDATA,
             path
@@ -1443,8 +1457,9 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        path = 'setattribute/' + parse.quote(app, '') + '/' + parse.quote(self.__encode_string(key), '')
-        res = self.__make_ocs_request(
+        path = 'setattribute/' + parse.quote(app, '') + '/' + parse.quote(
+            self.__encode_string(key), '')
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_PRIVATEDATA,
             path,
@@ -1464,8 +1479,9 @@ class Client():
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        path = 'deleteattribute/' + parse.quote(app, '') + '/' + parse.quote(self.__encode_string(key), '')
-        res = self.__make_ocs_request(
+        path = 'deleteattribute/' + parse.quote(app, '') + '/' + parse.quote(
+            self.__encode_string(key), '')
+        res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_PRIVATEDATA,
             path
@@ -1484,7 +1500,7 @@ class Client():
         """
         ena_apps = {}
 
-        res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
+        res = self._make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps')
         if res.status_code != 200:
             raise HTTPResponseError(res)
         tree = ET.fromstring(res.content)
@@ -1493,7 +1509,8 @@ class Client():
         for el in tree.findall('data/apps/element'):
             ena_apps[el.text] = False
 
-        res = self.__make_ocs_request('GET', self.OCS_SERVICE_CLOUD, 'apps?filter=enabled')
+        res = self._make_ocs_request('GET', self.OCS_SERVICE_CLOUD,
+                                     'apps?filter=enabled')
         if res.status_code != 200:
             raise HTTPResponseError(res)
         tree = ET.fromstring(res.content)
@@ -1530,7 +1547,8 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request('POST', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
+        res = self._make_ocs_request('POST', self.OCS_SERVICE_CLOUD,
+                                     'apps/' + appname)
         if res.status_code == 200:
             return True
 
@@ -1544,7 +1562,8 @@ class Client():
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self.__make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD, 'apps/' + appname)
+        res = self._make_ocs_request('DELETE', self.OCS_SERVICE_CLOUD,
+                                     'apps/' + appname)
         if res.status_code == 200:
             return True
 
@@ -1558,7 +1577,7 @@ class Client():
             path = path.path
         if len(path) == 0:
             return '/'
-        if path[0] != '/':
+        if not path.startswith('/'):
             path = '/' + path
         return path
 
@@ -1605,7 +1624,7 @@ class Client():
 
         accepted_codes = kwargs.pop('accepted_codes', [100])
 
-        res = self.__make_ocs_request(method, service, action, **kwargs)
+        res = self._make_ocs_request(method, service, action, **kwargs)
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
             self.__check_ocs_status(tree, accepted_codes=accepted_codes)
@@ -1613,7 +1632,7 @@ class Client():
 
         raise OCSResponseError(res)
 
-    def __make_ocs_request(self, method, service, action, **kwargs):
+    def _make_ocs_request(self, method, service, action, **kwargs):
         """Makes a OCS API request
 
         :param method: HTTP method
@@ -1634,10 +1653,11 @@ class Client():
 
         attributes['headers']['OCS-APIREQUEST'] = 'true'
 
-        if self.__debug:
-            print('OCS request: %s %s %s' % (method, self.url + path, attributes))
+        if self._debug:
+            print('OCS request: %s %s %s' % (method, self.url + path,
+                                             attributes))
 
-        res = self.__session.request(method, self.url + path, **attributes)
+        res = self._session.request(method, self.url + path, **attributes)
         return res
 
     def __make_dav_request(self, method, path, **kwargs):
@@ -1650,22 +1670,22 @@ class Client():
         contains it, or True if the operation succeded, False
         if it didn't
         """
-        if self.__debug:
+        if self._debug:
             print('DAV request: %s %s' % (method, path))
             if kwargs.get('headers'):
                 print('Headers: ', kwargs.get('headers'))
 
         path = self.__normalize_path(path)
-        res = self.__session.request(
+        res = self._session.request(
             method,
             self.__webdav_url + parse.quote(self.__encode_string(path)),
             **kwargs
         )
-        if self.__debug:
+        if self._debug:
             print('DAV status: %i' % res.status_code)
-        if res.status_code == 200 or res.status_code == 207:
+        if res.status_code in [200, 207]:
             return self.__parse_dav_response(res)
-        if res.status_code == 204 or res.status_code == 201:
+        if res.status_code in [204, 201]:
             return True
         raise HTTPResponseError(res)
 
@@ -1719,7 +1739,8 @@ class Client():
             return path[len(self.__davpath):]
         return path
 
-    def __webdav_move_copy(self,remote_path_source,remote_path_target,operation):
+    def __webdav_move_copy(self, remote_path_source, remote_path_target,
+                           operation):
         """Copies or moves a remote file or directory
 
         :param remote_path_source: source file or folder to copy / move
@@ -1741,7 +1762,8 @@ class Client():
 
         remote_path_source = self.__normalize_path(remote_path_source)
         headers = {
-            'Destination': self.__webdav_url + parse.quote(self.__encode_string(remote_path_target))
+            'Destination': self.__webdav_url + parse.quote(
+                self.__encode_string(remote_path_target))
         }
 
         return self.__make_dav_request(
@@ -1754,7 +1776,7 @@ class Client():
         """
         Take an XML element, iterate over it and build a dict
 
-        :param element: An xml.etree.ElementTree.Element , or a list of the same
+        :param element: An xml.etree.ElementTree.Element, or a list of the same
         :returns: A dictionary
         """
         return_dict = {}
@@ -1778,7 +1800,7 @@ class Client():
         return ShareInfo(self.__xml_to_dict(data_el))
 
     def __update_capabilities(self):
-        res = self.__make_ocs_request(
+        res = self._make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_CLOUD,
                 'capabilities'
