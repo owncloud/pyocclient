@@ -15,3 +15,4 @@ Contributors
 * Simon Vigneux <svigneux@kronostechnologies.com>
 * Roeland Jago Douma <rullzer@owncloud.com>
 * Erik Pellikka <erik@pellikka.org>
+* Florian Zierer <florian.zierer@moticon.de>
