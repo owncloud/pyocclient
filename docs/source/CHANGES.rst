@@ -4,6 +4,10 @@ Changelog
 0.3
 ---
 
+- Make subclassing of Client easier [bobatsar]
+- Add Depth param for recursive listing [bobatsar]
+- Add shared_with_me parameter to get_shares [bobatsar]
+- Link variable is now called url inside of shareinfo [SergioBertolinSG]
 - Python3 support [ethifus] [Blizzz]
 
 0.2
