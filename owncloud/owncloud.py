@@ -68,7 +68,7 @@ class ShareInfo(object):
         for k, v in share_info.items():
             if k not in del_attrs:
                 self.share_info[k] = v
-        self.share_id = self.__get_int('id')
+        self.share_id = self._get_int('id')
         if 'token' in self.share_info:
             self.token = self.share_info['token']
 
@@ -77,7 +77,7 @@ class ShareInfo(object):
 
         :returns: id of the share
         """
-        return self.__get_int('id')
+        return self._get_int('id')
 
     def get_share_type(self):
         """Returns the type of the share.
@@ -85,7 +85,7 @@ class ShareInfo(object):
 
         :returns: share type
         """
-        return self.__get_int('share_type')
+        return self._get_int('share_type')
 
     def get_share_with(self):
         """Returns the share recipient.
@@ -125,7 +125,7 @@ class ShareInfo(object):
 
         :returns: share permissions
         """
-        return self.__get_int('permissions')
+        return self._get_int('permissions')
 
     def get_share_time(self):
         """Returns the share time.
@@ -134,7 +134,7 @@ class ShareInfo(object):
         :rtype: datetime object
         """
         return datetime.datetime.fromtimestamp(
-            self.__get_int('stime')
+            self._get_int('stime')
         )
 
     def get_expiration(self):
@@ -143,7 +143,7 @@ class ShareInfo(object):
         :returns: expiration date
         :rtype: datetime object
         """
-        exp = self.__get_int('expiration')
+        exp = self._get_int('expiration')
         if exp is not None:
             return datetime.datetime.fromtimestamp(
                 exp
@@ -187,7 +187,7 @@ class ShareInfo(object):
     def __repr__(self):
         return self.__str__()
 
-    def __get_int(self, key):
+    def _get_int(self, key):
         """Simple wrapper which converts value to Integer
            in silently manner (w/o raising exception)"""
         try:
@@ -214,7 +214,7 @@ class PublicShare(ShareInfo):
 class FileInfo(object):
     """File information"""
 
-    __DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
+    _DATE_FORMAT = '%a, %d %b %Y %H:%M:%S %Z'
 
     def __init__(self, path, file_type='file', attributes=None):
         self.path = path
@@ -276,7 +276,7 @@ class FileInfo(object):
         """
         return datetime.datetime.strptime(
             self.attributes['{DAV:}getlastmodified'],
-            self.__DATE_FORMAT
+            self._DATE_FORMAT
         )
 
     def is_dir(self):
@@ -330,15 +330,15 @@ class Client(object):
         self.url = url
         self._session = None
         self._debug = kwargs.get('debug', False)
-        self.__verify_certs = kwargs.get('verify_certs', True)
-        self.__single_session = kwargs.get('single_session', True)
+        self._verify_certs = kwargs.get('verify_certs', True)
+        self._single_session = kwargs.get('single_session', True)
 
-        self.__capabilities = None
-        self.__version = None
+        self._capabilities = None
+        self._version = None
 
         url_components = parse.urlparse(url)
-        self.__davpath = url_components.path + 'remote.php/webdav'
-        self.__webdav_url = url + 'remote.php/webdav'
+        self._davpath = url_components.path + 'remote.php/webdav'
+        self._webdav_url = url + 'remote.php/webdav'
 
     def login(self, user_id, password):
         """Authenticate to ownCloud.
@@ -350,11 +350,11 @@ class Client(object):
         """
 
         self._session = requests.session()
-        self._session.verify = self.__verify_certs
+        self._session.verify = self._verify_certs
         self._session.auth = (user_id, password)
 
         try:
-            self.__update_capabilities()
+            self._update_capabilities()
         except HTTPResponseError as e:
             self._session.close()
             self._session = None
@@ -379,7 +379,7 @@ class Client(object):
             was not found
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        res = self.__make_dav_request('PROPFIND', path)
+        res = self._make_dav_request('PROPFIND', path)
         if res:
             return res[0]
         return None
@@ -400,7 +400,7 @@ class Client(object):
         if isinstance(depth, int) or depth == "infinity":
             headers['Depth'] = str(depth)
 
-        res = self.__make_dav_request('PROPFIND', path, headers=headers)
+        res = self._make_dav_request('PROPFIND', path, headers=headers)
         # first one is always the root, remove it from listing
         if res:
             return res[1:]
@@ -414,9 +414,9 @@ class Client(object):
         :rtype: binary data
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        path = self.__normalize_path(path)
+        path = self._normalize_path(path)
         res = self._session.get(
-            self.__webdav_url + parse.quote(self.__encode_string(path))
+            self._webdav_url + parse.quote(self._encode_string(path))
         )
         if res.status_code == 200:
             return res.content
@@ -433,9 +433,9 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        remote_path = self.__normalize_path(remote_path)
+        remote_path = self._normalize_path(remote_path)
         res = self._session.get(
-            self.__webdav_url + parse.quote(self.__encode_string(remote_path)),
+            self._webdav_url + parse.quote(self._encode_string(remote_path)),
             stream=True
         )
         if res.status_code == 200:
@@ -461,7 +461,7 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        remote_path = self.__normalize_path(remote_path)
+        remote_path = self._normalize_path(remote_path)
         url = self.url + 'index.php/apps/files/ajax/download.php?dir=' \
               + parse.quote(remote_path)
         res = self._session.get(url, stream=True)
@@ -488,7 +488,7 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        return self.__make_dav_request('PUT', remote_path, data=data)
+        return self._make_dav_request('PUT', remote_path, data=data)
 
     def put_file(self, remote_path, local_source_file, **kwargs):
         """Upload a file
@@ -504,7 +504,7 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         if kwargs.get('chunked', True):
-            return self.__put_file_chunked(
+            return self._put_file_chunked(
                 remote_path,
                 local_source_file,
                 **kwargs
@@ -519,7 +519,7 @@ class Client(object):
         if remote_path[-1] == '/':
             remote_path += os.path.basename(local_source_file)
         file_handle = open(local_source_file, 'rb', 8192)
-        res = self.__make_dav_request(
+        res = self._make_dav_request(
             'PUT',
             remote_path,
             data=file_handle,
@@ -537,7 +537,7 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        target_path = self.__normalize_path(target_path)
+        target_path = self._normalize_path(target_path)
         if not target_path.endswith('/'):
             target_path += '/'
         gathered_files = []
@@ -560,7 +560,7 @@ class Client(object):
                     return False
         return True
 
-    def __put_file_chunked(self, remote_path, local_source_file, **kwargs):
+    def _put_file_chunked(self, remote_path, local_source_file, **kwargs):
         """Uploads a file using chunks. If the file is smaller than
         ``chunk_size`` it will be uploaded directly.
 
@@ -575,7 +575,7 @@ class Client(object):
         result = True
         transfer_id = int(time.time())
 
-        remote_path = self.__normalize_path(remote_path)
+        remote_path = self._normalize_path(remote_path)
         if remote_path.endswith('/'):
             remote_path += os.path.basename(local_source_file)
 
@@ -591,7 +591,7 @@ class Client(object):
             headers['X-OC-MTIME'] = str(stat_result.st_mtime)
 
         if size == 0:
-            return self.__make_dav_request(
+            return self._make_dav_request(
                 'PUT',
                 remote_path,
                 data='',
@@ -612,7 +612,7 @@ class Client(object):
             else:
                 chunk_name = remote_path
 
-            if not self.__make_dav_request(
+            if not self._make_dav_request(
                     'PUT',
                     chunk_name,
                     data=data,
@@ -633,7 +633,7 @@ class Client(object):
         """
         if not path.endswith('/'):
             path += '/'
-        return self.__make_dav_request('MKCOL', path)
+        return self._make_dav_request('MKCOL', path)
 
     def delete(self, path):
         """Deletes a remote file or directory
@@ -642,7 +642,7 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        return self.__make_dav_request('DELETE', path)
+        return self._make_dav_request('DELETE', path)
 
     def list_open_remote_share(self):
         """List all pending remote shares
@@ -658,7 +658,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             shares = []
             for element in tree.find('data').iter('element'):
                 share_attr = {}
@@ -777,7 +777,7 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
 
-        return self.__webdav_move_copy(remote_path_source, remote_path_target,
+        return self._webdav_move_copy(remote_path_source, remote_path_target,
                                        "MOVE")
 
     def copy(self, remote_path_source, remote_path_target):
@@ -789,7 +789,7 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        return self.__webdav_move_copy(remote_path_source, remote_path_target,
+        return self._webdav_move_copy(remote_path_source, remote_path_target,
                                        "COPY")
 
     def share_file_with_link(self, path, **kwargs):
@@ -809,10 +809,10 @@ class Client(object):
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
 
-        path = self.__normalize_path(path)
+        path = self._normalize_path(path)
         post_data = {
             'shareType': self.OCS_SHARE_TYPE_LINK,
-            'path': self.__encode_string(path),
+            'path': self._encode_string(path),
         }
         if (public_upload is not None) and (isinstance(public_upload, bool)):
             post_data['publicUpload'] = str(public_upload).lower()
@@ -829,7 +829,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             data_el = tree.find('data')
             return ShareInfo(
                                 {
@@ -877,8 +877,8 @@ class Client(object):
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
-            return self.__get_shareinfo(tree.find('data').find('element'))
+            self._check_ocs_status(tree)
+            return self._get_shareinfo(tree.find('data').find('element'))
         raise HTTPResponseError(res)
 
     def get_shares(self, path='', **kwargs):
@@ -900,7 +900,7 @@ class Client(object):
         data = 'shares'
         if path != '':
             data += '?'
-            path = self.__encode_string(self.__normalize_path(path))
+            path = self._encode_string(self._normalize_path(path))
             args = {'path': path}
             reshares = kwargs.get('reshares', False)
             if isinstance(reshares, bool) and reshares:
@@ -924,7 +924,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             shares = []
             for element in tree.find('data').iter('element'):
                 '''share_attr = {}
@@ -933,7 +933,7 @@ class Client(object):
                     value = child.text
                     share_attr[key] = value
                 shares.append(share_attr)'''
-                shares.append(self.__get_shareinfo(element))
+                shares.append(self._get_shareinfo(element))
             return shares
         raise HTTPResponseError(res)
 
@@ -958,7 +958,7 @@ class Client(object):
         # We get 200 when the user was just created.
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return True
 
         raise HTTPResponseError(res)
@@ -1033,13 +1033,13 @@ class Client(object):
             'PUT',
             self.OCS_SERVICE_CLOUD,
             'users/' + parse.quote(user_name),
-            data={'key': self.__encode_string(key),
-                  'value': self.__encode_string(value)}
+            data={'key': self._encode_string(key),
+                  'value': self._encode_string(value)}
         )
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return True
         raise HTTPResponseError(res)
 
@@ -1062,7 +1062,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return True
 
         raise HTTPResponseError(res)
@@ -1084,7 +1084,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return [group.text for group in tree.find('data/groups')]
 
         raise HTTPResponseError(res)
@@ -1119,7 +1119,7 @@ class Client(object):
         )
 
         tree = ET.fromstring(res.content)
-        self.__check_ocs_status(tree)
+        self._check_ocs_status(tree)
         # <ocs><meta><statuscode>100</statuscode><status>ok</status></meta>
         # <data>
         # <email>frank@example.org</email><quota>0</quota><enabled>true</enabled>
@@ -1127,7 +1127,7 @@ class Client(object):
         # </ocs>
 
         data_element = tree.find('data')
-        return self.__xml_to_dict(data_element)
+        return self._xml_to_dict(data_element)
 
     def remove_user_from_group(self, user_name, group_name):
         """Removes a user from a group.
@@ -1147,7 +1147,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return True
 
         raise HTTPResponseError(res)
@@ -1171,7 +1171,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100, 103])
+            self._check_ocs_status(tree, [100, 103])
             return True
 
         raise HTTPResponseError(res)
@@ -1193,7 +1193,7 @@ class Client(object):
 
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
 
             groups = tree.find('data')
 
@@ -1233,12 +1233,12 @@ class Client(object):
                 or ((not isinstance(user, six.string_types)) or (user == ''))):
             return False
 
-        path = self.__normalize_path(path)
+        path = self._normalize_path(path)
         post_data = {
             'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else
             self.OCS_SHARE_TYPE_USER,
             'shareWith': user,
-            'path': self.__encode_string(path),
+            'path': self._encode_string(path),
             'permissions': perms
         }
 
@@ -1254,7 +1254,7 @@ class Client(object):
                   'returned: %i' % (path, perms, res.status_code))
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             data_el = tree.find('data')
             return ShareInfo(
                                 {
@@ -1284,7 +1284,7 @@ class Client(object):
         # We get 200 when the group was just created.
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, [100])
+            self._check_ocs_status(tree, [100])
             return True
 
         raise HTTPResponseError(res)
@@ -1353,7 +1353,7 @@ class Client(object):
                 or ((not isinstance(group, six.string_types)) or (group == ''))):
             return False
 
-        path = self.__normalize_path(path)
+        path = self._normalize_path(path)
         post_data = {'shareType': self.OCS_SHARE_TYPE_GROUP,
                      'shareWith': group,
                      'path': path,
@@ -1367,7 +1367,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             data_el = tree.find('data')
             return ShareInfo(
                                 {
@@ -1393,7 +1393,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             values = []
 
             element = tree.find('data')
@@ -1421,7 +1421,7 @@ class Client(object):
         if app is not None:
             path += '/' + parse.quote(app, '')
             if key is not None:
-                path += '/' + parse.quote(self.__encode_string(key), '')
+                path += '/' + parse.quote(self._encode_string(key), '')
         res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_PRIVATEDATA,
@@ -1429,7 +1429,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             values = []
             for element in tree.find('data').iter('element'):
                 app_text = element.find('app').text
@@ -1458,16 +1458,16 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'setattribute/' + parse.quote(app, '') + '/' + parse.quote(
-            self.__encode_string(key), '')
+            self._encode_string(key), '')
         res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_PRIVATEDATA,
             path,
-            data={'value': self.__encode_string(value)}
+            data={'value': self._encode_string(value)}
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             return True
         raise HTTPResponseError(res)
 
@@ -1480,7 +1480,7 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         path = 'deleteattribute/' + parse.quote(app, '') + '/' + parse.quote(
-            self.__encode_string(key), '')
+            self._encode_string(key), '')
         res = self._make_ocs_request(
             'POST',
             self.OCS_SERVICE_PRIVATEDATA,
@@ -1488,7 +1488,7 @@ class Client(object):
         )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
             return True
         raise HTTPResponseError(res)
 
@@ -1504,7 +1504,7 @@ class Client(object):
         if res.status_code != 200:
             raise HTTPResponseError(res)
         tree = ET.fromstring(res.content)
-        self.__check_ocs_status(tree)
+        self._check_ocs_status(tree)
         # <data><apps><element>files</element><element>activity</element> ...
         for el in tree.findall('data/apps/element'):
             ena_apps[el.text] = False
@@ -1514,7 +1514,7 @@ class Client(object):
         if res.status_code != 200:
             raise HTTPResponseError(res)
         tree = ET.fromstring(res.content)
-        self.__check_ocs_status(tree)
+        self._check_ocs_status(tree)
         for el in tree.findall('data/apps/element'):
             ena_apps[el.text] = True
 
@@ -1525,9 +1525,9 @@ class Client(object):
 
         :returns: ownCloud version as string
         """
-        if self.__version is None:
-            self.__update_capabilities()
-        return self.__version
+        if self._version is None:
+            self._update_capabilities()
+        return self._version
 
     def get_capabilities(self):
         """Gets the ownCloud app capabilities
@@ -1535,9 +1535,9 @@ class Client(object):
         :returns: capabilities dictionary that maps from
         app name to another dictionary containing the capabilities
         """
-        if self.__capabilities is None:
-            self.__update_capabilities()
-        return self.__capabilities
+        if self._capabilities is None:
+            self._update_capabilities()
+        return self._capabilities
 
     def enable_app(self, appname):
         """Enable an app through provisioning_api
@@ -1570,7 +1570,7 @@ class Client(object):
         raise HTTPResponseError(res)
 
     @staticmethod
-    def __normalize_path(path):
+    def _normalize_path(path):
         """Makes sure the path starts with a "/"
         """
         if isinstance(path, FileInfo):
@@ -1582,7 +1582,7 @@ class Client(object):
         return path
 
     @staticmethod
-    def __encode_string(s):
+    def _encode_string(s):
         """Encodes a unicode instance to utf-8. If a str is passed it will
         simply be returned
 
@@ -1594,7 +1594,7 @@ class Client(object):
         return s
 
     @staticmethod
-    def __check_ocs_status(tree, accepted_codes=[100]):
+    def _check_ocs_status(tree, accepted_codes=[100]):
         """Checks the status code of an OCS request
 
         :param tree: response parsed with elementtree
@@ -1627,7 +1627,7 @@ class Client(object):
         res = self._make_ocs_request(method, service, action, **kwargs)
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree, accepted_codes=accepted_codes)
+            self._check_ocs_status(tree, accepted_codes=accepted_codes)
             return res
 
         raise OCSResponseError(res)
@@ -1660,7 +1660,7 @@ class Client(object):
         res = self._session.request(method, self.url + path, **attributes)
         return res
 
-    def __make_dav_request(self, method, path, **kwargs):
+    def _make_dav_request(self, method, path, **kwargs):
         """Makes a WebDAV request
 
         :param method: HTTP method
@@ -1675,21 +1675,21 @@ class Client(object):
             if kwargs.get('headers'):
                 print('Headers: ', kwargs.get('headers'))
 
-        path = self.__normalize_path(path)
+        path = self._normalize_path(path)
         res = self._session.request(
             method,
-            self.__webdav_url + parse.quote(self.__encode_string(path)),
+            self._webdav_url + parse.quote(self._encode_string(path)),
             **kwargs
         )
         if self._debug:
             print('DAV status: %i' % res.status_code)
         if res.status_code in [200, 207]:
-            return self.__parse_dav_response(res)
+            return self._parse_dav_response(res)
         if res.status_code in [204, 201]:
             return True
         raise HTTPResponseError(res)
 
-    def __parse_dav_response(self, res):
+    def _parse_dav_response(self, res):
         """Parses the DAV responses from a multi-status response
 
         :param res: DAV response
@@ -1700,18 +1700,18 @@ class Client(object):
             tree = ET.fromstring(res.content)
             items = []
             for child in tree:
-                items.append(self.__parse_dav_element(child))
+                items.append(self._parse_dav_element(child))
             return items
         return False
 
-    def __parse_dav_element(self, dav_response):
+    def _parse_dav_element(self, dav_response):
         """Parses a single DAV element
 
         :param dav_response: DAV response
         :returns :class:`FileInfo`
         """
         href = parse.unquote(
-            self.__strip_dav_path(dav_response.find('{DAV:}href').text)
+            self._strip_dav_path(dav_response.find('{DAV:}href').text)
         )
 
         if six.PY2:
@@ -1729,17 +1729,17 @@ class Client(object):
 
         return FileInfo(href, file_type, file_attrs)
 
-    def __strip_dav_path(self, path):
+    def _strip_dav_path(self, path):
         """Removes the leading "remote.php/webdav" path from the given path
 
         :param path: path containing the remote DAV path "remote.php/webdav"
         :returns: path stripped of the remote DAV path
         """
-        if path.startswith(self.__davpath):
-            return path[len(self.__davpath):]
+        if path.startswith(self._davpath):
+            return path[len(self._davpath):]
         return path
 
-    def __webdav_move_copy(self, remote_path_source, remote_path_target,
+    def _webdav_move_copy(self, remote_path_source, remote_path_target,
                            operation):
         """Copies or moves a remote file or directory
 
@@ -1760,19 +1760,19 @@ class Client(object):
         if not (remote_path_target[0] == '/'):
             remote_path_target = '/' + remote_path_target
 
-        remote_path_source = self.__normalize_path(remote_path_source)
+        remote_path_source = self._normalize_path(remote_path_source)
         headers = {
-            'Destination': self.__webdav_url + parse.quote(
-                self.__encode_string(remote_path_target))
+            'Destination': self._webdav_url + parse.quote(
+                self._encode_string(remote_path_target))
         }
 
-        return self.__make_dav_request(
+        return self._make_dav_request(
             operation,
             remote_path_source,
             headers=headers
         )
 
-    def __xml_to_dict(self, element):
+    def _xml_to_dict(self, element):
         """
         Take an XML element, iterate over it and build a dict
 
@@ -1784,22 +1784,22 @@ class Client(object):
             return_dict[el.tag] = None
             children = el.getchildren()
             if children:
-                return_dict[el.tag] = self.__xml_to_dict(children)
+                return_dict[el.tag] = self._xml_to_dict(children)
             else:
                 return_dict[el.tag] = el.text
         return return_dict
 
-    def __get_shareinfo(self, data_el):
+    def _get_shareinfo(self, data_el):
         """Simple helper which returns instance of ShareInfo class
 
-        :param data_el: 'data' element extracted from __make_ocs_request
+        :param data_el: 'data' element extracted from _make_ocs_request
         :returns: instance of ShareInfo class
         """
         if (data_el is None) or not (isinstance(data_el, ET.Element)):
             return None
-        return ShareInfo(self.__xml_to_dict(data_el))
+        return ShareInfo(self._xml_to_dict(data_el))
 
-    def __update_capabilities(self):
+    def _update_capabilities(self):
         res = self._make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_CLOUD,
@@ -1807,7 +1807,7 @@ class Client(object):
                 )
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
-            self.__check_ocs_status(tree)
+            self._check_ocs_status(tree)
 
             data_el = tree.find('data')
             apps = {}
@@ -1817,13 +1817,13 @@ class Client(object):
                     app_caps[cap_el.tag] = cap_el.text
                 apps[app_el.tag] = app_caps
 
-            self.__capabilities = apps
+            self._capabilities = apps
 
             version_el = data_el.find('version/string')
             edition_el = data_el.find('version/edition')
-            self.__version = version_el.text
+            self._version = version_el.text
             if edition_el.text is not None:
-                self.__version += '-' + edition_el.text
+                self._version += '-' + edition_el.text
 
-            return self.__capabilities
+            return self._capabilities
         raise HTTPResponseError(res)
