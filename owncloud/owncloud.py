@@ -379,7 +379,7 @@ class Client(object):
             was not found
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        res = self._make_dav_request('PROPFIND', path)
+        res = self._make_dav_request('PROPFIND', path, headers={'Depth': '0'})
         if res:
             return res[0]
         return None
