@@ -1087,18 +1087,14 @@ class Client(object):
         raise HTTPResponseError(res)
 
     def user_is_in_group(self, user_name, group_name):
-        """Check if a user is in a group
+        """Checks if a user is in a group
 
         :param user_name:  name of user
         :param group_name:  name of group
         :returns: True if user is in group
         :raises: HTTPResponseError in case an HTTP error status was returned
-
         """
-        if group_name in self.get_user_groups(user_name):
-            return True
-        else:
-            return False
+        return group_name in self.get_user_groups(user_name)
 
     def get_user(self, user_name):
         """Retrieves information about a user
@@ -1199,18 +1195,14 @@ class Client(object):
         raise HTTPResponseError(res)
 
     def user_is_in_subadmin_group(self, user_name, group_name):
-        """Check if a user is in a subadmin group
+        """Checks if a user is in a subadmin group
 
         :param user_name:  name of user
         :param group_name:  name of subadmin group
         :returns: True if user is in subadmin group
         :raises: HTTPResponseError in case an HTTP error status was returned
-
         """
-        if group_name in self.get_user_subadmin_groups(user_name):
-            return True
-        else:
-            return False
+        return group_name in self.get_user_subadmin_groups(user_name)
 
     def share_file_with_user(self, path, user, **kwargs):
         """Shares a remote file with specified user
