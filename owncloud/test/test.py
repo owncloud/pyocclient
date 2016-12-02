@@ -34,7 +34,7 @@ class TestFileAccess(unittest.TestCase):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
         os.mkdir(self.temp_dir)
 
-        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.test_root = Config['test_root']
         if not self.test_root[-1] == '/':
@@ -634,8 +634,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.get_id()) is int)
         self.assertEquals(share_info.get_permissions(), 1)
 
-        shareclient = owncloud.Client(Config['owncloud_url'],
-                                      single_session=Config['single_session'])
+        shareclient = owncloud.Client(Config['owncloud_url'])
         shareclient.login(self.share2user, "share")
         share2_info = shareclient.get_shares(
             "/", shared_with_me=True)[0].share_info
@@ -874,7 +873,7 @@ class TestPrivateDataAccess(unittest.TestCase):
         )
 
     def setUp(self):
-        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.app_name = Config['app_name']
 
@@ -924,7 +923,7 @@ class TestPrivateDataAccess(unittest.TestCase):
 class TestUserAndGroupActions(unittest.TestCase):
 
     def setUp(self):
-        self.client = owncloud.Client(Config['owncloud_url'], single_session = Config['single_session'])
+        self.client = owncloud.Client(Config['owncloud_url'])
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.groups_to_create = Config['groups_to_create']
         self.not_existing_group = Config['not_existing_group']

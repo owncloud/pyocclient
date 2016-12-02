@@ -320,8 +320,6 @@ class Client(object):
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
-        :param single_session: True to use a single session for every call
-            (default, recommended), False to reauthenticate every call (use with ownCloud 5)
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
         if not url.endswith('/'):
@@ -331,7 +329,6 @@ class Client(object):
         self._session = None
         self._debug = kwargs.get('debug', False)
         self._verify_certs = kwargs.get('verify_certs', True)
-        self._single_session = kwargs.get('single_session', True)
 
         self._capabilities = None
         self._version = None
