@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4
+---
+
+- Some code cleanup removing needless if statements [jamescooke]
+- Remove old session_mode [PVince81]
+- Set Depth to 0 in file_info call [PVince81]
+- Make subclassing of Client event easier with protected methods [bobatsar]
+
 0.3
 ---
 
