@@ -7,3 +7,4 @@ dist/
 MANIFEST
 .idea/
 owncloud/test/config.py
+.venv
