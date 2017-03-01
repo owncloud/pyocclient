@@ -1343,6 +1343,28 @@ class Client(object):
 
         raise HTTPResponseError(res)
 
+    def get_group_members(self, group_name):
+        """Get group members via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param group_name:  name of group to list members
+        :returns: list of group members
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'groups/' + group_name
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self._check_ocs_status(tree, [100])
+            return [group.text for group in tree.find('data/users')]
+
+        raise HTTPResponseError(res)
+
     def group_exists(self, group_name):
         """Checks a group via provisioning API.
         If you get back an error 999, then the provisioning API is not enabled.
