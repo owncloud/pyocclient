@@ -246,7 +246,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/file3.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + 'subdir/pyoctest.dir/levelone/leveltwo/file4.dat'))
         self.assertIsNotNone(self.client.file_info(self.test_root + u'subdir/pyoctest.dir/levelone/文件.dat'))
-    
+
     @data_provider(files_content)
     def test_download_file(self, file_name, content, subdir):
         """Test file download"""
@@ -731,7 +731,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        sinfo_run = self.client.share_file_with_link(path)    
+        sinfo_run = self.client.share_file_with_link(path)
         sinfo = self.client.get_share(sinfo_run.get_id())
         self.assertIsInstance(sinfo, owncloud.ShareInfo)
         self.assertIsNotNone(sinfo)
@@ -973,11 +973,11 @@ class TestUserAndGroupActions(unittest.TestCase):
     def test_get_user(self):
         output = self.client.get_user(Config['owncloud_login'])
         expected_output =   {'displayname': 'admin',
-                             'enabled': 'true', 
-                             'email': None, 
-                             'quota': {'total': '309355267452', 
-                                       'relative': '0', 
-                                       'used': '3261820', 
+                             'enabled': 'true',
+                             'email': None,
+                             'quota': {'total': '309355267452',
+                                       'relative': '0',
+                                       'used': '3261820',
                                        'free': '309352005632'}
                             }
         self.assertEquals(output['displayname'], expected_output['displayname'])
@@ -991,6 +991,11 @@ class TestUserAndGroupActions(unittest.TestCase):
     def test_search_users(self):
         user_name = Config['owncloud_login']
         users = self.client.search_users(user_name[:-1])
+        self.assertIn(user_name, users)
+
+    def test_get_users(self):
+        user_name = Config['owncloud_login']
+        users = self.client.get_users()
         self.assertIn(user_name, users)
 
     def test_set_user_attribute(self):
@@ -1033,6 +1038,21 @@ class TestUserAndGroupActions(unittest.TestCase):
             with self.assertRaises(owncloud.ResponseError) as e:
                 self.client.create_group(group)
             self.assertEquals(e.exception.status_code, 102)
+
+    def test_get_groups(self):
+        test_group = Config['test_group']
+        not_existing_group = Config['not_existing_group']
+        groups = self.client.get_groups()
+        self.assertIn(test_group, groups)
+        self.assertNotIn(not_existing_group, groups)
+
+    def test_get_group_members(self):
+        user_name = Config['owncloud_login']
+        test_group = Config['test_group']
+        admin_members = self.client.get_group_members('admin')
+        test_members = self.client.get_group_members(test_group)
+        self.assertIn(user_name, admin_members)
+        self.assertNotIn(user_name, test_members)
 
     def test_not_existing_group(self):
         self.assertFalse(self.client.group_exists(self.not_existing_group))
@@ -1078,7 +1098,7 @@ class TestApps(unittest.TestCase):
 
     def setUp(self):
         self.client = owncloud.Client(Config['owncloud_url'])
-        self.client.login(Config['owncloud_login'], Config['owncloud_password'])        
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
 
     def test_enable_app_disable_app(self):
         self.assertTrue(self.client.enable_app('activity'))

@@ -1002,10 +1002,14 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
+        action_path = 'users'
+        if user_name:
+            action_path += '?search={}'.format(user_name)
+
         res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
-            'users?search=' + user_name
+            action_path
         )
 
         if res.status_code == 200:
@@ -1015,6 +1019,16 @@ class Client(object):
             return users
 
         raise HTTPResponseError(res)
+
+    def get_users(self):
+        """Get users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :returns: list of usernames
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        return self.search_users('')
 
     def set_user_attribute(self, user_name, key, value):
         """Sets a user attribute
@@ -1296,6 +1310,50 @@ class Client(object):
         # We get 200 when the group was just deleted.
         if res.status_code == 200:
             return True
+
+        raise HTTPResponseError(res)
+
+    def get_groups(self):
+        """Get groups via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :returns: list of groups
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'groups'
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            groups = [x.text for x in tree.findall('data/groups/element')]
+
+            return groups
+
+        raise HTTPResponseError(res)
+
+    def get_group_members(self, group_name):
+        """Get group members via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :param group_name:  name of group to list members
+        :returns: list of group members
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'groups/' + group_name
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self._check_ocs_status(tree, [100])
+            return [group.text for group in tree.find('data/users')]
 
         raise HTTPResponseError(res)
 
