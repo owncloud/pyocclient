@@ -1046,6 +1046,14 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.assertIn(test_group, groups)
         self.assertNotIn(not_existing_group, groups)
 
+    def test_get_group_members(self):
+        user_name = Config['owncloud_login']
+        test_group = Config['test_group']
+        admin_members = self.client.get_group_members('admin')
+        test_members = self.client.get_group_members(test_group)
+        self.assertIn(user_name, admin_members)
+        self.assertNotIn(user_name, test_members)
+
     def test_not_existing_group(self):
         self.assertFalse(self.client.group_exists(self.not_existing_group))
 
