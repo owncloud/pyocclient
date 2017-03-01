@@ -1002,10 +1002,14 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
+        action_path = 'users'
+        if user_name:
+            action_path += '?search={}'.format(user_name)
+
         res = self._make_ocs_request(
             'GET',
             self.OCS_SERVICE_CLOUD,
-            'users?search=' + user_name
+            action_path
         )
 
         if res.status_code == 200:
@@ -1024,19 +1028,7 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
 
         """
-        res = self._make_ocs_request(
-            'GET',
-            self.OCS_SERVICE_CLOUD,
-            'users'
-        )
-
-        if res.status_code == 200:
-            tree = ET.fromstring(res.content)
-            users = [x.text for x in tree.findall('data/users/element')]
-
-            return users
-
-        raise HTTPResponseError(res)
+        return self.search_users('')
 
     def set_user_attribute(self, user_name, key, value):
         """Sets a user attribute
