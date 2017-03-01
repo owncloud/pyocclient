@@ -1039,6 +1039,13 @@ class TestUserAndGroupActions(unittest.TestCase):
                 self.client.create_group(group)
             self.assertEquals(e.exception.status_code, 102)
 
+    def test_get_groups(self):
+        test_group = Config['test_group']
+        not_existing_group = Config['not_existing_group']
+        groups = self.client.get_groups()
+        self.assertIn(test_group, groups)
+        self.assertNotIn(not_existing_group, groups)
+
     def test_not_existing_group(self):
         self.assertFalse(self.client.group_exists(self.not_existing_group))
 
