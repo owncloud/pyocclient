@@ -1016,6 +1016,28 @@ class Client(object):
 
         raise HTTPResponseError(res)
 
+    def get_users(self):
+        """Get users via provisioning API.
+        If you get back an error 999, then the provisioning API is not enabled.
+
+        :returns: list of usernames
+        :raises: HTTPResponseError in case an HTTP error status was returned
+
+        """
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_CLOUD,
+            'users'
+        )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            users = [x.text for x in tree.findall('data/users/element')]
+
+            return users
+
+        raise HTTPResponseError(res)
+
     def set_user_attribute(self, user_name, key, value):
         """Sets a user attribute
 
