@@ -320,6 +320,8 @@ class Client(object):
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
+        :param dav_endpoint_version: None (default) to force using a specific endpoint version
+        instead of relying on capabilities
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
         if not url.endswith('/'):
@@ -329,13 +331,10 @@ class Client(object):
         self._session = None
         self._debug = kwargs.get('debug', False)
         self._verify_certs = kwargs.get('verify_certs', True)
+        self._dav_endpoint_version = kwargs.get('dav_endpoint_version', True)
 
         self._capabilities = None
         self._version = None
-
-        url_components = parse.urlparse(url)
-        self._davpath = url_components.path + 'remote.php/webdav'
-        self._webdav_url = url + 'remote.php/webdav'
 
     def login(self, user_id, password):
         """Authenticate to ownCloud.
@@ -352,6 +351,15 @@ class Client(object):
 
         try:
             self._update_capabilities()
+
+            url_components = parse.urlparse(self.url)
+            if self._dav_endpoint_version == 1:
+                self._davpath = url_components.path + 'remote.php/dav/files/' + parse.quote(user_id)
+                self._webdav_url = self.url + 'remote.php/dav/files/' + parse.quote(user_id)
+            else:
+                self._davpath = url_components.path + 'remote.php/webdav'
+                self._webdav_url = self.url + 'remote.php/webdav'
+
         except HTTPResponseError as e:
             self._session.close()
             self._session = None
@@ -1813,6 +1821,16 @@ class Client(object):
             self._version = version_el.text
             if edition_el.text is not None:
                 self._version += '-' + edition_el.text
+
+            if 'dav' in apps and 'chunking' in apps['dav']:
+                chunking_version = float(apps['dav']['chunking'])
+                if self._dav_endpoint_version > chunking_version:
+                    self._dav_endpoint_version = None
+
+                if self._dav_endpoint_version is None and chunking_version >= 1.0:
+                    self._dav_endpoint_version = 1
+                else:
+                    self._dav_endpoint_version = 0
 
             return self._capabilities
         raise HTTPResponseError(res)

@@ -9,12 +9,34 @@ import owncloud
 import datetime
 import time
 import tempfile
+import random
 import six
 
 from config import Config
 
+def getSupportedDavVersion():
+    # connect just to check supported DAV version
+    client = owncloud.Client(Config['owncloud_url'])
+    client.login(Config['owncloud_login'], Config['owncloud_password'])
+
+    caps = client.get_capabilities()
+    dav_version = None
+
+    if 'dav' in caps and 'chunking' in caps['dav']:
+        dav_version = float(caps['dav']['chunking'])
+
+    return dav_version
+
+def skipIfDavVersionLessThan(expected_version):
+    dav_version = getSupportedDavVersion()
+    if dav_version is None or dav_version < expected_version:
+        return unittest.skip("Expected DAV version %s not supported in this ownCloud version" % expected_version)
+    return lambda func: func
 
 class TestFileAccess(unittest.TestCase):
+
+    def get_dav_endpoint_version(self):
+        return 0
 
     def files():
         return (
@@ -31,10 +53,10 @@ class TestFileAccess(unittest.TestCase):
         )
 
     def setUp(self):
-        self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s/' % int(time.time())
+        self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s-%s/' % (int(time.time()), random.randint(1, 1000))
         os.mkdir(self.temp_dir)
 
-        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client = owncloud.Client(Config['owncloud_url'], dav_endpoint_version=self.get_dav_endpoint_version())
         self.client.login(Config['owncloud_login'], Config['owncloud_password'])
         self.test_root = Config['test_root']
         if not self.test_root[-1] == '/':
@@ -862,6 +884,10 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(share_info.get_share_with_displayname()) is str)
         self.assertTrue(self.client.delete_share(share_id))
 
+@skipIfDavVersionLessThan(1.0)
+class TestFileAccessDav1(TestFileAccess):
+    def get_dav_endpoint_version(self):
+        return 1
 
 class TestPrivateDataAccess(unittest.TestCase):
 
