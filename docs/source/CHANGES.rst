@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5
+---
+
+- Remove support for ownCloud 8.1 which is EOL [PVince81]
+
 0.4
 ---
 
