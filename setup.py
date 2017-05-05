@@ -3,18 +3,19 @@
 # vim: expandtab shiftwidth=4 softtabstop=4
 #
 from setuptools import setup
+import io
 
 version = '0.4'
 
 long_description = (
-    open('README.rst').read()
+    io.open('README.rst', encoding='utf-8').read()
     + '\n' +
     'Contributors\n'
     '============\n'
     + '\n' +
-    open('docs/source/CONTRIBUTORS.rst').read()
+    io.open('docs/source/CONTRIBUTORS.rst', encoding='utf-8').read()
     + '\n' +
-    open('CHANGES.rst').read()
+    io.open('CHANGES.rst', encoding='utf-8').read()
     + '\n')
 
 setup(
