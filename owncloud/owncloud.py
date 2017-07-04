@@ -519,7 +519,7 @@ class Client(object):
 
         headers = {}
         if kwargs.get('keep_mtime', True):
-            headers['X-OC-MTIME'] = str(stat_result.st_mtime)
+            headers['X-OC-MTIME'] = str(int(stat_result.st_mtime))
 
         if remote_path[-1] == '/':
             remote_path += os.path.basename(local_source_file)
@@ -593,7 +593,7 @@ class Client(object):
 
         headers = {}
         if kwargs.get('keep_mtime', True):
-            headers['X-OC-MTIME'] = str(stat_result.st_mtime)
+            headers['X-OC-MTIME'] = str(int(stat_result.st_mtime))
 
         if size == 0:
             return self._make_dav_request(
