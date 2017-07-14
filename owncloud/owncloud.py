@@ -1234,6 +1234,8 @@ class Client(object):
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
             http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+        :param remote_user (optional): True if it is a federated users
+            defaults to False if it is a local user
         :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
@@ -1244,6 +1246,8 @@ class Client(object):
                 or ((not isinstance(user, six.string_types)) or (user == ''))):
             return False
 
+        if remote_user and (not user.endswith('/')):
+            user = user + '/'
         path = self._normalize_path(path)
         post_data = {
             'shareType': self.OCS_SHARE_TYPE_REMOTE if remote_user else
