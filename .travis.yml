@@ -6,12 +6,12 @@ sudo: required
 services:
     - docker
 env:
-    - OC_VERSION=8.2
-    - OC_VERSION=9.0
-    - OC_VERSION=9.1
+    - NC_VERSION=12
+    - NC_VERSION=11
+    - NC_VERSION=10
 
 before_install:
-    - travis-build/setup_oc_docker.sh $OC_VERSION
+    - travis-build/setup_nc_docker.sh $OC_VERSION
 
 install:
     - pip install requests unittest-data-provider six
