@@ -65,9 +65,10 @@ class TestFileAccess(unittest.TestCase):
             self.test_root = '/' + self.test_root
         self.client.mkdir(self.test_root)
         self.share2user = Config['owncloud_share2user']
+        self.share2userPwd = 'Avcpwd4l!'
         self.test_group = Config['test_group']
         try:
-            self.client.create_user(self.share2user, 'share')
+            self.client.create_user(self.share2user, self.share2userPwd)
         except:
             pass
         try:
@@ -626,7 +627,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path, public_upload=False, password='1234')
+        share_info = self.client.share_file_with_link(path, public_upload=False, password='AnvvsP1234')
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
@@ -657,7 +658,7 @@ class TestFileAccess(unittest.TestCase):
         self.assertEquals(share_info.get_permissions(), 1)
 
         shareclient = owncloud.Client(Config['owncloud_url'])
-        shareclient.login(self.share2user, "share")
+        shareclient.login(self.share2user, self.share2userPwd)
         share2_info = shareclient.get_shares(
             "/", shared_with_me=True)[0].share_info
         self.assertEqual(share2_info["uid_owner"], Config['owncloud_login'])
@@ -955,6 +956,7 @@ class TestUserAndGroupActions(unittest.TestCase):
         self.not_existing_group = Config['not_existing_group']
         self.test_group = Config['test_group']
         self.share2user = Config['owncloud_share2user']
+        self.share2userPwd = 'Avcpwd4l!'
         try:
             self.apps = self.client.get_apps()
             if not self.apps['provisioning_api']:
@@ -963,7 +965,7 @@ class TestUserAndGroupActions(unittest.TestCase):
             raise unittest.SkipTest("no API")
 
         try:
-            self.client.create_user(self.share2user, 'share')
+            self.client.create_user(self.share2user, self.share2userPwd)
         except:
             pass
         try:
@@ -1031,7 +1033,7 @@ class TestUserAndGroupActions(unittest.TestCase):
             self.client.delete_user('ghost_user')
             self.client.create_user('ghost_user', 'ghost_pass')
         self.assertTrue(self.client.set_user_attribute('ghost_user','email','test@inf.org'))
-        self.assertTrue(self.client.set_user_attribute('ghost_user','password','secret'))
+        self.assertTrue(self.client.set_user_attribute('ghost_user','password','secret7363*'))
         self.assertEquals(self.client.get_user('ghost_user')['email'], 'test@inf.org')
         self.client.delete_user('ghost_user')
 
@@ -1045,11 +1047,11 @@ class TestUserAndGroupActions(unittest.TestCase):
 
     def test_create_existing_user(self):
         with self.assertRaises(owncloud.OCSResponseError) as e:
-            self.client.create_user(self.share2user, 'share')
+            self.client.create_user(self.share2user, self.share2userPwd)
         self.assertEquals(e.exception.status_code, 102)
         # try to catch with general ResponseError
         with self.assertRaises(owncloud.ResponseError) as e:
-            self.client.create_user(self.share2user, 'share')
+            self.client.create_user(self.share2user, self.share2userPwd)
         self.assertEquals(e.exception.status_code, 102)
 
     def test_create_groups(self):
