@@ -553,7 +553,6 @@ class Client(object):
         basedir = os.path.basename(local_directory[0: -1]) + '/'
         # gather files to upload
         for path, _, files in os.walk(local_directory):
-            path = path.replace('\\', '/')
             gathered_files.append(
                 (path, basedir + path[len(local_directory):], files)
             )
@@ -637,7 +636,6 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        path = path.replace('\\', "/")
         try:
             if not path.endswith('/'):
                 path += '/'
@@ -1639,7 +1637,9 @@ class Client(object):
     @staticmethod
     def _normalize_path(path):
         """Makes sure the path starts with a "/"
+           converts windows path to linux path
         """
+        path = path.replace('\\', '/')
         if isinstance(path, FileInfo):
             path = path.path
         if len(path) == 0:
