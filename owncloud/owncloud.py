@@ -640,8 +640,10 @@ class Client(object):
             if not path.endswith('/'):
                 path += '/'
             return self._make_dav_request('MKCOL', path)
-        except HTTPResponseError:
-            if self._debug:
+        except HTTPResponseError as e:
+            if e.status_code != 405:
+                raise e
+            elif self._debug:
                 print('probably folder already exists: {}'.format(path))
             else:
                 pass
