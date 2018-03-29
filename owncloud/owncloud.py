@@ -553,6 +553,7 @@ class Client(object):
         basedir = os.path.basename(local_directory[0: -1]) + '/'
         # gather files to upload
         for path, _, files in os.walk(local_directory):
+            path = path.replace('\\', '/')
             gathered_files.append(
                 (path, basedir + path[len(local_directory):], files)
             )
@@ -636,9 +637,16 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        if not path.endswith('/'):
-            path += '/'
-        return self._make_dav_request('MKCOL', path)
+        path = path.replace('\\', "/")
+        try:
+            if not path.endswith('/'):
+                path += '/'
+            return self._make_dav_request('MKCOL', path)
+        except HTTPResponseError:
+            if self._debug:
+                print('probably folder already exists: {}'.format(path))
+            else:
+                pass
 
     def delete(self, path):
         """Deletes a remote file or directory
