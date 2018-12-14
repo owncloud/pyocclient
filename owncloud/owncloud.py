@@ -1226,6 +1226,46 @@ class Client(object):
         """
         return group_name in self.get_user_subadmin_groups(user_name)
 
+    def get_possible_user_labels_to_share(self, search_string, items_per_page, item_type):
+        """Get user labels corresponding to the username being searched
+        :param search_string: string being searched, e.g. LastName FirstName
+        :param items_per_page: item count being returned per page
+        :param item_type: item type possibly being shared, e.g. folder
+        """
+        receipient_path = "format=xml"
+        #replace space with plus which is conform with the API
+        receipient_path += "&search=" + search_string.replace(" ", "+")
+        receipient_path += "&perPage=" + str(items_per_page)
+        receipient_path += "&itemType=" + str(item_type)
+
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_SHARE,
+            'sharees?' + receipient_path
+        )
+        labelElements = self._parse_xml_for_wanted_element(res.content, "label")
+        return labelElements
+
+    def get_possible_user_emails_to_share(self, search_string, items_per_page, item_type):
+        """Get email addresses corresponding to the username being searched 
+        :param search_string: string being searched, e.g. LastName FirstName
+        :param items_per_page: item count being returned per page
+        :param item_type: item type possibly being shared, e.g. folder
+        """
+        receipient_path = "format=xml"
+        #replace space with plus which is conform with the API
+        receipient_path += "&search=" + search_string.replace(" ", "+")
+        receipient_path += "&perPage=" + str(items_per_page)
+        receipient_path += "&itemType=" + str(item_type)
+
+        res = self._make_ocs_request(
+            'GET',
+            self.OCS_SERVICE_SHARE,
+            'sharees?' + receipient_path
+        )
+        shareWithElements = self._parse_xml_for_wanted_element(res.content, "shareWith")
+        return shareWithElements
+
     def share_file_with_user(self, path, user, **kwargs):
         """Shares a remote file with specified user
 
@@ -1830,6 +1870,23 @@ class Client(object):
             remote_path_source,
             headers=headers
         )
+
+    def _parse_xml_for_wanted_element(self, xmlString, wantedElement):
+        """Get labels or emails out of an XML
+        :param xmlString: result out of a HTTP request which will be gone through
+        :param wantedElement: XML tag to look for
+        """
+        wantedElementArray = []
+        tree = ET.fromstring(xmlString)
+        users = tree.find("data").find("users")
+        elements = users.findall("element")
+        if wantedElement == "label":
+            for element in elements:
+                wantedElementArray.append(element.find(wantedElement).text)
+        if (wantedElement == "shareType") or (wantedElement == "shareWith") or (wantedElement == "shareWithAdditionalInfo"):
+            for element in elements:
+                wantedElementArray.append(element.find("value").find(wantedElement).text)
+        return wantedElementArray
 
     def _xml_to_dict(self, element):
         """
