@@ -6,8 +6,6 @@ sudo: required
 services:
     - docker
 env:
-    - OC_VERSION=9.0
-    - OC_VERSION=9.1
     - OC_VERSION=10.0
 
 before_install:
