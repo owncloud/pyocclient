@@ -1841,7 +1841,7 @@ class Client(object):
         return_dict = {}
         for el in element:
             return_dict[el.tag] = None
-            children = el.getchildren()
+            children = list(el)
             if children:
                 return_dict[el.tag] = self._xml_to_dict(children)
             else:
