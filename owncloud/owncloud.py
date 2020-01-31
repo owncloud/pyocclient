@@ -178,6 +178,15 @@ class ShareInfo(object):
             return self.share_info['displayname_owner']
         return None
 
+    def get_name(self):
+        """Returns the name of a link share
+
+        :returns: name of link share
+        """
+        if 'name' in self.share_info:
+            return self.share_info['name']
+        return None
+
     def __str__(self):
         info = ''
         for k, v in self.share_info.items():
@@ -806,6 +815,7 @@ class Client(object):
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
         http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+        :param name (optional): display name for the link
         :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
@@ -813,6 +823,7 @@ class Client(object):
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
+        name = kwargs.get('name', None)
 
         path = self._normalize_path(path)
         post_data = {
@@ -823,6 +834,8 @@ class Client(object):
             post_data['publicUpload'] = str(public_upload).lower()
         if isinstance(password, six.string_types):
             post_data['password'] = password
+        if name is not None:
+            post_data['name'] = self._encode_string(name)
         if perms:
             post_data['permissions'] = perms
 
@@ -841,7 +854,8 @@ class Client(object):
                                     'id': data_el.find('id').text,
                                     'path': path,
                                     'url': data_el.find('url').text,
-                                    'token': data_el.find('token').text
+                                    'token': data_el.find('token').text,
+                                    'name': data_el.find('name').text
                                 }
             )
         raise HTTPResponseError(res)
