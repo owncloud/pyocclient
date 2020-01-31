@@ -4,7 +4,13 @@ Changelog
 0.5
 ---
 
-- Remove support for ownCloud 8.1 which is EOL [PVince81]
+- Added "name" attribute for public links [PVince81]
+- Fixed deprecation warnings [Tilman Lüttje] [PVince81]
+- Added support sharing with federated users [remjg]
+- Fixed setup script for utf-8 paths [amicitas]
+- Fixed file mtime parsing issue [viraj96]
+- Add support for the server's DAV v2 endpoint [PVince81]
+- Remove support for ownCloud 8.1, 9.0 and 9.1 which are EOL [PVince81]
 
 0.4
 ---
