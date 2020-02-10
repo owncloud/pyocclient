@@ -345,18 +345,23 @@ class Client(object):
         self._capabilities = None
         self._version = None
 
-    def login(self, user_id, password):
+    def login(self, user_id=None, password=None, token=None):
         """Authenticate to ownCloud.
         This will create a session on the server.
 
         :param user_id: user id
         :param password: password
+        :param token: oauth2 token
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-
+        
         self._session = requests.session()
         self._session.verify = self._verify_certs
-        self._session.auth = (user_id, password)
+        
+        if user_id is None and password is None and token is not None and isinstance(token, str):
+            self._session.headers.update({"Authorization", "Bearer {}".format(token)})
+        else:
+            self._session.auth = (user_id, password)
 
         try:
             self._update_capabilities()
