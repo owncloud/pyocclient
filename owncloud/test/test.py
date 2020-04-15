@@ -1417,7 +1417,6 @@ class TestPublicFolder(unittest.TestCase):
 
     @data_provider(files_content)
     def test_mkdir(self, file_name, content, subdir):
-        print(f'-------------- file_name: {file_name}, content: {content}, subdir: {subdir}')
         """Test subdirectory creation"""
         self.anon_client = owncloud.Client(Config['owncloud_url'])
         self.anon_client.anon_login(self.public_upload_token)
