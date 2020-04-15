@@ -402,6 +402,11 @@ class Client(object):
         anon_session.anon_login(folder_token, folder_password=folder_password)
         return anon_session
 
+    def drop_file(self, file_name):
+        """ Convenience wrapper for put_file """
+        destination = '/' + os.path.basename(file_name)
+        return self.put_file(destination, file_name)
+
     def file_info(self, path):
         """Returns the file info for the given remote file
 
