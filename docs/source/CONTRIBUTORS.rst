@@ -16,3 +16,4 @@ Contributors
 * Roeland Jago Douma <rullzer@owncloud.com>
 * Erik Pellikka <erik@pellikka.org>
 * Florian Zierer <florian.zierer@moticon.de>
+* mrwunderbar666 <paul.balluff@gmail.com>

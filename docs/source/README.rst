@@ -31,6 +31,8 @@ Accessing files
 - upload with chunking and mtime keeping
 - upload whole directories
 - directory download as zip
+- access files from public links
+- upload files to files drop link target
 
 Sharing (OCS Share API)
 -----------------------
