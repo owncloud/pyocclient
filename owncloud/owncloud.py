@@ -384,6 +384,29 @@ class Client(object):
         self._session.close()
         return True
 
+    def anon_login(self, folder_token, folder_password=''):
+        self._session = requests.session()
+        self._session.verify = self._verify_certs
+        self._session.auth = (folder_token, folder_password)
+
+        url_components = parse.urlparse(self.url)
+        self._davpath = url_components.path + 'public.php/webdav'
+        self._webdav_url = self.url + 'public.php/webdav'
+    
+    @classmethod
+    def from_public_link(cls, public_link, folder_password='', **kwargs):
+        public_link_components = parse.urlparse(public_link)
+        url = public_link_components.scheme + '://' + public_link_components.hostname
+        folder_token = public_link_components.path.split('/')[-1]       
+        anon_session = cls(url, **kwargs)
+        anon_session.anon_login(folder_token, folder_password=folder_password)
+        return anon_session
+
+    def drop_file(self, file_name):
+        """ Convenience wrapper for put_file """
+        destination = '/' + os.path.basename(file_name)
+        return self.put_file(destination, file_name)
+
     def file_info(self, path):
         """Returns the file info for the given remote file
 
