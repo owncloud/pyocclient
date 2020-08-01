@@ -1,8 +1,7 @@
 language: python
 python:
     - "2.7"
-    - "3.5"
-sudo: required
+    - "3.8"
 services:
     - docker
 env:
@@ -12,9 +11,10 @@ before_install:
     - travis-build/setup_oc_docker.sh $OC_VERSION
 
 install:
-    - pip install requests unittest-data-provider six
+    - pip install flake8 requests unittest-data-provider six
 
 script:
+    - flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
     - cp owncloud/test/config.py.sample owncloud/test/config.py
     # execute unit tests
     - ./runtests.sh
