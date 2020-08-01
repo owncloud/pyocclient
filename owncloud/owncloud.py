@@ -1685,7 +1685,7 @@ class Client(object):
         :param s: str or unicode to encode
         :returns: encoded output as str
         """
-        if six.PY2 and isinstance(s, unicode):
+        if six.PY2 and isinstance(s, unicode):  # noqa: F821
             return s.encode('utf-8')
         return s
 
