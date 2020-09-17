@@ -154,6 +154,57 @@ class TestFileAccess(unittest.TestCase):
         self.assertTrue(type(dir_info.get_last_modified()) is datetime.datetime)
         self.assertTrue(dir_info.is_dir())
 
+    @data_provider(files_content)
+    def test_get_file_info_with_properties(self, file_name, content, subdir):
+        """Test getting file info with extra properties"""
+        self.assertTrue(self.client.mkdir(self.test_root + subdir))
+        self.assertTrue(self.client.put_file_contents(self.test_root + file_name, content))
+
+        # ensure we first pass all the properties expected by the tests below, then any extra attributes
+        file_info = self.client.file_info(self.test_root + file_name, [
+            'd:getlastmodified',
+            'd:getcontentlength',
+            'd:resourcetype',
+            'd:getetag',
+            'd:getcontenttype',
+            'oc:favorite',
+            'oc:owner-id',
+            'oc:owner-display-name'
+        ])
+        self.assertTrue(isinstance(file_info, owncloud.FileInfo))
+        self.assertEqual(file_info.get_name(), file_name)
+        self.assertEqual(file_info.get_path() + '/', self.test_root)
+        self.assertEqual(file_info.get_size(), len(content))
+        self.assertIsNotNone(file_info.get_etag())
+        self.assertEqual(file_info.get_content_type(), 'text/plain')
+        self.assertTrue(type(file_info.get_last_modified()) is datetime.datetime)
+        self.assertFalse(file_info.is_dir())
+        self.assertIsNotNone(file_info.attributes['{http://owncloud.org/ns}favorite'])
+        self.assertIsNotNone(file_info.attributes['{http://owncloud.org/ns}owner-id'])
+        self.assertIsNotNone(file_info.attributes['{http://owncloud.org/ns}owner-display-name'])
+
+        dir_info = self.client.file_info(self.test_root + subdir, [
+            'd:getlastmodified',
+            'd:getcontentlength',
+            'd:resourcetype',
+            'd:getetag',
+            'd:getcontenttype',
+            'oc:favorite',
+            'oc:owner-id',
+            'oc:owner-display-name'
+        ])
+        self.assertTrue(isinstance(dir_info, owncloud.FileInfo))
+        self.assertEqual(dir_info.get_name(), subdir)
+        self.assertEqual(file_info.get_path() + '/', self.test_root)
+        self.assertIsNone(dir_info.get_size())
+        self.assertIsNotNone(dir_info.get_etag())
+        self.assertEqual(dir_info.get_content_type(), 'httpd/unix-directory')
+        self.assertTrue(type(dir_info.get_last_modified()) is datetime.datetime)
+        self.assertTrue(dir_info.is_dir())
+        self.assertIsNotNone(dir_info.attributes['{http://owncloud.org/ns}favorite'])
+        self.assertIsNotNone(dir_info.attributes['{http://owncloud.org/ns}owner-id'])
+        self.assertIsNotNone(dir_info.attributes['{http://owncloud.org/ns}owner-display-name'])
+
     def test_get_file_info_non_existing(self):
         """Test getting file info for non existing file"""
         with self.assertRaises(owncloud.ResponseError) as e:
@@ -189,6 +240,41 @@ class TestFileAccess(unittest.TestCase):
         self.assertEqual(len(listing), 6)
         self.assertEqual(listing[2].get_name(), 'subdir')
         self.assertEqual(listing[3].get_name(), 'in dir.txt')
+
+    def test_get_file_listing_with_properties(self):
+        """Test getting file listing with extra properties"""
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'file one.txt', 'first file'))
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'zz+z.txt', 'z file'))
+        self.assertTrue(self.client.put_file_contents(self.test_root + u'中文.txt', ''))
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'abc.txt', ''))
+        self.assertTrue(self.client.mkdir(self.test_root + 'subdir'))
+        self.assertTrue(self.client.put_file_contents(self.test_root + 'subdir/in dir.txt', ''))
+
+        listing = self.client.list(self.test_root, depth=1, properties=[
+            'd:getlastmodified',
+            'd:getcontentlength',
+            'd:resourcetype',
+            'd:getetag',
+            'd:getcontenttype',
+            'oc:favorite',
+            'oc:owner-id',
+            'oc:owner-display-name'
+        ])
+        self.assertEqual(len(listing), 5)
+        self.assertEqual(listing[0].get_name(), 'abc.txt')
+        self.assertEqual(listing[1].get_name(), 'file one.txt')
+        self.assertEqual(listing[2].get_name(), 'subdir')
+        self.assertEqual(listing[3].get_name(), 'zz+z.txt')
+        self.assertEqual(listing[4].get_name(), u'中文.txt')
+
+        self.assertTrue(listing[2].is_dir())
+        self.assertFalse(listing[3].is_dir())
+
+        for i in range(5):
+            self.assertIsNotNone(listing[i].attributes['{http://owncloud.org/ns}favorite'])
+            self.assertIsNotNone(listing[i].attributes['{http://owncloud.org/ns}owner-id'])
+            self.assertIsNotNone(listing[i].attributes['{http://owncloud.org/ns}owner-display-name'])
+
 
     def test_get_file_listing_non_existing(self):
         """Test getting file listing for non existing directory"""
