@@ -407,25 +407,40 @@ class Client(object):
         destination = '/' + os.path.basename(file_name)
         return self.put_file(destination, file_name)
 
-    def file_info(self, path):
+    def file_info(self, path, properties=None):
         """Returns the file info for the given remote file
 
         :param path: path to the remote file
+        :param properties: a list of properties to request (optional)
         :returns: file info
         :rtype: :class:`FileInfo` object or `None` if file
             was not found
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        res = self._make_dav_request('PROPFIND', path, headers={'Depth': '0'})
+        if properties:
+            root = ET.Element('d:propfind',
+                              {
+                                  'xmlns:d': "DAV:",
+                                  'xmlns:nc': "http://nextcloud.org/ns",
+                                  'xmlns:oc': "http://owncloud.org/ns"
+                              })
+            prop = ET.SubElement(root, 'd:prop')
+            for p in properties:
+                ET.SubElement(prop, p)
+            data = ET.tostring(root)
+        else:
+            data = None
+        res = self._make_dav_request('PROPFIND', path, headers={'Depth': '0'}, data=data)
         if res:
             return res[0]
         return None
 
-    def list(self, path, depth=1):
+    def list(self, path, depth=1, properties=None):
         """Returns the listing/contents of the given remote directory
 
         :param path: path to the remote directory
         :param depth: depth of the listing, integer or "infinity"
+        :param properties: a list of properties to request (optional)
         :returns: directory listing
         :rtype: array of :class:`FileInfo` objects
         :raises: HTTPResponseError in case an HTTP error status was returned
@@ -437,7 +452,21 @@ class Client(object):
         if isinstance(depth, int) or depth == "infinity":
             headers['Depth'] = str(depth)
 
-        res = self._make_dav_request('PROPFIND', path, headers=headers)
+        if properties:
+            root = ET.Element('d:propfind',
+                              {
+                                  'xmlns:d': "DAV:",
+                                  'xmlns:nc': "http://nextcloud.org/ns",
+                                  'xmlns:oc': "http://owncloud.org/ns"
+                              })
+            prop = ET.SubElement(root, 'd:prop')
+            for p in properties:
+                ET.SubElement(prop, p)
+            data = ET.tostring(root)
+        else:
+            data = None
+
+        res = self._make_dav_request('PROPFIND', path, headers=headers, data=data)
         # first one is always the root, remove it from listing
         if res:
             return res[1:]
