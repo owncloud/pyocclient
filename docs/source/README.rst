@@ -107,6 +107,30 @@ Example for uploading a file then sharing with link:
 
     print "Here is your link: " + link_info.get_link()
 
+Example for uploading a file to a public shared folder:
+
+.. code-block:: python
+
+    import owncloud
+
+    public_link = 'http://domain.tld/owncloud/A1B2C3D4'
+
+    oc = owncloud.Client.from_public_link(public_link)
+    oc.drop_file('myfile.zip')
+
+
+Example for downloading a file from a public shared folder with password:
+
+.. code-block:: python
+
+    import owncloud
+
+    public_link = 'http://domain.tld/owncloud/A1B2C3D4'
+    folder_password = 'secret'
+
+    oc = owncloud.Client.from_public_link(public_link, password=folder_password)
+    oc.get_file('/sharedfile.zip', 'download/destination/sharedfile.zip')
+
 Running the unit tests
 ======================
 
