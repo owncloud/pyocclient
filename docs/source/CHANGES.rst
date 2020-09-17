@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6
+---
+
+- Added support to query arbitrary properties with file info and file listing [NikosChondros]
+- Added support for file operations within a public link [mrwunderbar666]
+
 0.5
 ---
 

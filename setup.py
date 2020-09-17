@@ -5,7 +5,7 @@
 from setuptools import setup
 import io
 
-version = '0.5'
+version = '0.6'
 
 long_description = (
     io.open('README.rst', encoding='utf-8').read()
@@ -36,7 +36,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'Topic :: Internet :: WWW/HTTP',
