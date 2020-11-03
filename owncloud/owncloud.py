@@ -902,14 +902,21 @@ class Client(object):
             self._check_ocs_status(tree)
             data_el = tree.find('data')
             id_el = data_el.find('id')
+            share_id = 0
+            if id_el is not None:
+                share_id = id_el.text
             name_el = data_el.find('name')
+            share_name = ''
+            if name_el is not None:
+                share_name = name_el.text
+
             return ShareInfo(
                                 {
-                                    'id': id_el.text if id_el else None,
+                                    'id': share_id,
                                     'path': path,
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text,
-                                    'name': name_el.text if name_el else None
+                                    'name': share_name
                                 }
             )
         raise HTTPResponseError(res)
