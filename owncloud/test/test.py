@@ -1557,5 +1557,47 @@ class TestPublicFolder(unittest.TestCase):
         self.assertIsNotNone(file_info)
         self.assertEqual(file_info.get_size(), 2 * 1024)
 
+
+class TestRecipientAPI(unittest.TestCase):
+
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'])
+        self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+        self.test_group = Config['test_group']
+        self.share2user = Config['owncloud_share2user']
+        self.share2userPwd = 'Avcpwd4l!'
+        try:
+            self.client.create_user(self.share2user, self.share2userPwd)
+        except:
+            self.share2user = None
+        try:
+            self.client.create_group(self.test_group)
+        except:
+            self.test_group = None
+
+    def tearDown(self):
+        try:
+            self.client.delete_user(self.share2user)
+        except:
+            pass
+        try:
+            self.client.delete_group(self.test_group)
+        except:
+            pass
+        self.client.logout()
+
+    def test_get_recipients(self):
+        users = self.client.get_sharees("", share_type=self.client.OCS_SHARE_TYPE_USER)
+        users = [recipient.get_share_with() for recipient in users]
+        self.assertTrue(Config['owncloud_login'] in users)
+        if self.share2user is not None:
+            self.assertTrue(self.share2user in users)
+
+        if self.test_group:
+            groups = self.client.get_sharees("", share_type=self.client.OCS_SHARE_TYPE_GROUP)
+            groups = [recipient.get_share_with() for recipient in groups]
+            self.assertTrue(self.test_group in groups)
+
+
 if __name__ == '__main__':
     unittest.main()
