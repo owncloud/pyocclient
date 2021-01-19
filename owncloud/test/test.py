@@ -1544,7 +1544,7 @@ class TestPublicFolder(unittest.TestCase):
 
     @data_provider(files)
     def test_drop_file(self, file_name):
-        """Test convinience wrapper"""
+        """Test convenience wrapper"""
         temp_file = self.temp_dir + file_name
         self.__create_file(temp_file, 2 * 1024)
         self.anon_client = owncloud.Client(Config['owncloud_url'])
