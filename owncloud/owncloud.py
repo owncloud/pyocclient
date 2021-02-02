@@ -1789,10 +1789,10 @@ class Client(object):
         """Makes a WebDAV request
 
         :param method: HTTP method
-        :param path: remote path of the targetted file
+        :param path: remote path of the targeted file
         :param \*\*kwargs: optional arguments that ``requests.Request.request`` accepts
         :returns array of :class:`FileInfo` if the response
-        contains it, or True if the operation succeded, False
+        contains it, or True if the operation succeeded, False
         if it didn't
         """
         if self._debug:
