@@ -713,8 +713,10 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path, public_upload=False, password='AnvvsP1234!@', name='Test Link')
-
+        # Expire in three days
+        expires = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime("%Y-%m-%d")
+        share_info = self.client.share_file_with_link(path, public_upload=False, password='AnvvsP1234!@',
+                                                      name='Test Link', expireDate=expires)
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
         self.assertTrue(type(share_info.get_id()) is int)
