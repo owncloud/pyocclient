@@ -392,12 +392,12 @@ class Client(object):
         url_components = parse.urlparse(self.url)
         self._davpath = url_components.path + 'public.php/webdav'
         self._webdav_url = self.url + 'public.php/webdav'
-    
+
     @classmethod
     def from_public_link(cls, public_link, folder_password='', **kwargs):
         public_link_components = parse.urlparse(public_link)
         url = public_link_components.scheme + '://' + public_link_components.hostname
-        folder_token = public_link_components.path.split('/')[-1]       
+        folder_token = public_link_components.path.split('/')[-1]
         anon_session = cls(url, **kwargs)
         anon_session.anon_login(folder_token, folder_password=folder_password)
         return anon_session
@@ -876,6 +876,7 @@ class Client(object):
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
         name = kwargs.get('name', None)
+        expire_date = kwargs.get('expireDate', None)
 
         path = self._normalize_path(path)
         post_data = {
@@ -888,6 +889,8 @@ class Client(object):
             post_data['password'] = password
         if name is not None:
             post_data['name'] = self._encode_string(name)
+        if expire_date is not None:
+            post_data['expireDate'] = expire_date
         if perms:
             post_data['permissions'] = perms
 
@@ -901,13 +904,22 @@ class Client(object):
             tree = ET.fromstring(res.content)
             self._check_ocs_status(tree)
             data_el = tree.find('data')
+            id_el = data_el.find('id')
+            share_id = 0
+            if id_el is not None:
+                share_id = id_el.text
+            name_el = data_el.find('name')
+            share_name = ''
+            if name_el is not None:
+                share_name = name_el.text
+
             return ShareInfo(
                                 {
-                                    'id': data_el.find('id').text,
+                                    'id': share_id,
                                     'path': path,
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text,
-                                    'name': data_el.find('name').text
+                                    'name': share_name
                                 }
             )
         raise HTTPResponseError(res)
