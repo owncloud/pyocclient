@@ -713,7 +713,7 @@ class TestFileAccess(unittest.TestCase):
         path = self.test_root + file_name
         self.assertTrue(self.client.put_file_contents(path, 'hello world!'))
 
-        share_info = self.client.share_file_with_link(path, public_upload=False, password='AnvvsP1234', name='Test Link')
+        share_info = self.client.share_file_with_link(path, public_upload=False, password='AnvvsP1234!@', name='Test Link')
 
         self.assertTrue(self.client.is_shared(path))
         self.assertTrue(isinstance(share_info, owncloud.ShareInfo))
@@ -1319,7 +1319,7 @@ class TestPublicFolder(unittest.TestCase):
             [u'文件.txt', u'你好世界'.encode('utf-8'), u'文件夹']
         )
 
-    
+
     def setUp(self):
         self.temp_dir = tempfile.gettempdir() + '/pyocclient_test%s-%s/' % (int(time.time()), random.randint(1, 1000))
         os.mkdir(self.temp_dir)
@@ -1424,7 +1424,7 @@ class TestPublicFolder(unittest.TestCase):
         with self.assertRaises(owncloud.ResponseError) as e:
             self.anon_client.list('/')
         self.assertEqual(e.exception.status_code, 404)
-    
+
     def test_anon_login_pw(self):
         self.anon_client = owncloud.Client(Config['owncloud_url'])
         self.anon_client.anon_login(self.pw_public_download_token, folder_password=self.folder_password)
@@ -1461,7 +1461,7 @@ class TestPublicFolder(unittest.TestCase):
         with self.assertRaises(owncloud.ResponseError) as e:
             self.anon_client.list('/')
         self.assertEqual(e.exception.status_code, 404)
-    
+
     def test_from_link_pw(self):
         self.anon_client = owncloud.Client.from_public_link(self.pw_public_download_link, folder_password=self.folder_password)
         listing = self.anon_client.list('/')
@@ -1477,7 +1477,7 @@ class TestPublicFolder(unittest.TestCase):
         self.anon_client = owncloud.Client.from_public_link(self.pw_public_upload_link, folder_password=self.folder_password)
         with self.assertRaises(owncloud.ResponseError) as e:
             self.anon_client.list('/')
-        self.assertEqual(e.exception.status_code, 404)             
+        self.assertEqual(e.exception.status_code, 404)
 
 
     @data_provider(files_content)
@@ -1510,7 +1510,7 @@ class TestPublicFolder(unittest.TestCase):
         self.assertTrue(self.anon_client.mkdir(subdir))
         # Only users with account can get file info in upload folders
         self.assertIsNotNone(self.client.file_info(self.public_folder_upload + subdir))
-    
+
     @data_provider(files)
     def test_upload_small_file(self, file_name):
         """Test simple upload"""
@@ -1525,7 +1525,7 @@ class TestPublicFolder(unittest.TestCase):
         file_info = self.client.file_info(self.public_folder_upload + file_name)
         self.assertIsNotNone(file_info)
         self.assertEqual(file_info.get_size(), 2 * 1024)
-    
+
     @data_provider(files)
     def test_upload_big_file(self, file_name):
         """Test chunked upload"""
