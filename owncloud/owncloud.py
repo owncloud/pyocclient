@@ -398,7 +398,7 @@ class Client(object):
         public_link_components = parse.urlparse(public_link)
         url = public_link_components.scheme + '://' + public_link_components.hostname
         if public_link_components.port:
-            url += f":{public_link_components.port}"
+            url += ":" + public_link_components.port
         folder_token = public_link_components.path.split('/')[-1]
         anon_session = cls(url, **kwargs)
         anon_session.anon_login(folder_token, folder_password=folder_password)
