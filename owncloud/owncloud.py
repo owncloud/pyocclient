@@ -15,7 +15,11 @@ import xml.etree.ElementTree as ET
 import os
 import math
 import six
+import logging
 from six.moves.urllib import parse
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ResponseError(Exception):
@@ -331,7 +335,7 @@ class Client(object):
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
         :param dav_endpoint_version: None (default) to force using a specific endpoint version
         instead of relying on capabilities
-        :param debug: set to True to print debugging messages to stdout, defaults to False
+        :param debug: set to True to log debugging messages with python logging, defaults to False
         """
         if not url.endswith('/'):
             url += '/'
@@ -1333,7 +1337,7 @@ class Client(object):
         )
 
         if self._debug:
-            print('OCS share_file request for file %s with permissions %i '
+            LOGGER.debug('OCS share_file request for file %s with permissions %i '
                   'returned: %i' % (path, perms, res.status_code))
         if res.status_code == 200:
             tree = ET.fromstring(res.content)
@@ -1781,7 +1785,7 @@ class Client(object):
         attributes['headers']['OCS-APIREQUEST'] = 'true'
 
         if self._debug:
-            print('OCS request: %s %s %s' % (method, self.url + path,
+            LOGGER.debug('OCS request: %s %s %s' % (method, self.url + path,
                                              attributes))
 
         res = self._session.request(method, self.url + path, **attributes)
@@ -1798,9 +1802,9 @@ class Client(object):
         if it didn't
         """
         if self._debug:
-            print('DAV request: %s %s' % (method, path))
+            LOGGER.debug('DAV request: %s %s' % (method, path))
             if kwargs.get('headers'):
-                print('Headers: ', kwargs.get('headers'))
+                LOGGER.debug('Headers: ', kwargs.get('headers'))
 
         path = self._normalize_path(path)
         res = self._session.request(
@@ -1809,7 +1813,7 @@ class Client(object):
             **kwargs
         )
         if self._debug:
-            print('DAV status: %i' % res.status_code)
+            LOGGER.debug('DAV status: %i' % res.status_code)
         if res.status_code in [200, 207]:
             return self._parse_dav_response(res)
         if res.status_code in [204, 201]:
