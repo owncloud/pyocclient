@@ -703,6 +703,26 @@ class Client(object):
             path += '/'
         return self._make_dav_request('MKCOL', path)
 
+    def makedirs(self, path,  exist_ok=False):
+        """Creates recursively remote directories
+
+        :param path: path to the remote directory to create
+        :param exist_ok: if True, it does not throw an error if a folder already exist
+        :returns: True if the operation succeeded, False otherwise
+        :raises: HTTPResponseError in case an HTTP error status was returned
+        """
+        try:
+            self.mkdir(path)
+        except HTTPResponseError as e:
+            if e.status_code == 409:
+                self.makedirs(os.path.dirname(path))
+                self.makedirs(path)
+            elif e.status_code == 405 and exist_ok:
+                pass
+            else:
+                raise e
+        return True
+
     def delete(self, path):
         """Deletes a remote file or directory
 
