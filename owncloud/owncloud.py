@@ -977,7 +977,7 @@ class Client(object):
             args = {'path': path}
             reshares = kwargs.get('reshares', False)
             if isinstance(reshares, bool) and reshares:
-                args['reshares'] = reshares
+                args['reshares'] = str(reshares).lower()
             subfiles = kwargs.get('subfiles', False)
             if isinstance(subfiles, bool) and subfiles:
                 args['subfiles'] = str(subfiles).lower()
