@@ -868,7 +868,7 @@ class Client(object):
         defaults to read only (1)
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
-        http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+        https://doc.owncloud.com/server/next/developer_manual/core/apis/ocs-share-api.html
         :param name (optional): display name for the link
         :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
@@ -1301,7 +1301,7 @@ class Client(object):
         :param user: name of the user whom we want to share a file/folder
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
-            http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+            https://doc.owncloud.com/server/next/developer_manual/core/apis/ocs-share-api.html
         :param remote_user (optional): True if it is a federated users
             defaults to False if it is a local user
         :returns: instance of :class:`ShareInfo` with the share info
@@ -1470,7 +1470,7 @@ class Client(object):
         :param group: name of the group with which we want to share a file/folder
         :param perms (optional): permissions of the shared object
             defaults to read only (1)
-            http://doc.owncloud.org/server/6.0/admin_manual/sharing_api/index.html
+            https://doc.owncloud.com/server/next/developer_manual/core/apis/ocs-share-api.html
         :returns: instance of :class:`ShareInfo` with the share info
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
