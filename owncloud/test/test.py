@@ -116,6 +116,17 @@ class TestFileAccess(unittest.TestCase):
         self.assertIsNotNone(self.client.file_info(self.test_root + subdir))
 
     @data_provider(files_content)
+    def test_makedirs(self, file_name, content, subdir):
+        """Test recursive subdirectory creation with existing folder"""
+        new_dir = os.path.join(self.test_root, subdir, subdir)
+        self.assertTrue(self.client.makedirs(new_dir))
+        self.assertIsNotNone(self.client.file_info(new_dir))
+
+        new_dir = os.path.join(new_dir, subdir)
+        self.assertTrue(self.client.makedirs(new_dir, exist_ok=True))
+        self.assertIsNotNone(self.client.file_info(new_dir))
+
+    @data_provider(files_content)
     def test_put_file_contents(self, file_name, content, subdir):
         """Test creating remote file with given contents"""
         self.assertTrue(self.client.mkdir(self.test_root + subdir))
