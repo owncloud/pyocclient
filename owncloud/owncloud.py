@@ -63,8 +63,7 @@ class ShareInfo(object):
     def __init__(self, share_info):
         self.share_info = {}
         # remove unneeded attributes
-        del_attrs = ['item_type', 'item_source', 'file_source', 'parent',
-                     'storage', 'mail_send']
+        del_attrs = ['parent', 'storage', 'mail_send']
         for k, v in share_info.items():
             if k not in del_attrs:
                 self.share_info[k] = v
