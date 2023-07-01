@@ -57,6 +57,57 @@ class HTTPResponseError(ResponseError):
         ResponseError.__init__(self, res, "HTTP")
 
 
+class Recipient(object):
+    """Recipient information"""
+
+    def __init__(self, recipient_info):
+        self.recipient_info = {}
+        for k, v in recipient_info.items():
+            self.recipient_info[k] = v
+
+    def get_label(self):
+        """Return the label of the recipient.
+        Display name for users.
+
+        :returns: label of recipient
+        """
+        return self.recipient_info['label']
+
+    def get_share_type(self):
+        """Returns the type of the recipient.
+        See OCS_SHARE_TYPE_* constants.
+
+        :returns: share type
+        """
+        return self.recipient_info['value']['shareType']
+
+    def is_user(self):
+        """Returns whether the recipient is an user or not
+
+        :returns: true if recipient is an user
+        """
+        return self.recipient_info['value']['shareType'] == Client.OCS_SHARE_TYPE_USER
+
+    def get_share_with(self):
+        """Returns the share recipient.
+        If share type is OCS_SHARE_TYPE_USER, then the recipient is the name of
+        the user.
+        For OCS_SHARE_TYPE_GROUP it is the name of the group.
+
+        :returns: name of the share recipient
+        """
+        return self.recipient_info['value']['shareWith']
+
+    def __str__(self):
+        info = ''
+        for k, v in self.recipient_info.items():
+            info += '%s=%s,' % (k, v)
+        return 'Recipient(%s)' % info[:-1]
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class ShareInfo(object):
     """Share information"""
 
@@ -323,6 +374,9 @@ class Client(object):
     OCS_SHARE_TYPE_GROUP = 1
     OCS_SHARE_TYPE_LINK = 3
     OCS_SHARE_TYPE_REMOTE = 6
+
+    OCS_ITEM_TYPE_FOLDER = "folder"
+    OCS_ITEM_TYPE_FILE = "file"
 
     def __init__(self, url, **kwargs):
         """Instantiates a client
@@ -1008,6 +1062,31 @@ class Client(object):
                 shares.append(share_attr)'''
                 shares.append(self._get_shareinfo(element))
             return shares
+        raise HTTPResponseError(res)
+
+    def get_sharees(self, search, share_type, item_type=OCS_ITEM_TYPE_FOLDER):
+        """Get all share recipients for the provided search term.
+
+        :param search: The search string
+        :param item_type: OCS_ITEM_TYPE_*
+        :param share_type: OCS_SHARE_TYPE_*
+        :returns: list of Recipient class
+        :raises: ResponseError in case an HTTP error status was returned
+        """
+        action_path = 'sharees?itemType={}'.format(item_type)
+        if search is not None:
+            action_path += '&search={}'.format(search)
+        if share_type is not None:
+            action_path += '&shareType={}'.format(share_type)
+        res = self._make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_SHARE,
+                action_path
+                )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self._check_ocs_status(tree)
+            return self._get_recipients(tree.find('data'))
         raise HTTPResponseError(res)
 
     def create_user(self, user_name, initial_password):
@@ -1925,6 +2004,14 @@ class Client(object):
         if (data_el is None) or not (isinstance(data_el, ET.Element)):
             return None
         return ShareInfo(self._xml_to_dict(data_el))
+
+    def _get_recipients(self, data_el):
+        recipients = []
+        if (data_el is None) or not (isinstance(data_el, ET.Element)):
+            return recipients
+        for element in data_el.findall('.//element'):
+            recipients.append(Recipient(self._xml_to_dict(element)))
+        return recipients
 
     def _update_capabilities(self):
         res = self._make_ocs_request(
