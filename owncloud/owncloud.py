@@ -648,17 +648,13 @@ class Client(object):
             remote_path += os.path.basename(local_source_file)
 
         stat_result = os.stat(local_source_file)
-
-        file_handle = open(local_source_file, 'rb', 8192)
-        file_handle.seek(0, os.SEEK_END)
-        size = file_handle.tell()
-        file_handle.seek(0)
+        size = stat_result.st_size
 
         headers = {}
         if kwargs.get('keep_mtime', True):
             headers['X-OC-MTIME'] = str(int(stat_result.st_mtime))
 
-        if size == 0:
+        if size <= 0:
             return self._make_dav_request(
                 'PUT',
                 remote_path,
@@ -671,25 +667,25 @@ class Client(object):
         if chunk_count > 1:
             headers['OC-CHUNKED'] = '1'
 
-        for chunk_index in range(0, int(chunk_count)):
-            data = file_handle.read(chunk_size)
-            if chunk_count > 1:
-                chunk_name = '%s-chunking-%s-%i-%i' % \
-                             (remote_path, transfer_id, chunk_count,
-                              chunk_index)
-            else:
-                chunk_name = remote_path
+        with open(local_source_file, 'rb', 8192) as file_handle:
+            for chunk_index in range(0, int(chunk_count)):
+                data = file_handle.read(chunk_size)
+                if chunk_count > 1:
+                    chunk_name = '%s-chunking-%s-%i-%i' % \
+                                (remote_path, transfer_id, chunk_count,
+                                chunk_index)
+                else:
+                    chunk_name = remote_path
 
-            if not self._make_dav_request(
-                    'PUT',
-                    chunk_name,
-                    data=data,
-                    headers=headers
-            ):
-                result = False
-                break
+                if not self._make_dav_request(
+                        'PUT',
+                        chunk_name,
+                        data=data,
+                        headers=headers
+                ):
+                    result = False
+                    break
 
-        file_handle.close()
         return result
 
     def mkdir(self, path):
