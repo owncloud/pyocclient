@@ -1035,6 +1035,34 @@ class Client(object):
             return True
 
         raise HTTPResponseError(res)
+    
+    def enable_user(self, user_name):
+        """Enables a user on the ownCloud server.
+        """
+        res = self._make_ocs_request(
+            'PUT',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/enable'
+        )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self._check_ocs_status(tree, [100])
+            return True
+        return HTTPResponseError(res)
+    
+    def disable_user(self, user_name):
+        """Disables a user on the ownCloud server.
+        """
+        res = self._make_ocs_request(
+            'PUT',
+            self.OCS_SERVICE_CLOUD,
+            'users/' + user_name + '/disable'
+        )
+        if res.status_code == 200:
+            tree = ET.fromstring(res.content)
+            self._check_ocs_status(tree, [100])
+            return True
+        return HTTPResponseError(res)
 
     def delete_user(self, user_name):
         """Deletes a user via provisioning API.
