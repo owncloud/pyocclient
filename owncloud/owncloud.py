@@ -909,7 +909,7 @@ class Client(object):
                                     'path': path,
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text,
-                                    'name': data_el.find('name').text
+                                    'name': name.text if (name := data_el.find('name')) else None
                                 }
             )
         raise HTTPResponseError(res)
