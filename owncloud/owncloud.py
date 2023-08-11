@@ -718,6 +718,17 @@ class Client(object):
         """
         if not path.endswith('/'):
             path += '/'
+
+        path_split = list(filter(None, path.split("/")))
+        if len(path_split) > 1:
+            file_list = [x.get_name() for x in self.list(self._normalize_path("/".join(path_split[0:-1])))]
+            if path_split[-1] in file_list:
+                raise FileExistsError(f"Remote folder {path_split[-1]} exist, please check!")
+        else:
+            file_list = [x.get_name() for x in self.list(path="./")]
+            if path_split[0] in file_list:
+                raise FileExistsError(f"Remote folder {path_split[-1]} exist, please check!")
+
         return self._make_dav_request('MKCOL', path)
 
     def delete(self, path):
