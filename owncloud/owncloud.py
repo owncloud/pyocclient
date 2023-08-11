@@ -506,6 +506,23 @@ class Client(object):
             self._webdav_url + parse.quote(self._encode_string(remote_path)),
             stream=True
         )
+
+        path_split = list(filter(None, remote_path.split("/")))
+        try:
+            if len(path_split) > 1:
+                file_list = [x.get_name() for x in self.list(self._normalize_path("/".join(path_split[0:-1])))]
+                if path_split[-1] not in file_list:
+                    raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
+            else:
+                file_list = [x.get_name() for x in self.list(path="./")]
+                if path_split[0] not in file_list:
+                    raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
+        except HTTPResponseError as e:
+            if e.status_code == 404:
+                raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
+            else:
+                raise e
+
         if res.status_code == 200:
             if local_file is None:
                 # use downloaded file name from Content-Disposition
