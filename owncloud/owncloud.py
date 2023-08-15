@@ -392,7 +392,28 @@ class Client(object):
         url_components = parse.urlparse(self.url)
         self._davpath = url_components.path + 'public.php/webdav'
         self._webdav_url = self.url + 'public.php/webdav'
-    
+
+    def check_remote_path(self, path: str):
+        path_split = list(filter(None, path.split("/")))
+        try:
+            if len(path_split) > 1:
+                file_list = [x.get_name() for x in self.list(self._normalize_path("/".join(path_split[0:-1])))]
+                if path_split[-1] not in file_list:
+                    return False
+                else:
+                    return True
+            else:
+                file_list = [x.get_name() for x in self.list(path="./")]
+                if path_split[0] not in file_list:
+                    return False
+                else:
+                    return True
+        except HTTPResponseError as e:
+            if e.status_code == 404:
+                raise ValueError(f"Remote path {path_split[-1]} there is an error, please check!")
+            else:
+                raise e
+
     @classmethod
     def from_public_link(cls, public_link, folder_password='', **kwargs):
         public_link_components = parse.urlparse(public_link)
@@ -502,27 +523,13 @@ class Client(object):
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
         remote_path = self._normalize_path(remote_path)
+        if self.check_remote_path(path=remote_path):
+            raise FileNotFoundError(f"get_file function error: Remote file {remote_path} not exist, please check!")
+
         res = self._session.get(
             self._webdav_url + parse.quote(self._encode_string(remote_path)),
             stream=True
         )
-
-        path_split = list(filter(None, remote_path.split("/")))
-        try:
-            if len(path_split) > 1:
-                file_list = [x.get_name() for x in self.list(self._normalize_path("/".join(path_split[0:-1])))]
-                if path_split[-1] not in file_list:
-                    raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
-            else:
-                file_list = [x.get_name() for x in self.list(path="./")]
-                if path_split[0] not in file_list:
-                    raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
-        except HTTPResponseError as e:
-            if e.status_code == 404:
-                raise FileNotFoundError(f"Remote file {path_split[-1]} not exist, please check!")
-            else:
-                raise e
-
         if res.status_code == 200:
             if local_file is None:
                 # use downloaded file name from Content-Disposition
@@ -588,6 +595,9 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
+        if self.check_remote_path(path=remote_path):
+            raise FileExistsError(f"put_file function error: Remote file {remote_path} exist, please check!")
+
         if kwargs.get('chunked', True):
             return self._put_file_chunked(
                 remote_path,
@@ -719,15 +729,8 @@ class Client(object):
         if not path.endswith('/'):
             path += '/'
 
-        path_split = list(filter(None, path.split("/")))
-        if len(path_split) > 1:
-            file_list = [x.get_name() for x in self.list(self._normalize_path("/".join(path_split[0:-1])))]
-            if path_split[-1] in file_list:
-                raise FileExistsError(f"Remote folder {path_split[-1]} exist, please check!")
-        else:
-            file_list = [x.get_name() for x in self.list(path="./")]
-            if path_split[0] in file_list:
-                raise FileExistsError(f"Remote folder {path_split[-1]} exist, please check!")
+        if self.check_remote_path(path=path):
+            raise FileExistsError(f"mkdir function error: Remote file {path} exist, please check!")
 
         return self._make_dav_request('MKCOL', path)
 
@@ -738,6 +741,8 @@ class Client(object):
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
+        if not self.check_remote_path(path=path):
+            raise FileNotFoundError(f"delete function error: Remote file {path} not exist, please check!")
         return self._make_dav_request('DELETE', path)
 
     def list_open_remote_share(self):
@@ -902,6 +907,8 @@ class Client(object):
             or False if the operation failed
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
+        if not self.check_remote_path(path=path):
+            raise FileNotFoundError(f"share_file_with_link function error: Remote file {path} not exist, please check!")
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
