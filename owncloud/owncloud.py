@@ -329,7 +329,7 @@ class Client(object):
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
-        :param dav_endpoint_version: None (default) to force using a specific endpoint version
+        :param dav_endpoint_version: 1 (default) to force using a specific endpoint version
         instead of relying on capabilities
         :param debug: set to True to print debugging messages to stdout, defaults to False
         """
@@ -340,7 +340,7 @@ class Client(object):
         self._session = None
         self._debug = kwargs.get('debug', False)
         self._verify_certs = kwargs.get('verify_certs', True)
-        self._dav_endpoint_version = kwargs.get('dav_endpoint_version', True)
+        self._dav_endpoint_version = kwargs.get('dav_endpoint_version', 1)
 
         self._capabilities = None
         self._version = None
