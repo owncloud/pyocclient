@@ -7,6 +7,8 @@ import os
 import shutil
 import owncloud
 import datetime
+import mock
+import requests
 import time
 import tempfile
 import random
@@ -1265,6 +1267,35 @@ class TestLogin(unittest.TestCase):
 
     def tearDown(self):
         self.client.logout()
+
+
+class TestTimeout(unittest.TestCase):
+    def setUp(self):
+        self.client = owncloud.Client(Config['owncloud_url'], timeout=15)
+
+    @mock.patch.object(requests.Session, 'request', autospec=True,
+                       return_value=requests.Response())
+    def test_timeout_is_set_on_ocs_requests(self, mock_req):
+        mock_req.return_value.status_code = 404
+        try:
+            self.client.login(Config['owncloud_login'], Config['owncloud_password'])
+        except owncloud.owncloud.HTTPResponseError:
+            pass
+        mock_req.assert_called_with(
+            mock.ANY,
+            mock.ANY,
+            timeout=15,
+        )
+    @mock.patch.object(requests.Session, 'request', autospec=True,
+                       return_value=requests.Response())
+    def test_timeout_is_set_on_dav_requests(self, mock_req):
+        mock_req.status_code = 404
+        self.client.list('/')
+        mock_req.assert_called_with(
+            mock.ANY,
+            mock.ANY,
+            timeout=15,
+        )
 
 
 class TestOCSRequest(unittest.TestCase):
