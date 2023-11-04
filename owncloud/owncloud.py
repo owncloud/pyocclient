@@ -329,9 +329,11 @@ class Client(object):
 
         :param url: URL of the target ownCloud instance
         :param verify_certs: True (default) to verify SSL certificates, False otherwise
-        :param dav_endpoint_version: None (default) to force using a specific endpoint version
+        :param dav_endpoint_version: 1 (default) to force using a specific endpoint version
         instead of relying on capabilities
         :param debug: set to True to print debugging messages to stdout, defaults to False
+        :param timeout: The number of seconds that the client will wait for to respond,
+        or None to not set any timeout.
         """
         if not url.endswith('/'):
             url += '/'
@@ -340,7 +342,8 @@ class Client(object):
         self._session = None
         self._debug = kwargs.get('debug', False)
         self._verify_certs = kwargs.get('verify_certs', True)
-        self._dav_endpoint_version = kwargs.get('dav_endpoint_version', True)
+        self._dav_endpoint_version = kwargs.get('dav_endpoint_version', 1)
+        self._timeout = kwargs.get('timeout', None)
 
         self._capabilities = None
         self._version = None
@@ -1784,7 +1787,8 @@ class Client(object):
             print('OCS request: %s %s %s' % (method, self.url + path,
                                              attributes))
 
-        res = self._session.request(method, self.url + path, **attributes)
+        res = self._session.request(
+                method, self.url + path, timeout=self._timeout, **attributes)
         return res
 
     def _make_dav_request(self, method, path, **kwargs):
@@ -1806,6 +1810,7 @@ class Client(object):
         res = self._session.request(
             method,
             self._webdav_url + parse.quote(self._encode_string(path)),
+            timeout=self._timeout,
             **kwargs
         )
         if self._debug:
