@@ -877,6 +877,7 @@ class Client(object):
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
+        expiredate = kwargs.get('expiredate', None)
         name = kwargs.get('name', None)
 
         path = self._normalize_path(path)
@@ -888,6 +889,8 @@ class Client(object):
             post_data['publicUpload'] = str(public_upload).lower()
         if isinstance(password, six.string_types):
             post_data['password'] = password
+        if isinstance(expiredate, datetime.date):
+            post_data['expireDate'] = expiredate
         if name is not None:
             post_data['name'] = self._encode_string(name)
         if perms:
