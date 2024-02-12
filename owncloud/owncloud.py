@@ -868,6 +868,7 @@ class Client(object):
         defaults to read only (1)
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
+        :param expiredate (optional): sets an expiration date for the shared link
         https://doc.owncloud.com/server/next/admin_manual/configuration/files/file_sharing_configuration.html
         :param name (optional): display name for the link
         :returns: instance of :class:`ShareInfo` with the share info
@@ -877,6 +878,7 @@ class Client(object):
         perms = kwargs.get('perms', None)
         public_upload = kwargs.get('public_upload', 'false')
         password = kwargs.get('password', None)
+        expiredate = kwargs.get('expiredate', None)
         name = kwargs.get('name', None)
 
         path = self._normalize_path(path)
@@ -888,6 +890,8 @@ class Client(object):
             post_data['publicUpload'] = str(public_upload).lower()
         if isinstance(password, six.string_types):
             post_data['password'] = password
+        if isinstance(expiredate, datetime.date):
+            post_data['expireDate'] = expiredate
         if name is not None:
             post_data['name'] = self._encode_string(name)
         if perms:
