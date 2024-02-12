@@ -868,6 +868,7 @@ class Client(object):
         defaults to read only (1)
         :param public_upload (optional): allows users to upload files or folders
         :param password (optional): sets a password
+        :param expiredate (optional): sets an expiration date for the shared link
         https://doc.owncloud.com/server/next/admin_manual/configuration/files/file_sharing_configuration.html
         :param name (optional): display name for the link
         :returns: instance of :class:`ShareInfo` with the share info
