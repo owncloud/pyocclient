@@ -907,6 +907,17 @@ class Client(object):
             tree = ET.fromstring(res.content)
             self._check_ocs_status(tree)
             data_el = tree.find('data')
+            exp_el = data_el.find('expiration')
+            expiration = None
+            if exp_el is not None:
+                if exp_el.text is not None:
+                    expiration = int(
+                        round(
+                            datetime.datetime.strptime(
+                                exp_el.text, "%Y-%m-%d %H:%M:%S"
+                            ).timestamp()
+                        )
+                    )
             return ShareInfo(
                                 {
                                     'id': data_el.find('id').text,
@@ -914,13 +925,7 @@ class Client(object):
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text,
                                     'name': data_el.find('name').text,
-                                    "expiration": int(
-                                        round(
-                                            datetime.datetime.strptime(
-                                                data_el.find("expiration").text, "%Y-%m-%d %H:%M:%S"
-                                            ).timestamp()
-                                        )
-                                    ),
+                                    "expiration": expiration,
                                 }
             )
         raise HTTPResponseError(res)
