@@ -913,7 +913,14 @@ class Client(object):
                                     'path': path,
                                     'url': data_el.find('url').text,
                                     'token': data_el.find('token').text,
-                                    'name': data_el.find('name').text
+                                    'name': data_el.find('name').text,
+                                    "expiration": int(
+                                        round(
+                                            datetime.datetime.strptime(
+                                                data_el.find("expiration").text, "%Y-%m-%d %H:%M:%S"
+                                            ).timestamp()
+                                        )
+                                    ),
                                 }
             )
         raise HTTPResponseError(res)
