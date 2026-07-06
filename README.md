@@ -1,3 +1,6 @@
+> **⚠️ This repository is archived and no longer maintained.**
+> It is read-only and will not receive further updates or contributions.
+
 # pyocclient
 
 <!-- OSPO-managed README | Generated: 2026-04-16 | v2 -->
